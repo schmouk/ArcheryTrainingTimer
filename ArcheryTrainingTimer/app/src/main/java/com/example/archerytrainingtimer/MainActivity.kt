@@ -44,7 +44,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.platform.LocalConfiguration
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 // import android.util.Log
 // MainActivity class definition (no change from before)
@@ -111,6 +114,38 @@ fun SimpleScreen(
     userPreferencesRepository: UserPreferencesRepository,
     onCloseApp: () -> Unit
 ) {
+    // adapt items size to screen width
+    val configuration = LocalConfiguration.current
+    val currentScreenWidthDp = configuration.screenWidthDp.dp
+    val currentScreenHeightDp = configuration.screenHeightDp.dp
+    val refScreenWidthDp = 411.dp // Your baseline for good proportions
+    val refScreenHeightDp = 914.dp // Your baseline for good proportions
+    // Calculate scale factor, ensure it's not Dp / Dp if you need a raw float
+    val horizontalScaleFactor = (currentScreenWidthDp.value / refScreenWidthDp.value).coerceIn(0.60f, 1.5f)
+    val verticalScaleFactor = (currentScreenHeightDp.value / refScreenHeightDp.value).coerceIn(0.40f, 1.5f)
+    val scaleFactor = min(horizontalScaleFactor, verticalScaleFactor)
+
+    // scales a dimension (width or height) according to the running device deviceScaling factor
+    fun deviceScaling(dim: Int) : Float {
+        return scaleFactor * dim
+    }
+
+    // scales horizontal dimension (width) according to the running device horizontalScaleFactor factor
+    fun horizontalDeviceScaling(dim: Int) : Float {
+        return horizontalScaleFactor * dim
+    }
+
+
+    // --- Dynamic Sizes & SPs ---
+    val mainTimerStrokeWidth = deviceScaling(14).dp
+    val adaptiveInitialMainFontSize = deviceScaling(76).sp
+    val adaptiveInitialSeriesFontSize = deviceScaling(34).sp
+    val repetitionBoxSize = deviceScaling(48).dp
+    //val majorSpacerHeight = deviceScaling(24).dp
+    val majorSpacerHeight = deviceScaling(8).dp
+    val generalPadding = deviceScaling(12).dp  // 16
+
+
     var selectedDurationString by rememberSaveable { mutableStateOf<String?>(null) }
     var numberOfRepetitions by remember { mutableStateOf<Int?>(null) }
     var numberOfSeries by remember { mutableStateOf<Int?>(null) }
@@ -122,13 +157,16 @@ fun SimpleScreen(
     var currentRepetitionsLeft by rememberSaveable { mutableStateOf<Int?>(null) }
 
     val durationOptions = listOf("5 s", "10 s", "15 s", "20 s", "30 s")
+    val durationsScaling = 4f / durationOptions.size
+    //val durationButtonWidth = (durationsScaling * (currentScreenWidthDp.value / durationOptions.size - deviceScaling(0))).dp
+    val durationButtonWidth = (currentScreenWidthDp.value / durationOptions.size - horizontalDeviceScaling(8)).dp
     val minRepetitions = 2
     val maxRepetitions = 15
     val repetitionRange = (minRepetitions..maxRepetitions).toList()
     val seriesOptions = listOf(2, 10, 15, 20, 25, 30)
 
-    val customInteractiveTextStyle = TextStyle(fontSize = 18.sp)
-    val smallerTextStyle = TextStyle(fontSize = 14.sp)
+    val customInteractiveTextStyle = TextStyle(fontSize = deviceScaling(18).sp)
+    val smallerTextStyle = TextStyle(fontSize = deviceScaling(16).sp)
     val repetitionsLazyListState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
 
@@ -246,15 +284,16 @@ fun SimpleScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp)
+            .padding(deviceScaling(16).dp)
     ) {
         Text( // Title
             text = "Series Training Timer",
             style = MaterialTheme.typography.titleLarge,
             color = AppTitleColor,
             modifier = Modifier
-                .padding(bottom = 16.dp)
+                .padding(bottom = generalPadding)
                 .align(Alignment.CenterHorizontally)
+                .scale(scaleFactor)
         )
 
         Row( // Timer Row
@@ -262,7 +301,7 @@ fun SimpleScreen(
                 .fillMaxWidth()
                 .weight(1f)
                 .background(AppTimerRowBackgroundColor)
-                .padding(vertical = 4.dp),
+                .padding(vertical = deviceScaling(4).dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Left Cell (Square Timer Display)
@@ -270,11 +309,11 @@ fun SimpleScreen(
                 modifier = Modifier
                     .weight(0.6f)
                     .aspectRatio(1f)
-                    .padding(8.dp),
+                    .padding(deviceScaling(4/*8*/).dp),  //8.dp),
                 contentAlignment = Alignment.Center
             ) {
                 val circleRadius = min(constraints.maxWidth, constraints.maxHeight) / 2f * 0.9f
-                val strokeWidthPx = with(LocalDensity.current) { 14.dp.toPx() }
+                val strokeWidthPx = with(LocalDensity.current) { mainTimerStrokeWidth.toPx() }
 
                 val mainTimerDisplayColor = if (showDimmedTimers) dimmedTimerColor else activeTimerColor
 
@@ -297,21 +336,22 @@ fun SimpleScreen(
                 if (durationToDisplayString.isNotEmpty()) {
                     AdaptiveText(
                         text = durationToDisplayString,
-                        modifier = Modifier.padding(16.dp),
+                        modifier = Modifier.padding(generalPadding),
                         color = mainTimerDisplayColor, // Use conditional color
                         fontWeight = FontWeight.Bold,
                         targetWidth = Dp(circleRadius * 1.2f),
-                        initialFontSize = 76.sp
+                        initialFontSize = adaptiveInitialMainFontSize
                     )
                 }
             }
 
             // Right Control Cell
+            val localPadding = deviceScaling(8).dp // 8.dp
             Column(
                 modifier = Modifier
                     .weight(0.4f)
                     .fillMaxHeight()
-                    .padding(start = 8.dp, end = 8.dp),
+                    .padding(start = localPadding, end = localPadding),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceEvenly
             ) {
@@ -346,22 +386,23 @@ fun SimpleScreen(
                         disabledContainerColor = AppButtonColor.copy(alpha = 0.5f),
                         disabledContentColor = AppButtonTextColor.copy(alpha = 0.5f)
                     ),
-                    modifier = Modifier.fillMaxWidth(0.9f)
+                    modifier = Modifier.fillMaxWidth(0.92f).scale(horizontalScaleFactor)
                 ) {
                     Text(
                         text = if (isTimerRunning) "Stop" else "Start",
-                        style = customInteractiveTextStyle.copy(color = if (isTimerRunning || allSelectionsMade) AppButtonTextColor else AppButtonTextColor.copy(alpha = 0.5f))
+                        style = customInteractiveTextStyle.copy(color = if (allSelectionsMade) AppButtonTextColor else AppButtonTextColor.copy(alpha = 0.5f))
+                        //style = customInteractiveTextStyle.copy(color = if (isTimerRunning || allSelectionsMade) AppButtonTextColor else AppButtonTextColor.copy(alpha = 0.5f))
                     )
                 }
                 BoxWithConstraints( // Series Countdown Circle
                     modifier = Modifier
                         .fillMaxWidth(0.8f)
                         .aspectRatio(1f)
-                        .padding(4.dp),
+                        .padding(deviceScaling(4).dp),
                     contentAlignment = Alignment.Center
                 ) {
                     val seriesCircleRadius = min(constraints.maxWidth, constraints.maxHeight) / 2f * 0.85f
-                    val seriesStrokeWidthPx = with(LocalDensity.current) { 7.dp.toPx() }
+                    val seriesStrokeWidthPx = with(LocalDensity.current) { deviceScaling(7).dp.toPx() }
 
                     val seriesDisplayColor = if (showDimmedTimers) dimmedTimerColor else activeTimerColor
 
@@ -382,11 +423,11 @@ fun SimpleScreen(
                     if (seriesToDisplayString.isNotEmpty()) {
                         AdaptiveText(
                             text = seriesToDisplayString,
-                            modifier = Modifier.padding(8.dp),
+                            modifier = Modifier.padding(localPadding),  //8.dp),
                             color = seriesDisplayColor, // Use conditional color
                             fontWeight = FontWeight.Normal,
                             targetWidth = Dp(seriesCircleRadius * 1.1f),
-                            initialFontSize = 34.sp
+                            initialFontSize = adaptiveInitialSeriesFontSize  //34.sp
                         )
                     }
                 }
@@ -401,7 +442,7 @@ fun SimpleScreen(
             style = customInteractiveTextStyle,
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier
-                .padding(top = 24.dp, bottom = 8.dp)
+                .padding(top = deviceScaling(24).dp)
                 .align(Alignment.CenterHorizontally)
         )
         Row( // Duration Buttons Row
@@ -410,62 +451,75 @@ fun SimpleScreen(
                 .padding(top = 0.dp),
             horizontalArrangement = Arrangement.Center
         ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            val borderStrokeWidth = deviceScaling(5).dp
+            Row(horizontalArrangement = Arrangement.spacedBy(deviceScaling(0).dp)) {
                 durationOptions.forEach { duration ->
                     val isSelected = selectedDurationString == duration
                     Button(
                         onClick = { selectedDurationString = if (isSelected) null else duration },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isSelected) SelectedButtonBackgroundColor else AppButtonColor,
+                            containerColor = if (isSelected) SelectedButtonBackgroundColor else AppButtonColor.copy(alpha = 0.38f),
                             contentColor = AppButtonTextColor
                         ),
                         border = if (isSelected) BorderStroke(
-                            5.dp,
+                            borderStrokeWidth,
                             SelectedButtonBorderColor
-                        ) else null,
-                        modifier = Modifier.defaultMinSize(minWidth = 72.dp)
-                    ) { Text(text = duration, style = customInteractiveTextStyle) }
+                        ) else BorderStroke(  //null
+                            borderStrokeWidth,
+                            AppBackgroundColor
+                        ),
+                        modifier = Modifier
+                            .width(durationButtonWidth)
+                            //.scale(horizontalScaleFactor)
+                            /*.padding(
+                                horizontal = if (isSelected) borderStrokeWidth else 0.dp,
+                                vertical = 0.dp  //if (isSelected) 0.dp else borderStrokeWidth
+                            )*/
+                    ) { Text(text = duration,
+                        style =  TextStyle(
+                                fontSize = (13f * durationsScaling).toInt().sp,
+                                color = if (isSelected) AppButtonTextColor else AppTextColor
+                            )
+                        ) }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(majorSpacerHeight))
 
         Text( // Number of repetitions title
             text = "Number of repetitions per series",
             style = customInteractiveTextStyle,
             color = AppTextColor,
             modifier = Modifier
-                .padding(top = 16.dp)
+                .padding(top = generalPadding)
                 .align(Alignment.CenterHorizontally)
         )
         LazyRow( // Repetitions LazyRow
             state = repetitionsLazyListState,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 12.dp, bottom = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            contentPadding = PaddingValues(horizontal = 16.dp)
+                .padding(top = deviceScaling(12).dp, bottom = deviceScaling(8).dp),
+            horizontalArrangement = Arrangement.spacedBy(deviceScaling(10).dp),
+            contentPadding = PaddingValues(horizontal = generalPadding)
         ) {
             items(repetitionRange) { number ->
                 val isNumberSelected = number == numberOfRepetitions
                 Box(
                     modifier = Modifier
-                        .size(48.dp)
+                        .size(repetitionBoxSize)  //48.dp)
                         .then(
                             if (isNumberSelected) Modifier.border(
                                 BorderStroke(
-                                    4.dp,
+                                    deviceScaling(4).dp,
                                     SelectedButtonBorderColor
                                 ), shape = CircleShape
                             ) else Modifier
                         )
-                        .padding(if (isNumberSelected) 4.dp else 0.dp)
+                        .padding(if (isNumberSelected) deviceScaling(4).dp else 0.dp)
                         .clip(CircleShape)
                         .background(
-                            color = if (isNumberSelected) AppTitleColor else AppButtonColor.copy(
-                                alpha = 0.3f
-                            )
+                            color = if (isNumberSelected) AppTitleColor else AppButtonColor.copy(alpha = 0.38f)
                         )
                         .clickable { numberOfRepetitions = if (isNumberSelected) null else number },
                     contentAlignment = Alignment.Center
@@ -479,42 +533,40 @@ fun SimpleScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(majorSpacerHeight))  //24.dp))
 
         Text( // Number of series title
             text = "Number of series",
             style = customInteractiveTextStyle,
             color = AppTextColor,
             modifier = Modifier
-                .padding(top = 16.dp)
+                .padding(top = generalPadding)
                 .align(Alignment.CenterHorizontally)
         )
         Row( // Series Selector Row
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 12.dp, bottom = 8.dp),
+                .padding(top = deviceScaling(12).dp, bottom = deviceScaling(8).dp),
             horizontalArrangement = Arrangement.Center
         ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(deviceScaling(10).dp)) {
                 seriesOptions.forEach { seriesCount ->
                     val isSeriesSelected = seriesCount == numberOfSeries
                     Box(
                         modifier = Modifier
-                            .size(48.dp)
+                            .size(repetitionBoxSize)  //48.dp)
                             .then(
                                 if (isSeriesSelected) Modifier.border(
                                     BorderStroke(
-                                        4.dp,
+                                        deviceScaling(4).dp,
                                         SelectedButtonBorderColor
                                     ), shape = CircleShape
                                 ) else Modifier
                             )
-                            .padding(if (isSeriesSelected) 4.dp else 0.dp)
+                            .padding(if (isSeriesSelected) deviceScaling(4).dp else 0.dp)
                             .clip(CircleShape)
                             .background(
-                                color = if (isSeriesSelected) AppTitleColor else AppButtonColor.copy(
-                                    alpha = 0.3f
-                                )
+                                color = if (isSeriesSelected) AppTitleColor else AppButtonColor.copy(alpha = 0.38f)
                             )
                             .clickable {
                                 numberOfSeries = if (isSeriesSelected) null else seriesCount
@@ -531,11 +583,11 @@ fun SimpleScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(majorSpacerHeight))
 
         Row( // Checkbox Row
             modifier = Modifier
-                .padding(top = 4.dp, bottom = 16.dp)
+                .padding(top = deviceScaling(4).dp, bottom = generalPadding)
                 .toggleable(
                     value = saveSelectionChecked,
                     role = Role.Checkbox,
@@ -555,9 +607,10 @@ fun SimpleScreen(
                     checkmarkColor = AppButtonTextColor,
                     disabledCheckedColor = AppTitleColor.copy(alpha = 0.5f),
                     disabledUncheckedColor = AppTextColor.copy(alpha = 0.38f)
-                )
+                ),
+                modifier = Modifier.scale(scaleFactor)
             )
-            Spacer(modifier = Modifier.width(6.dp))
+            Spacer(modifier = Modifier.width(deviceScaling(6).dp))
             Text(
                 text = "Save current selection",
                 style = smallerTextStyle,
@@ -565,7 +618,8 @@ fun SimpleScreen(
             )
         }
 
-        Spacer(Modifier.weight(0.05f))
+        //Spacer(Modifier.weight(0.05f))
+        Spacer(modifier = Modifier.height(majorSpacerHeight))
 
         Button( // Close Button
             onClick = { processCloseAppActions() },
@@ -575,7 +629,8 @@ fun SimpleScreen(
             ),
             modifier = Modifier
                 .align(Alignment.End)
-                .padding(top = 8.dp)
+                .padding(top = deviceScaling(8).dp)
+                .scale(horizontalScaleFactor)
         ) {
             Text("Close", style = customInteractiveTextStyle)
         }
