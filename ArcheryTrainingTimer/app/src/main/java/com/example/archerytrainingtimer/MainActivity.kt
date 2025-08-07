@@ -1,7 +1,11 @@
 package com.example.archerytrainingtimer
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.media.AudioAttributes
+import android.media.SoundPool
 import android.os.Bundle
+
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.BorderStroke
@@ -31,9 +35,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
@@ -43,7 +47,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
 import com.example.archerytrainingtimer.ui.theme.*
+
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -130,6 +136,61 @@ fun SimpleScreen(
     val horizontalScaleFactor = (currentScreenWidthDp.value / refScreenWidthDp.value).coerceIn(0.60f, 1.5f)
     val verticalScaleFactor = (currentScreenHeightDp.value / refScreenHeightDp.value).coerceIn(0.40f, 1.5f)
     val scaleFactor = min(horizontalScaleFactor, verticalScaleFactor)
+
+    // Playing sound
+    val context = LocalContext.current
+    var playBeepEvent by remember { mutableStateOf(false) }
+    var playEndBeepEvent by remember { mutableStateOf(false) }
+
+    // SoundPool setup
+    val soundPool = remember {
+        val audioAttributes = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION) // Or USAGE_GAME, USAGE_MEDIA
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
+        SoundPool.Builder()
+            .setMaxStreams(1) // Only need to play one beep at a time
+            .setAudioAttributes(audioAttributes)
+            .build()
+    }
+
+    var beepSoundId by remember { mutableStateOf<Int?>(null) }
+    var endBeepSoundId by remember { mutableStateOf<Int?>(null) }
+    var soundPoolLoaded by remember { mutableStateOf(false) }
+
+    // Load sound and release SoundPool
+    DisposableEffect(Unit) {
+        beepSoundId = soundPool.load(context, R.raw.beep, 1)
+        endBeepSoundId = soundPool.load(context, R.raw.beep_end, 1)
+        soundPool.setOnLoadCompleteListener { _, _, status ->
+            if (status == 0) {
+                soundPoolLoaded = true
+            }
+        }
+        onDispose {
+            soundPool.release()
+        }
+    }
+
+    // Play sound effect - single beep
+    LaunchedEffect(playBeepEvent) {
+        if (playBeepEvent && soundPoolLoaded && beepSoundId != null) {
+            soundPool.play(beepSoundId!!, 1f, 1f, 1, 0, 1f)
+            playBeepEvent = false // Reset trigger
+        }
+    }
+
+    // Play sound effect - end beep
+    LaunchedEffect(playEndBeepEvent) {
+        if (playEndBeepEvent && soundPoolLoaded && endBeepSoundId != null) {
+            soundPool.play(endBeepSoundId!!, 1f, 1f, 1, 0, 1f)
+            delay(340L)
+            soundPool.play(endBeepSoundId!!, 1f, 1f, 1, 0, 1f)
+            delay(340L)
+            soundPool.play(endBeepSoundId!!, 1f, 1f, 1, 0, 1f)
+            playEndBeepEvent = false // Reset trigger
+        }
+    }
 
     // scales a dimension (width or height) according to the running device deviceScaling factor
     fun deviceScaling(dim: Int) : Float {
@@ -244,6 +305,10 @@ fun SimpleScreen(
             }
 
             while (isTimerRunning && isActive) {
+                if (currentDurationSecondsLeft == initialDurationSeconds) {
+                    playBeepEvent = true
+                }
+
                 if (currentDurationSecondsLeft != null && currentDurationSecondsLeft!! > 0) {
                     // current repetition timer tick
                     delay(1000L)
@@ -266,6 +331,7 @@ fun SimpleScreen(
                                     isDimmedState = true
                                     currentDurationSecondsLeft = 0
                                     currentRepetitionsLeft = 0
+                                    playEndBeepEvent = true
                                     break
                                 } else {
                                     // reset duration for next repetition in the same series
