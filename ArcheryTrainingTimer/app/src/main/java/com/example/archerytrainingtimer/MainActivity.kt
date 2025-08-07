@@ -56,6 +56,7 @@ import kotlinx.coroutines.launch
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.font.FontStyle
 import kotlin.math.min
 import kotlin.math.roundToInt
 
@@ -525,7 +526,8 @@ fun SimpleScreen(
                         val arcTopLeftX = canvasCenterX - arcDiameter / 2f
                         val arcTopLeftY = canvasCenterY - arcDiameter / 2f
 
-                        val progressStrokeWidth = (0.72 * mainTimerStrokeWidth.value).dp.toPx() //10.dp.toPx() //
+                        val progressStrokeWidth =
+                            (0.72 * mainTimerStrokeWidth.value).dp.toPx() //10.dp.toPx() //
 
                         drawArc(
                             color = if (isDimmedState) DimmedProgressBorderColor else ProgressBorderColor,
@@ -539,21 +541,44 @@ fun SimpleScreen(
                     }
                 }
 
-                // AdaptiveText for the main duration
-                val durationToDisplayValue = if (showDimmedTimers) 0 else if (isRestMode) currentRestTimeLeft else currentDurationSecondsLeft
-                val durationToDisplayString = durationToDisplayValue?.toString() ?:
-                                                initialDurationSeconds?.toString() ?:
-                                                selectedDurationString?.split(" ")?.firstOrNull() ?: ""
+                // --- Column to hold Countdown numbers and "Rest..." text ---
+                Column(
+                    modifier = Modifier.fillMaxSize(), // Allow Column to fill the Box to help with alignment
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    //verticalArrangement = Arrangement.Center // To center items if they don't fill the space
+                ) {
+                    Spacer(modifier = Modifier.weight(1f)) // Pushes content downwards
 
-                if (durationToDisplayString.isNotEmpty()) {
-                    AdaptiveText(
-                        text = durationToDisplayString,
-                        modifier = Modifier.padding(generalPadding),
-                        color = if (isRestMode) WABlueColor else if (isDimmedState) DimmedTimerBorderColor else TimerBorderColor,
-                        fontWeight = FontWeight.Bold,
-                        targetWidth = Dp(circleRadius * 1.2f),
-                        initialFontSize = adaptiveInitialMainFontSize
+                    // AdaptiveText for the main duration
+                    val durationToDisplayValue = if (showDimmedTimers) 0 else if (isRestMode) currentRestTimeLeft else currentDurationSecondsLeft
+                    val durationToDisplayString = durationToDisplayValue?.toString() ?:
+                    initialDurationSeconds?.toString() ?:
+                    selectedDurationString?.split(" ")?.firstOrNull() ?: ""
+
+                    if (durationToDisplayString.isNotEmpty()) {
+                        AdaptiveText(
+                            text = durationToDisplayString,
+                            modifier = Modifier.padding(generalPadding),
+                            color = if (isRestMode) WABlueColor else if (isDimmedState) DimmedTimerBorderColor else TimerBorderColor,
+                            fontWeight = FontWeight.Bold,
+                            targetWidth = Dp(circleRadius * 1.2f),
+                            initialFontSize = adaptiveInitialMainFontSize
+                        )
+                    }
+
+                    // "Rest..." Text, displayed only during rest mode
+                    Text(
+                        text = if (isRestMode) "Rest..." else "",
+                        style = MaterialTheme.typography.bodyLarge.copy( // Or bodyMedium, adjust size as needed
+                            color = WABlueColor,
+                            fontStyle = FontStyle.Italic
+                        ),
+                        modifier = Modifier.padding(top = 0.dp) // Minimal padding from numbers
                     )
+
+                    Spacer(modifier = Modifier.weight(0.8f)) // Less weight below, so numbers are slightly above true center
+                    // to make space for "Rest..." text to appear "below center".
+                    // Adjust these weights (e.g., 1f and 1f for true center of the block)
                 }
             }
 
@@ -610,7 +635,9 @@ fun SimpleScreen(
                         disabledContainerColor = AppButtonColor.copy(alpha = 0.5f),
                         disabledContentColor = AppButtonTextColor.copy(alpha = 0.5f)
                     ),
-                    modifier = Modifier.fillMaxWidth(0.92f).scale(horizontalScaleFactor)
+                    modifier = Modifier
+                        .fillMaxWidth(0.92f)
+                        .scale(horizontalScaleFactor)
                 ) {
                     Text(
                         text = if (isTimerRunning) "Stop" else "Start",
@@ -744,7 +771,9 @@ fun SimpleScreen(
                         .padding(if (isNumberSelected) deviceScaling(4).dp else 0.dp)
                         .clip(CircleShape)
                         .background(
-                            color = if (isNumberSelected) AppTitleColor else AppButtonColor.copy(alpha = 0.38f)
+                            color = if (isNumberSelected) AppTitleColor else AppButtonColor.copy(
+                                alpha = 0.38f
+                            )
                         )
                         .clickable { numberOfRepetitions = if (isNumberSelected) null else number },
                     contentAlignment = Alignment.Center
@@ -791,7 +820,9 @@ fun SimpleScreen(
                             .padding(if (isSeriesSelected) deviceScaling(4).dp else 0.dp)
                             .clip(CircleShape)
                             .background(
-                                color = if (isSeriesSelected) AppTitleColor else AppButtonColor.copy(alpha = 0.38f)
+                                color = if (isSeriesSelected) AppTitleColor else AppButtonColor.copy(
+                                    alpha = 0.38f
+                                )
                             )
                             .clickable {
                                 numberOfSeries = if (isSeriesSelected) null else seriesCount
