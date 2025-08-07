@@ -293,7 +293,8 @@ fun SimpleScreen(
                 currentDurationSecondsLeft = durationValue
             }
             // Always update currentRepetitionsLeft from selection if timer is neither running nor stopped
-            currentRepetitionsLeft = numberOfRepetitions
+            //currentRepetitionsLeft = numberOfRepetitions
+            //currentSeriesLeft = numberOfSeries
         }
     }
 
@@ -377,6 +378,7 @@ fun SimpleScreen(
                                     playRestBeepEvent = false
                                     currentDurationSecondsLeft = 0
                                     currentRepetitionsLeft = 0
+                                    currentSeriesLeft = 0
                                     playEndBeepEvent = true
                                     break
                                     /*
@@ -637,7 +639,7 @@ fun SimpleScreen(
                     }
 
                     // Series display will show 0 when dimmed
-                    val seriesToDisplayValue = currentSeriesLeft  //currentRepetitionsLeft
+                    val seriesToDisplayValue = currentSeriesLeft
                     val seriesToDisplayString = seriesToDisplayValue?.toString() ?:
                     currentSeriesLeft?.toString() ?: ""
                     //currentRepetitionsLeft?.toString() ?: ""
