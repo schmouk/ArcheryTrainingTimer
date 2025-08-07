@@ -159,7 +159,6 @@ fun SimpleScreen(
     var isTimerRunning by remember { mutableStateOf(false) }
     var isTimerStopped by remember { mutableStateOf(false) }
     var isDimmedState by remember { mutableStateOf(false) }
-    var isSessionCompleted by remember { mutableStateOf(false) }
 
     var initialDurationSeconds by rememberSaveable { mutableStateOf<Int?>(null) }
     var currentDurationSecondsLeft by rememberSaveable { mutableStateOf<Int?>(null) }
@@ -179,12 +178,6 @@ fun SimpleScreen(
     val smallerTextStyle = TextStyle(fontSize = deviceScaling(16).sp)
     val repetitionsLazyListState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
-
-    val activeTimerColor = AppTitleColor // Your active color
-    val dimmedTimerColor = Color(0xFF999999) // Color for "dimmed" countdown display
-
-    // Color for the progress arc - dimmed version of the active color
-    val progressArcColor = activeTimerColor.copy(alpha = 0.3f) // Dimming factor for the arc
 
     // This flag will determine if the timers should be dimmed
     // It's true when a full cycle of repetitions is complete and timer is stopped
@@ -271,7 +264,6 @@ fun SimpleScreen(
                                     isTimerRunning = false
                                     isTimerStopped = false
                                     isDimmedState = true
-                                    isSessionCompleted = true
                                     currentDurationSecondsLeft = 0
                                     currentRepetitionsLeft = 0
                                     break
@@ -352,10 +344,6 @@ fun SimpleScreen(
                 val circleRadius = min(constraints.maxWidth, constraints.maxHeight) / 2f * 0.9f
                 val strokeWidthPx = with(LocalDensity.current) { mainTimerStrokeWidth.toPx() } // Ensure mainTimerStrokeWidth is defined
 
-                val mainTimerDisplayColor = if (showDimmedTimers) dimmedTimerColor else activeTimerColor
-                val progressArcColor = activeTimerColor.copy(alpha = 0.3f)
-
-
                 val sweepAngle = if (numberOfRepetitions != null && numberOfRepetitions!! > 0 && currentRepetitionsLeft != null) {
                     ((numberOfRepetitions!! - currentRepetitionsLeft!!) / numberOfRepetitions!!.toFloat()) * 360f
                 } else {
@@ -368,58 +356,26 @@ fun SimpleScreen(
 
                     // 1. Draw the main circle border
                     drawCircle(
-                        color = mainTimerDisplayColor,
+                        color = if (isDimmedState) DimmedTimerBorderColor else TimerBorderColor,
                         radius = circleRadius - strokeWidthPx / 2f, // Radius to the center of the stroke
                         style = Stroke(width = strokeWidthPx),
                         center = Offset(canvasCenterX, canvasCenterY)
                     )
 
                     // 2. Draw the progress arc
-                    val arcDiameter = (circleRadius - strokeWidthPx / 2f) * 2f
-                    val arcTopLeftX = canvasCenterX - arcDiameter / 2f
-                    val arcTopLeftY = canvasCenterY - arcDiameter / 2f
+                    if (sweepAngle > 0f) {
+                        val arcDiameter = (circleRadius - strokeWidthPx / 2f) * 2f
+                        val arcTopLeftX = canvasCenterX - arcDiameter / 2f
+                        val arcTopLeftY = canvasCenterY - arcDiameter / 2f
 
-                    val progressStrokeWidth = (0.72 * mainTimerStrokeWidth.value).dp.toPx() //10.dp.toPx() // Use a thick, fixed stroke for the arc
+                        val progressStrokeWidth = (0.72 * mainTimerStrokeWidth.value).dp.toPx() //10.dp.toPx() //
 
-                    if (!showDimmedTimers) { // Keep your conditional logic for when to show
                         drawArc(
-                            color = ProgressBorderColor, //WARedColor,
-                            startAngle = -90f,     // Standard start
-                            sweepAngle = sweepAngle,
-                            useCenter = false,
-                            style = Stroke(width = progressStrokeWidth), // DEBUG
-                            topLeft = Offset(arcTopLeftX, arcTopLeftY),
-                            size = androidx.compose.ui.geometry.Size(arcDiameter, arcDiameter)
-                        )
-                    } else if (showDimmedTimers) {
-                        drawArc(
-                            color = ProgressBorderColor,
-                            startAngle = -90f,
-                            sweepAngle = 360f,
-                            useCenter = false,
-                            style = Stroke(width = progressStrokeWidth), // DEBUG
-                            topLeft = Offset(arcTopLeftX, arcTopLeftY),
-                            size = androidx.compose.ui.geometry.Size(arcDiameter, arcDiameter)
-                        )
-                    }
-
-                    if (sweepAngle > 0f && !showDimmedTimers) {
-                        drawArc(
-                            color = progressArcColor,
+                            color = if (isDimmedState) DimmedProgressBorderColor else ProgressBorderColor,
                             startAngle = -90f,
                             sweepAngle = sweepAngle,
                             useCenter = false,
-                            style = Stroke(width = strokeWidthPx),
-                            topLeft = Offset(arcTopLeftX, arcTopLeftY),
-                            size = androidx.compose.ui.geometry.Size(arcDiameter, arcDiameter)
-                        )
-                    } else if (showDimmedTimers) { // Optional full arc when dimmed
-                        drawArc(
-                            color = progressArcColor.copy(alpha = 0.5f), // Or a different dimmed color
-                            startAngle = -90f,
-                            sweepAngle = 360f,
-                            useCenter = false,
-                            style = Stroke(width = strokeWidthPx),
+                            style = Stroke(width = progressStrokeWidth),
                             topLeft = Offset(arcTopLeftX, arcTopLeftY),
                             size = androidx.compose.ui.geometry.Size(arcDiameter, arcDiameter)
                         )
@@ -436,7 +392,7 @@ fun SimpleScreen(
                     AdaptiveText(
                         text = durationToDisplayString,
                         modifier = Modifier.padding(generalPadding),
-                        color = mainTimerDisplayColor,
+                        color = if (isDimmedState) DimmedTimerBorderColor else TimerBorderColor,
                         fontWeight = FontWeight.Bold,
                         targetWidth = Dp(circleRadius * 1.2f),
                         initialFontSize = adaptiveInitialMainFontSize
@@ -459,11 +415,13 @@ fun SimpleScreen(
                         if (isTimerRunning) {  // Just pause - stop state
                             isTimerRunning = false
                             isTimerStopped = true
+                            isDimmedState = true
                         }
                         else if (isTimerStopped) {  // Resume from stop state
                             isTimerStopped = false
-                            isTimerRunning = true
-                        } else { // Trying to Start
+                            isTimerRunning =true
+                            isDimmedState = false
+                        } else { // Trying to Start or Restart after session completion
                             if (allSelectionsMade) {
                                 // If currentRepetitionsLeft is 0, it means a cycle just finished (dimmed state).
                                 // Reset both countdowns for a new cycle.
@@ -484,6 +442,7 @@ fun SimpleScreen(
                                     }
                                 }
                                 isTimerRunning = true  // Start - running state
+                                isDimmedState = false
                             }
                         }
                     },
@@ -502,6 +461,7 @@ fun SimpleScreen(
                         //style = customInteractiveTextStyle.copy(color = if (isTimerRunning || allSelectionsMade) AppButtonTextColor else AppButtonTextColor.copy(alpha = 0.5f))
                     )
                 }
+
                 BoxWithConstraints( // Series Countdown Circle
                     modifier = Modifier
                         .fillMaxWidth(0.8f)
@@ -512,11 +472,9 @@ fun SimpleScreen(
                     val seriesCircleRadius = min(constraints.maxWidth, constraints.maxHeight) / 2f * 0.85f
                     val seriesStrokeWidthPx = with(LocalDensity.current) { deviceScaling(7).dp.toPx() }
 
-                    val seriesDisplayColor = if (showDimmedTimers) dimmedTimerColor else activeTimerColor
-
                     Canvas(modifier = Modifier.fillMaxSize()) {
                         drawCircle(
-                            color = seriesDisplayColor, // Use conditional color
+                            color = if (isDimmedState) DimmedTimerBorderColor else TimerBorderColor,
                             radius = seriesCircleRadius - seriesStrokeWidthPx / 2,
                             style = Stroke(width = seriesStrokeWidthPx),
                             center = Offset(size.width / 2, size.height / 2)
@@ -534,7 +492,7 @@ fun SimpleScreen(
                         AdaptiveText(
                             text = seriesToDisplayString,
                             modifier = Modifier.padding(localPadding),  //8.dp),
-                            color = seriesDisplayColor, // Use conditional color
+                            color = if (isDimmedState) DimmedTimerBorderColor else TimerBorderColor,
                             fontWeight = FontWeight.Normal,
                             targetWidth = Dp(seriesCircleRadius * 1.1f),
                             initialFontSize = adaptiveInitialSeriesFontSize  //34.sp
