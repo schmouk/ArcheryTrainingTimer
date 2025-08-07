@@ -1,5 +1,6 @@
 package com.example.archerytrainingtimer
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -9,6 +10,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -110,6 +114,7 @@ fun AdaptiveText(
 }
 
 
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun SimpleScreen(
     userPreferencesRepository: UserPreferencesRepository,
@@ -164,7 +169,6 @@ fun SimpleScreen(
 
     val durationOptions = listOf("5 s", "10 s", "15 s", "20 s", "30 s")
     val durationsScaling = 4f / durationOptions.size
-    //val durationButtonWidth = (durationsScaling * (currentScreenWidthDp.value / durationOptions.size - deviceScaling(0))).dp
     val durationButtonWidth = (currentScreenWidthDp.value / durationOptions.size - horizontalDeviceScaling(8)).dp
     val minRepetitions = 2
     val maxRepetitions = 15
@@ -178,6 +182,9 @@ fun SimpleScreen(
 
     val activeTimerColor = AppTitleColor // Your active color
     val dimmedTimerColor = Color(0xFF999999) // Color for "dimmed" countdown display
+
+    // Color for the progress arc - dimmed version of the active color
+    val progressArcColor = activeTimerColor.copy(alpha = 0.3f) // Dimming factor for the arc
 
     // This flag will determine if the timers should be dimmed
     // It's true when a full cycle of repetitions is complete and timer is stopped
@@ -343,31 +350,93 @@ fun SimpleScreen(
                 contentAlignment = Alignment.Center
             ) {
                 val circleRadius = min(constraints.maxWidth, constraints.maxHeight) / 2f * 0.9f
-                val strokeWidthPx = with(LocalDensity.current) { mainTimerStrokeWidth.toPx() }
+                val strokeWidthPx = with(LocalDensity.current) { mainTimerStrokeWidth.toPx() } // Ensure mainTimerStrokeWidth is defined
 
                 val mainTimerDisplayColor = if (showDimmedTimers) dimmedTimerColor else activeTimerColor
+                val progressArcColor = activeTimerColor.copy(alpha = 0.3f)
 
-                Canvas(modifier = Modifier.fillMaxSize()) {
-                    drawCircle(
-                        color = mainTimerDisplayColor, // Use conditional color
-                        radius = circleRadius - strokeWidthPx / 2,
-                        style = Stroke(width = strokeWidthPx),
-                        center = Offset(size.width / 2, size.height / 2)
-                    )
+
+                val sweepAngle = if (numberOfRepetitions != null && numberOfRepetitions!! > 0 && currentRepetitionsLeft != null) {
+                    ((numberOfRepetitions!! - currentRepetitionsLeft!!) / numberOfRepetitions!!.toFloat()) * 360f
+                } else {
+                    0f
                 }
 
-                // When dimmed, main duration should also show 0
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val canvasCenterX = size.width / 2f
+                    val canvasCenterY = size.height / 2f
+
+                    // 1. Draw the main circle border
+                    drawCircle(
+                        color = mainTimerDisplayColor,
+                        radius = circleRadius - strokeWidthPx / 2f, // Radius to the center of the stroke
+                        style = Stroke(width = strokeWidthPx),
+                        center = Offset(canvasCenterX, canvasCenterY)
+                    )
+
+                    // 2. Draw the progress arc
+                    val arcDiameter = (circleRadius - strokeWidthPx / 2f) * 2f
+                    val arcTopLeftX = canvasCenterX - arcDiameter / 2f
+                    val arcTopLeftY = canvasCenterY - arcDiameter / 2f
+
+                    val progressStrokeWidth = (0.72 * mainTimerStrokeWidth.value).dp.toPx() //10.dp.toPx() // Use a thick, fixed stroke for the arc
+
+                    if (!showDimmedTimers) { // Keep your conditional logic for when to show
+                        drawArc(
+                            color = ProgressBorderColor, //WARedColor,
+                            startAngle = -90f,     // Standard start
+                            sweepAngle = sweepAngle,
+                            useCenter = false,
+                            style = Stroke(width = progressStrokeWidth), // DEBUG
+                            topLeft = Offset(arcTopLeftX, arcTopLeftY),
+                            size = androidx.compose.ui.geometry.Size(arcDiameter, arcDiameter)
+                        )
+                    } else if (showDimmedTimers) {
+                        drawArc(
+                            color = ProgressBorderColor,
+                            startAngle = -90f,
+                            sweepAngle = 360f,
+                            useCenter = false,
+                            style = Stroke(width = progressStrokeWidth), // DEBUG
+                            topLeft = Offset(arcTopLeftX, arcTopLeftY),
+                            size = androidx.compose.ui.geometry.Size(arcDiameter, arcDiameter)
+                        )
+                    }
+
+                    if (sweepAngle > 0f && !showDimmedTimers) {
+                        drawArc(
+                            color = progressArcColor,
+                            startAngle = -90f,
+                            sweepAngle = sweepAngle,
+                            useCenter = false,
+                            style = Stroke(width = strokeWidthPx),
+                            topLeft = Offset(arcTopLeftX, arcTopLeftY),
+                            size = androidx.compose.ui.geometry.Size(arcDiameter, arcDiameter)
+                        )
+                    } else if (showDimmedTimers) { // Optional full arc when dimmed
+                        drawArc(
+                            color = progressArcColor.copy(alpha = 0.5f), // Or a different dimmed color
+                            startAngle = -90f,
+                            sweepAngle = 360f,
+                            useCenter = false,
+                            style = Stroke(width = strokeWidthPx),
+                            topLeft = Offset(arcTopLeftX, arcTopLeftY),
+                            size = androidx.compose.ui.geometry.Size(arcDiameter, arcDiameter)
+                        )
+                    }
+                }
+
+                // AdaptiveText for the main duration
                 val durationToDisplayValue = if (showDimmedTimers) 0 else currentDurationSecondsLeft
                 val durationToDisplayString = durationToDisplayValue?.toString() ?:
-                initialDurationSeconds?.toString() ?:
-                selectedDurationString?.split(" ")?.firstOrNull() ?: ""
-
+                                                initialDurationSeconds?.toString() ?:
+                                                selectedDurationString?.split(" ")?.firstOrNull() ?: ""
 
                 if (durationToDisplayString.isNotEmpty()) {
                     AdaptiveText(
                         text = durationToDisplayString,
                         modifier = Modifier.padding(generalPadding),
-                        color = mainTimerDisplayColor, // Use conditional color
+                        color = mainTimerDisplayColor,
                         fontWeight = FontWeight.Bold,
                         targetWidth = Dp(circleRadius * 1.2f),
                         initialFontSize = adaptiveInitialMainFontSize
