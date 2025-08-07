@@ -50,6 +50,7 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 
 // import android.util.Log
+
 // MainActivity class definition (no change from before)
 class MainActivity : ComponentActivity() {
     private lateinit var userPreferencesRepository: UserPreferencesRepository
@@ -151,10 +152,15 @@ fun SimpleScreen(
     var numberOfSeries by remember { mutableStateOf<Int?>(null) }
     var saveSelectionChecked by remember { mutableStateOf(false) }
     var isTimerRunning by remember { mutableStateOf(false) }
+    var isTimerStopped by remember { mutableStateOf(false) }
+    var isDimmedState by remember { mutableStateOf(false) }
+    var isSessionCompleted by remember { mutableStateOf(false) }
 
     var initialDurationSeconds by rememberSaveable { mutableStateOf<Int?>(null) }
     var currentDurationSecondsLeft by rememberSaveable { mutableStateOf<Int?>(null) }
     var currentRepetitionsLeft by rememberSaveable { mutableStateOf<Int?>(null) }
+    var currentSeriesLeft by rememberSaveable { mutableStateOf<Int?>(null) }
+    //var currentTimerLeft by rememberSaveable { mutableStateOf<Int?>(null) }
 
     val durationOptions = listOf("5 s", "10 s", "15 s", "20 s", "30 s")
     val durationsScaling = 4f / durationOptions.size
@@ -193,29 +199,26 @@ fun SimpleScreen(
                     currentDurationSecondsLeft = durationValue
                 }
                 currentRepetitionsLeft = loadedPrefs.numberOfRepetitions
+                currentSeriesLeft = loadedPrefs.numberOfSeries
             }
         }
     }
 
     // Determine if all selections are made
-    val isSaveEnabled = selectedDurationString != null &&
-            numberOfRepetitions != null &&
-            numberOfSeries != null
-
     val allSelectionsMade = selectedDurationString != null &&
             numberOfRepetitions != null &&
             numberOfSeries != null
 
     // Update initial/current countdown values when selections change AND timer is NOT running
     LaunchedEffect(selectedDurationString, numberOfRepetitions, numberOfSeries, isTimerRunning) {
-        if (!isTimerRunning) {
+        if (!isTimerRunning && !isTimerStopped) {
             val durationValue = selectedDurationString?.split(" ")?.firstOrNull()?.toIntOrNull()
             initialDurationSeconds = durationValue
             // Only update currentDurationSecondsLeft if not in the "dimmed" state from a previous cycle
             if (currentRepetitionsLeft != 0 || currentDurationSecondsLeft != 0 ) {
                 currentDurationSecondsLeft = durationValue
             }
-            // Always update currentRepetitionsLeft from selection if timer is not running
+            // Always update currentRepetitionsLeft from selection if timer is neither running nor stopped
             currentRepetitionsLeft = numberOfRepetitions
         }
     }
@@ -227,6 +230,7 @@ fun SimpleScreen(
             if (currentRepetitionsLeft == 0) { // Indicates a previous cycle was completed
                 currentRepetitionsLeft = numberOfRepetitions // Reset for new cycle
                 currentDurationSecondsLeft = initialDurationSeconds // Reset for new cycle
+                currentSeriesLeft = currentSeriesLeft!! - 1
             } else { // Normal start or resume
                 if (currentDurationSecondsLeft == null || currentDurationSecondsLeft == 0) {
                     currentDurationSecondsLeft = initialDurationSeconds
@@ -234,28 +238,54 @@ fun SimpleScreen(
                 if (currentRepetitionsLeft == null) {
                     currentRepetitionsLeft = numberOfRepetitions
                 }
+                if (currentSeriesLeft == null) {
+                    currentSeriesLeft = numberOfSeries
+                }
             }
 
             while (isTimerRunning && isActive) {
                 if (currentDurationSecondsLeft != null && currentDurationSecondsLeft!! > 0) {
+                    // current repetition timer tick
                     delay(1000L)
                     if (!isTimerRunning) break
                     currentDurationSecondsLeft = currentDurationSecondsLeft!! - 1
                 } else if (currentDurationSecondsLeft == 0) {
+                    // end of current repetition duration
                     if (currentRepetitionsLeft != null && currentRepetitionsLeft!! > 0) {
+                        // go to next repetition in current series
                         currentRepetitionsLeft = currentRepetitionsLeft!! - 1
                         if (currentRepetitionsLeft == 0) {
-                            isTimerRunning = false // Stop timer, will trigger dimmed state via showDimmedTimers
-                            // currentDurationSecondsLeft is already 0, currentRepetitionsLeft is now 0.
-                            break
+                            // this was the last repetition in current series
+                            if (currentSeriesLeft != null && currentSeriesLeft!! > 0) {
+                                // so, count down series number
+                                currentSeriesLeft = currentSeriesLeft!! - 1
+                                if (currentSeriesLeft == 0) {
+                                    // If no more series left, stop the timer and show dimmed state
+                                    isTimerRunning = false
+                                    isTimerStopped = false
+                                    isDimmedState = true
+                                    isSessionCompleted = true
+                                    currentDurationSecondsLeft = 0
+                                    currentRepetitionsLeft = 0
+                                    break
+                                } else {
+                                    // reset duration for next repetition in the same series
+                                    currentDurationSecondsLeft = initialDurationSeconds
+                                    currentRepetitionsLeft = numberOfRepetitions
+                                }
+                            } else {  // should never happen
+                                currentDurationSecondsLeft = initialDurationSeconds
+                                currentRepetitionsLeft = numberOfRepetitions
+                            }
                         } else {
+                            // let's start a new repetition into current series
                             currentDurationSecondsLeft = initialDurationSeconds
                         }
-                    } else {
+                    } else { // currentRepetitionsLeft is null -> should never happen
                         isTimerRunning = false
                         break
                     }
-                } else {
+                } else {  // currentDurationSecondsLeft is null -> should never happen
                     isTimerRunning = false
                     break
                 }
@@ -357,16 +387,22 @@ fun SimpleScreen(
             ) {
                 Button( // Start/Stop Button
                     onClick = {
-                        if (isTimerRunning) {
-                            isTimerRunning = false // Just pause
+                        if (isTimerRunning) {  // Just pause - stop state
+                            isTimerRunning = false
+                            isTimerStopped = true
+                        }
+                        else if (isTimerStopped) {  // Resume from stop state
+                            isTimerStopped = false
+                            isTimerRunning = true
                         } else { // Trying to Start
                             if (allSelectionsMade) {
                                 // If currentRepetitionsLeft is 0, it means a cycle just finished (dimmed state).
                                 // Reset both countdowns for a new cycle.
-                                if (currentRepetitionsLeft == 0) {
+                                if (currentSeriesLeft == null || currentSeriesLeft == 0) {
+                                    currentSeriesLeft = numberOfSeries
                                     currentRepetitionsLeft = numberOfRepetitions
                                     currentDurationSecondsLeft = initialDurationSeconds
-                                } else {
+                                } else {  // CAUTION: is this dead code? Let's check...
                                     // Handle cases where selections might have been cleared or timer never run
                                     if (currentDurationSecondsLeft == null || currentDurationSecondsLeft == 0) {
                                         currentDurationSecondsLeft = initialDurationSeconds
@@ -374,8 +410,11 @@ fun SimpleScreen(
                                     if (currentRepetitionsLeft == null) { // This should ideally not happen if allSelectionsMade is true
                                         currentRepetitionsLeft = numberOfRepetitions
                                     }
+                                    if (currentSeriesLeft == null) { // This should ideally not happen if allSelectionsMade is true
+                                        currentSeriesLeft = numberOfSeries
+                                    }
                                 }
-                                isTimerRunning = true // Start or resume
+                                isTimerRunning = true  // Start - running state
                             }
                         }
                     },
@@ -416,9 +455,11 @@ fun SimpleScreen(
                     }
 
                     // Series display will show 0 when dimmed
-                    val seriesToDisplayValue = currentRepetitionsLeft
+                    val seriesToDisplayValue = currentSeriesLeft  //currentRepetitionsLeft
                     val seriesToDisplayString = seriesToDisplayValue?.toString() ?:
-                    numberOfRepetitions?.toString() ?: ""
+                    currentSeriesLeft?.toString() ?: ""
+                    //currentRepetitionsLeft?.toString() ?: ""
+                    //numberOfRepetitions?.toString() ?: ""
 
                     if (seriesToDisplayString.isNotEmpty()) {
                         AdaptiveText(
@@ -533,7 +574,7 @@ fun SimpleScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(majorSpacerHeight))  //24.dp))
+        Spacer(modifier = Modifier.height(majorSpacerHeight))
 
         Text( // Number of series title
             text = "Number of series",
@@ -591,7 +632,7 @@ fun SimpleScreen(
                 .toggleable(
                     value = saveSelectionChecked,
                     role = Role.Checkbox,
-                    enabled = isSaveEnabled,
+                    enabled = allSelectionsMade,
                     onValueChange = { saveSelectionChecked = !saveSelectionChecked }
                 )
                 .align(Alignment.CenterHorizontally),
@@ -600,10 +641,10 @@ fun SimpleScreen(
             Checkbox(
                 checked = saveSelectionChecked,
                 onCheckedChange = null,
-                enabled = isSaveEnabled,
+                enabled = allSelectionsMade,
                 colors = CheckboxDefaults.colors(
                     checkedColor = AppTitleColor,
-                    uncheckedColor = AppTextColor.copy(alpha = if (isSaveEnabled) 1f else 0.5f),
+                    uncheckedColor = AppTextColor.copy(alpha = if (allSelectionsMade) 1f else 0.5f),
                     checkmarkColor = AppButtonTextColor,
                     disabledCheckedColor = AppTitleColor.copy(alpha = 0.5f),
                     disabledUncheckedColor = AppTextColor.copy(alpha = 0.38f)
@@ -614,7 +655,7 @@ fun SimpleScreen(
             Text(
                 text = "Save current selection",
                 style = smallerTextStyle,
-                color = AppTextColor.copy(alpha = if (isSaveEnabled) 1f else 0.38f)
+                color = AppTextColor.copy(alpha = if (allSelectionsMade) 1f else 0.38f)
             )
         }
 
