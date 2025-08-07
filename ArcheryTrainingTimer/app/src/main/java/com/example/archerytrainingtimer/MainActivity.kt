@@ -339,17 +339,17 @@ fun SimpleScreen(
                                 // this was the last repetition in current series
                                 if (currentSeriesLeft != null && currentSeriesLeft!! > 0) {
                                     // then, count down series number
-                                    currentSeriesLeft = currentSeriesLeft!! - 1
-                                    if (currentSeriesLeft == 0) {
+                                    if (currentSeriesLeft == 1) {
                                         // If no more series left, stop the timer and show dimmed state
                                         isTimerRunning = false
                                         isTimerStopped = false
                                         isDimmedState = true
                                         isRestMode = false
                                         playRestBeepEvent = false
+                                        playEndBeepEvent = true
                                         currentDurationSecondsLeft = 0
                                         currentRepetitionsLeft = 0
-                                        playEndBeepEvent = true
+                                        currentSeriesLeft = 0
                                         break
                                     } else {
                                         // enters the rest mode
@@ -424,6 +424,7 @@ fun SimpleScreen(
                         isDimmedState = false
                         isTimerStopped = false
                         currentRepetitionsLeft = numberOfRepetitions
+                        currentSeriesLeft = currentSeriesLeft!! - 1
 
                         /*
                         // If currentSeriesLeft becomes 0 here, it means that was the rest *after* the final series,
