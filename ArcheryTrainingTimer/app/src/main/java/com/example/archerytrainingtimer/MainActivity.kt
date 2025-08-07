@@ -141,6 +141,7 @@ fun SimpleScreen(
     val context = LocalContext.current
     var playBeepEvent by remember { mutableStateOf(false) }
     var playEndBeepEvent by remember { mutableStateOf(false) }
+    var playRestBeepEvent by remember { mutableStateOf(false) }
 
     // SoundPool setup
     val soundPool = remember {
@@ -192,6 +193,16 @@ fun SimpleScreen(
         }
     }
 
+    // Play sound effect - rest beeps
+    LaunchedEffect(playRestBeepEvent) {
+        if (playRestBeepEvent && soundPoolLoaded && beepSoundId != null) {
+            soundPool.play(beepSoundId!!, 1f, 1f, 1, 0, 1f)
+            delay(240L)
+            soundPool.play(beepSoundId!!, 1f, 1f, 1, 0, 1f)
+            playRestBeepEvent = false // Reset trigger
+        }
+    }
+
     // scales a dimension (width or height) according to the running device deviceScaling factor
     fun deviceScaling(dim: Int) : Float {
         return scaleFactor * dim
@@ -202,16 +213,13 @@ fun SimpleScreen(
         return horizontalScaleFactor * dim
     }
 
-
     // --- Dynamic Sizes & SPs ---
     val mainTimerStrokeWidth = deviceScaling(14).dp
     val adaptiveInitialMainFontSize = deviceScaling(76).sp
     val adaptiveInitialSeriesFontSize = deviceScaling(34).sp
     val repetitionBoxSize = deviceScaling(48).dp
-    //val majorSpacerHeight = deviceScaling(24).dp
     val majorSpacerHeight = deviceScaling(8).dp
     val generalPadding = deviceScaling(12).dp  // 16
-
 
     var selectedDurationString by rememberSaveable { mutableStateOf<String?>(null) }
     var numberOfRepetitions by remember { mutableStateOf<Int?>(null) }
@@ -225,7 +233,12 @@ fun SimpleScreen(
     var currentDurationSecondsLeft by rememberSaveable { mutableStateOf<Int?>(null) }
     var currentRepetitionsLeft by rememberSaveable { mutableStateOf<Int?>(null) }
     var currentSeriesLeft by rememberSaveable { mutableStateOf<Int?>(null) }
-    //var currentTimerLeft by rememberSaveable { mutableStateOf<Int?>(null) }
+
+    // Rest Mode & Series Tracking
+    var isRestMode by rememberSaveable { mutableStateOf(false) }
+    var currentRestTimeLeft by rememberSaveable { mutableStateOf<Int?>(null) }
+    var initialRestTime by rememberSaveable { mutableStateOf<Int?>(null) } // To store calculated rest time
+    val endOfRestBeepTime = 5 // seconds before end of rest to play beep
 
     val durationOptions = listOf("5 s", "10 s", "15 s", "20 s", "30 s")
     val durationsScaling = 4f / durationOptions.size
@@ -233,7 +246,7 @@ fun SimpleScreen(
     val minRepetitions = 2
     val maxRepetitions = 15
     val repetitionRange = (minRepetitions..maxRepetitions).toList()
-    val seriesOptions = listOf(2, 10, 15, 20, 25, 30)
+    val seriesOptions = listOf(3, 10, 15, 20, 25, 30)
 
     val customInteractiveTextStyle = TextStyle(fontSize = deviceScaling(18).sp)
     val smallerTextStyle = TextStyle(fontSize = deviceScaling(16).sp)
@@ -243,7 +256,7 @@ fun SimpleScreen(
     // This flag will determine if the timers should be dimmed
     // It's true when a full cycle of repetitions is complete and timer is stopped
     val showDimmedTimers = rememberSaveable(currentRepetitionsLeft, isTimerRunning) {
-        currentRepetitionsLeft == 0 && !isTimerRunning
+        currentRepetitionsLeft == 0 && !isTimerRunning  && !isRestMode
     }
 
     LaunchedEffect(key1 = Unit) {
@@ -253,7 +266,7 @@ fun SimpleScreen(
             numberOfSeries = loadedPrefs.numberOfSeries
             saveSelectionChecked = loadedPrefs.saveSelection
 
-            if (!isTimerRunning) {
+            if (!isTimerRunning && !isRestMode) {
                 val durationValue = loadedPrefs.selectedDuration?.split(" ")?.firstOrNull()?.toIntOrNull()
                 initialDurationSeconds = durationValue
                 if (currentRepetitionsLeft != 0) { // Only reset if not in a "completed and dimmed" state
@@ -285,74 +298,149 @@ fun SimpleScreen(
     }
 
     LaunchedEffect(isTimerRunning) {
-        if (isTimerRunning) {
-            // Ensure values are sane before starting countdown loop
-            // If starting from a dimmed state (reps=0, duration=0), reset them.
-            if (currentRepetitionsLeft == 0) { // Indicates a previous cycle was completed
-                currentRepetitionsLeft = numberOfRepetitions // Reset for new cycle
-                currentDurationSecondsLeft = initialDurationSeconds // Reset for new cycle
-                currentSeriesLeft = currentSeriesLeft!! - 1
-            } else { // Normal start or resume
-                if (currentDurationSecondsLeft == null || currentDurationSecondsLeft == 0) {
-                    currentDurationSecondsLeft = initialDurationSeconds
-                }
-                if (currentRepetitionsLeft == null) {
-                    currentRepetitionsLeft = numberOfRepetitions
-                }
-                if (currentSeriesLeft == null) {
-                    currentSeriesLeft = numberOfSeries
-                }
-            }
-
-            while (isTimerRunning && isActive) {
-                if (currentDurationSecondsLeft == initialDurationSeconds) {
-                    playBeepEvent = true
+        while (isTimerRunning) {
+            // --- Normal Repetition Countdown ---
+            if (!isRestMode) {
+                // Ensure values are sane before starting countdown loop
+                // If starting from a dimmed state (reps=0, duration=0), reset them.
+                if (currentRepetitionsLeft == 0) { // Indicates a previous cycle was completed
+                    currentRepetitionsLeft = numberOfRepetitions // Reset for new cycle
+                    currentDurationSecondsLeft = initialDurationSeconds // Reset for new cycle
+                    currentSeriesLeft = currentSeriesLeft!! - 1
+                } else { // Normal start or resume
+                    if (currentDurationSecondsLeft == null || currentDurationSecondsLeft == 0) {
+                        currentDurationSecondsLeft = initialDurationSeconds
+                    }
+                    if (currentRepetitionsLeft == null) {
+                        currentRepetitionsLeft = numberOfRepetitions
+                    }
+                    if (currentSeriesLeft == null) {
+                        currentSeriesLeft = numberOfSeries
+                    }
                 }
 
-                if (currentDurationSecondsLeft != null && currentDurationSecondsLeft!! > 0) {
-                    // current repetition timer tick
-                    delay(1000L)
-                    if (!isTimerRunning) break
-                    currentDurationSecondsLeft = currentDurationSecondsLeft!! - 1
-                } else if (currentDurationSecondsLeft == 0) {
-                    // end of current repetition duration
-                    if (currentRepetitionsLeft != null && currentRepetitionsLeft!! > 0) {
-                        // go to next repetition in current series
-                        currentRepetitionsLeft = currentRepetitionsLeft!! - 1
-                        if (currentRepetitionsLeft == 0) {
-                            // this was the last repetition in current series
-                            if (currentSeriesLeft != null && currentSeriesLeft!! > 0) {
-                                // so, count down series number
-                                currentSeriesLeft = currentSeriesLeft!! - 1
-                                if (currentSeriesLeft == 0) {
+                while (isTimerRunning && !isRestMode && isActive) {
+                    if (currentDurationSecondsLeft != null && currentDurationSecondsLeft == initialDurationSeconds) {
+                        playBeepEvent = true
+                    }
+                    if (currentDurationSecondsLeft != null && currentDurationSecondsLeft!! > 0) {
+                        // current repetition timer tick
+                        delay(1000L)
+                        if (!isTimerRunning || isRestMode)
+                            break
+                        currentDurationSecondsLeft = currentDurationSecondsLeft!! - 1
+                    } else if (currentDurationSecondsLeft == 0) {
+                        // end of current repetition duration
+                        if (currentRepetitionsLeft != null && currentRepetitionsLeft!! > 0) {
+                            // go to next repetition in current series
+                            currentRepetitionsLeft = currentRepetitionsLeft!! - 1
+
+                            if (currentRepetitionsLeft == 0) {
+                                // this was the last repetition in current series
+                                if (currentSeriesLeft != null && currentSeriesLeft!! > 0) {
+                                    // then, count down series number
+                                    currentSeriesLeft = currentSeriesLeft!! - 1
+                                    if (currentSeriesLeft == 0) {
+                                        // If no more series left, stop the timer and show dimmed state
+                                        isTimerRunning = false
+                                        isTimerStopped = false
+                                        isDimmedState = true
+                                        isRestMode = false
+                                        playRestBeepEvent = false
+                                        currentDurationSecondsLeft = 0
+                                        currentRepetitionsLeft = 0
+                                        playEndBeepEvent = true
+                                        break
+                                    } else {
+                                        // enters the rest mode
+                                        playRestBeepEvent = true
+                                        isRestMode = true
+
+                                        val seriesDuration = (initialDurationSeconds ?: 1) * (numberOfRepetitions ?: 1) // Avoid 0 if null
+                                        initialRestTime = (seriesDuration / 2).coerceAtLeast(endOfRestBeepTime + 2) // Ensure rest is at least 5s for the beep logic
+                                        currentRestTimeLeft = initialRestTime
+
+                                        // reset duration for next repetition in the same series
+                                        //currentDurationSecondsLeft = initialDurationSeconds
+                                        //currentRepetitionsLeft = numberOfRepetitions
+                                    }
+                                } else {
+                                    // (currentSeriesLeft != null && currentSeriesLeft!! > 0)
+                                    // this is the end of the training session
+                                    // notice: dead code? Let's check...
+
                                     // If no more series left, stop the timer and show dimmed state
                                     isTimerRunning = false
                                     isTimerStopped = false
                                     isDimmedState = true
+                                    isRestMode = false
+                                    playRestBeepEvent = false
                                     currentDurationSecondsLeft = 0
                                     currentRepetitionsLeft = 0
                                     playEndBeepEvent = true
                                     break
-                                } else {
-                                    // reset duration for next repetition in the same series
+                                    /*
+                                    playRestBeepEvent = true
+                                    isRestMode = true
+
+                                    val seriesDuration = (initialDurationSeconds ?: 1) * (numberOfRepetitions ?: 1) // Avoid 0 if null
+                                    initialRestTime = (seriesDuration / 2).coerceAtLeast(endOfRestBeepTime + 2) // Ensure rest is at least 5s for the beep logic
+                                    currentRestTimeLeft = initialRestTime
+
                                     currentDurationSecondsLeft = initialDurationSeconds
                                     currentRepetitionsLeft = numberOfRepetitions
+                                    */
                                 }
-                            } else {  // should never happen
+                            } else {
+                                // let's start a new repetition into current series
                                 currentDurationSecondsLeft = initialDurationSeconds
-                                currentRepetitionsLeft = numberOfRepetitions
                             }
-                        } else {
-                            // let's start a new repetition into current series
-                            currentDurationSecondsLeft = initialDurationSeconds
+                        } else { // currentRepetitionsLeft is null -> should never happen
+                            isTimerRunning = false
+                            break
                         }
-                    } else { // currentRepetitionsLeft is null -> should never happen
+                    } else {  // currentDurationSecondsLeft is null -> should never happen
                         isTimerRunning = false
                         break
                     }
-                } else {  // currentDurationSecondsLeft is null -> should never happen
-                    isTimerRunning = false
-                    break
+                }
+            }
+
+            // --- Rest Mode Countdown ---
+            if (isRestMode) { // Check isRestMode again, as it could have been set in the block above
+                while (isTimerRunning && isRestMode && isActive) {
+                    if (currentRestTimeLeft != null && currentRestTimeLeft!! > 0) {
+                        // Check for 5 seconds left to play beeps
+                        if (currentRestTimeLeft == endOfRestBeepTime) {
+                            playRestBeepEvent = true
+                        }
+                        delay(1000L)
+                        if (!isTimerRunning || !isRestMode) break
+                        currentRestTimeLeft = currentRestTimeLeft!! - 1
+                    } else {
+                        // Rest time ended (currentRestTimeLeft is 0 or null)
+                        isRestMode = false
+                        isTimerRunning = true
+                        isDimmedState = false
+                        isTimerStopped = false
+                        currentRepetitionsLeft = numberOfRepetitions
+
+                        /*
+                        // If currentSeriesLeft becomes 0 here, it means that was the rest *after* the final series,
+                        // which shouldn't happen based on the check currentSeriesLeft!! > 1 before entering rest.
+                        // However, as a safeguard:
+                        if (currentSeriesLeft == 0) {
+                            isTimerRunning = false // All series and rests are complete
+                            currentRepetitionsLeft = 0
+                            currentDurationSecondsLeft = 0
+                        } else {
+                            // Setup for the next series of repetitions
+                            // The main loop of LaunchedEffect(isTimerRunning) will re-enter the !isRestMode block
+                            // which will then initialize currentRepetitionsLeft and currentDurationSecondsLeft.
+                        }
+                        */
+                        break // Exit rest loop
+                    }
                 }
             }
         }
@@ -422,14 +510,14 @@ fun SimpleScreen(
 
                     // 1. Draw the main circle border
                     drawCircle(
-                        color = if (isDimmedState) DimmedTimerBorderColor else TimerBorderColor,
+                        color = if (isRestMode) WABlueColor else if (isDimmedState) DimmedTimerBorderColor else TimerBorderColor,
                         radius = circleRadius - strokeWidthPx / 2f, // Radius to the center of the stroke
                         style = Stroke(width = strokeWidthPx),
                         center = Offset(canvasCenterX, canvasCenterY)
                     )
 
                     // 2. Draw the progress arc
-                    if (sweepAngle > 0f) {
+                    if (!isRestMode && sweepAngle > 0f) {
                         val arcDiameter = (circleRadius - strokeWidthPx / 2f) * 2f
                         val arcTopLeftX = canvasCenterX - arcDiameter / 2f
                         val arcTopLeftY = canvasCenterY - arcDiameter / 2f
@@ -449,7 +537,7 @@ fun SimpleScreen(
                 }
 
                 // AdaptiveText for the main duration
-                val durationToDisplayValue = if (showDimmedTimers) 0 else currentDurationSecondsLeft
+                val durationToDisplayValue = if (showDimmedTimers) 0 else if (isRestMode) currentRestTimeLeft else currentDurationSecondsLeft
                 val durationToDisplayString = durationToDisplayValue?.toString() ?:
                                                 initialDurationSeconds?.toString() ?:
                                                 selectedDurationString?.split(" ")?.firstOrNull() ?: ""
@@ -458,7 +546,7 @@ fun SimpleScreen(
                     AdaptiveText(
                         text = durationToDisplayString,
                         modifier = Modifier.padding(generalPadding),
-                        color = if (isDimmedState) DimmedTimerBorderColor else TimerBorderColor,
+                        color = if (isRestMode) WABlueColor else if (isDimmedState) DimmedTimerBorderColor else TimerBorderColor,
                         fontWeight = FontWeight.Bold,
                         targetWidth = Dp(circleRadius * 1.2f),
                         initialFontSize = adaptiveInitialMainFontSize
@@ -485,7 +573,7 @@ fun SimpleScreen(
                         }
                         else if (isTimerStopped) {  // Resume from stop state
                             isTimerStopped = false
-                            isTimerRunning =true
+                            isTimerRunning = true
                             isDimmedState = false
                         } else { // Trying to Start or Restart after session completion
                             if (allSelectionsMade) {
@@ -512,7 +600,7 @@ fun SimpleScreen(
                             }
                         }
                     },
-                    enabled = isTimerRunning || allSelectionsMade,
+                    enabled = (isTimerRunning || allSelectionsMade) && !isRestMode,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = AppButtonColor,
                         contentColor = AppButtonTextColor,
@@ -523,7 +611,7 @@ fun SimpleScreen(
                 ) {
                     Text(
                         text = if (isTimerRunning) "Stop" else "Start",
-                        style = customInteractiveTextStyle.copy(color = if (allSelectionsMade) AppButtonTextColor else AppButtonTextColor.copy(alpha = 0.5f))
+                        style = customInteractiveTextStyle.copy(color = if (allSelectionsMade && !isRestMode) AppButtonTextColor else AppButtonTextColor.copy(alpha = 0.5f))
                         //style = customInteractiveTextStyle.copy(color = if (isTimerRunning || allSelectionsMade) AppButtonTextColor else AppButtonTextColor.copy(alpha = 0.5f))
                     )
                 }
