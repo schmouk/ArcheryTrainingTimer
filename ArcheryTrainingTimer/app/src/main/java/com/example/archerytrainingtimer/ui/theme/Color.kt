@@ -17,7 +17,11 @@ val AppButtonTextColor = Color(0xFF33373F)
 
 val SelectedButtonBackgroundColor = AppTitleColor // Background for selected button
 val SelectedButtonBorderColor = WARedColor
+
+val TimerBorderColor = WAYellowColor
 val ProgressBorderColor = Color(0xFF923035) // i.e 60% of WARedColor
+val DimmedTimerBorderColor = Color(0xFF4B4A19) // i.e 30% of WAYellowColor
+val DimmedProgressBorderColor = Color(0xFF4A1813) // i.e 30% of WARedColor
 
 val AppSurfaceContainerLow = Color(0xFF08090A)
 val AppSurfaceContainerHigh = Color(0xFF212325)
