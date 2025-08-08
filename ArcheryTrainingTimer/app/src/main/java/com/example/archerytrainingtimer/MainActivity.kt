@@ -303,11 +303,14 @@ fun SimpleScreen(
             val durationValue = selectedDurationString?.split(" ")?.firstOrNull()?.toIntOrNull()
             initialDurationSeconds = durationValue
             // Only update currentDurationSecondsLeft if not in the "dimmed" state from a previous cycle
-            /*
             if (currentRepetitionsLeft != 0 || currentDurationSecondsLeft != 0 ) {
                 currentDurationSecondsLeft = durationValue
+                currentRepetitionsLeft = numberOfRepetitions
+                currentSeriesLeft = numberOfSeries
+                sessionDurationSeconds = durationValue
+                sessionRepetitionsNumber = numberOfRepetitions
+                sessionSeriesNumber = numberOfSeries
             }
-            */
             // Always update currentRepetitionsLeft from selection if timer is neither running nor stopped
             //currentRepetitionsLeft = numberOfRepetitions
             //currentSeriesLeft = numberOfSeries
