@@ -139,7 +139,7 @@ fun SimpleScreen(
     val refScreenHeightDp = 914.dp // Your baseline for good proportions
     // Calculate scale factor, ensure it's not Dp / Dp if you need a raw float
     val horizontalScaleFactor = (currentScreenWidthDp.value / refScreenWidthDp.value).coerceIn(0.60f, 1.5f)
-    val verticalScaleFactor = (currentScreenHeightDp.value / refScreenHeightDp.value).coerceIn(0.40f, 1.5f)
+    val verticalScaleFactor = (currentScreenHeightDp.value / refScreenHeightDp.value).coerceIn(0.40f, 1f)
     val scaleFactor = min(horizontalScaleFactor, verticalScaleFactor)
 
     // Playing sound
@@ -151,7 +151,7 @@ fun SimpleScreen(
     // SoundPool setup
     val soundPool = remember {
         val audioAttributes = AudioAttributes.Builder()
-            .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION) // Or USAGE_GAME, USAGE_MEDIA
+            .setUsage(AudioAttributes.USAGE_MEDIA)  //USAGE_ASSISTANCE_SONIFICATION) // Or USAGE_GAME, USAGE_MEDIA
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
             .build()
         SoundPool.Builder()
