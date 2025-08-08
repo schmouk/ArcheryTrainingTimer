@@ -249,15 +249,15 @@ fun SimpleScreen(
     var isRestMode by rememberSaveable { mutableStateOf(false) }
     var currentRestTimeLeft by rememberSaveable { mutableStateOf<Int?>(null) }
     var initialRestTime by rememberSaveable { mutableStateOf<Int?>(null) } // To store calculated rest time
-    val endOfRestBeepTime = 5 // seconds before end of rest to play beep
+    val endOfRestBeepTime = 7 // seconds before end of rest to play beep
 
-    val durationOptions = listOf("5 s", "10 s", "15 s", "20 s", "30 s")
+    val durationOptions = listOf("10 s", "15 s", "20 s", "30 s")
     val durationsScaling = 4f / durationOptions.size
     val durationButtonWidth = (currentScreenWidthDp.value / durationOptions.size - horizontalDeviceScaling(8)).dp
-    val minRepetitions = 2
+    val minRepetitions = 3
     val maxRepetitions = 15
     val repetitionRange = (minRepetitions..maxRepetitions).toList()
-    val seriesOptions = listOf(3, 10, 15, 20, 25, 30)
+    val seriesOptions = listOf(1, 10, 15, 20, 25, 30)
 
     val customInteractiveTextStyle = TextStyle(fontSize = deviceScaling(18).sp)
     val smallerTextStyle = TextStyle(fontSize = deviceScaling(16).sp)
@@ -514,7 +514,10 @@ fun SimpleScreen(
                 val strokeWidthPx = with(LocalDensity.current) { mainTimerStrokeWidth.toPx() } // Ensure mainTimerStrokeWidth is defined
 
                 val sweepAngle = if (sessionRepetitionsNumber != null && sessionRepetitionsNumber!! > 0 && currentRepetitionsLeft != null) {
-                    ((sessionRepetitionsNumber!! - currentRepetitionsLeft!!) / sessionRepetitionsNumber!!.toFloat()) * 360f
+                    if (currentRepetitionsLeft!! > 1)
+                        ((sessionRepetitionsNumber!! - currentRepetitionsLeft!!) / sessionRepetitionsNumber!!.toFloat()) * 360f
+                    else
+                        ((sessionRepetitionsNumber!! * sessionDurationSeconds!! - currentDurationSecondsLeft!! + 1) / (sessionRepetitionsNumber!! * sessionDurationSeconds!!).toFloat()) * 360f
                 } else {
                     0f
                 }
