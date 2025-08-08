@@ -238,6 +238,9 @@ fun SimpleScreen(
     var isDimmedState by remember { mutableStateOf(false) }
 
     var initialDurationSeconds by rememberSaveable { mutableStateOf<Int?>(null) }
+    var sessionDurationSeconds by rememberSaveable { mutableStateOf<Int?>(null) }
+    var sessionRepetitionsNumber by rememberSaveable { mutableStateOf<Int?>(null) }
+    var sessionSeriesNumber by rememberSaveable { mutableStateOf<Int?>(null) }
     var currentDurationSecondsLeft by rememberSaveable { mutableStateOf<Int?>(null) }
     var currentRepetitionsLeft by rememberSaveable { mutableStateOf<Int?>(null) }
     var currentSeriesLeft by rememberSaveable { mutableStateOf<Int?>(null) }
@@ -280,8 +283,11 @@ fun SimpleScreen(
                 if (currentRepetitionsLeft != 0) { // Only reset if not in a "completed and dimmed" state
                     currentDurationSecondsLeft = durationValue
                 }
-                currentRepetitionsLeft = loadedPrefs.numberOfRepetitions
-                currentSeriesLeft = loadedPrefs.numberOfSeries
+                currentRepetitionsLeft = numberOfRepetitions  //loadedPrefs.numberOfRepetitions
+                currentSeriesLeft = numberOfSeries  //loadedPrefs.numberOfSeries
+                sessionDurationSeconds = initialDurationSeconds
+                sessionRepetitionsNumber = numberOfRepetitions
+                sessionSeriesNumber = numberOfSeries
             }
         }
     }
@@ -297,9 +303,11 @@ fun SimpleScreen(
             val durationValue = selectedDurationString?.split(" ")?.firstOrNull()?.toIntOrNull()
             initialDurationSeconds = durationValue
             // Only update currentDurationSecondsLeft if not in the "dimmed" state from a previous cycle
+            /*
             if (currentRepetitionsLeft != 0 || currentDurationSecondsLeft != 0 ) {
                 currentDurationSecondsLeft = durationValue
             }
+            */
             // Always update currentRepetitionsLeft from selection if timer is neither running nor stopped
             //currentRepetitionsLeft = numberOfRepetitions
             //currentSeriesLeft = numberOfSeries
@@ -313,23 +321,26 @@ fun SimpleScreen(
                 // Ensure values are sane before starting countdown loop
                 // If starting from a dimmed state (reps=0, duration=0), reset them.
                 if (currentRepetitionsLeft == 0) { // Indicates a previous cycle was completed
-                    currentRepetitionsLeft = numberOfRepetitions // Reset for new cycle
-                    currentDurationSecondsLeft = initialDurationSeconds // Reset for new cycle
+                    currentRepetitionsLeft = sessionRepetitionsNumber  //numberOfRepetitions // Reset for new cycle
+                    currentDurationSecondsLeft = sessionDurationSeconds  //initialDurationSeconds // Reset for new cycle
                     currentSeriesLeft = currentSeriesLeft!! - 1
                 } else { // Normal start or resume
                     if (currentDurationSecondsLeft == null || currentDurationSecondsLeft == 0) {
-                        currentDurationSecondsLeft = initialDurationSeconds
+                        sessionDurationSeconds = initialDurationSeconds
+                        currentDurationSecondsLeft = initialDurationSeconds  //initialDurationSeconds
                     }
                     if (currentRepetitionsLeft == null) {
-                        currentRepetitionsLeft = numberOfRepetitions
+                        sessionRepetitionsNumber = numberOfRepetitions
+                        currentRepetitionsLeft = numberOfRepetitions  //numberOfRepetitions
                     }
                     if (currentSeriesLeft == null) {
-                        currentSeriesLeft = numberOfSeries
+                        sessionSeriesNumber = numberOfSeries
+                        currentSeriesLeft = numberOfSeries  //numberOfSeries
                     }
                 }
 
                 while (isTimerRunning && !isRestMode && isActive) {
-                    if (currentDurationSecondsLeft != null && currentDurationSecondsLeft == initialDurationSeconds) {
+                    if (currentDurationSecondsLeft != null && currentDurationSecondsLeft == sessionDurationSeconds) {  // initialDurationSeconds) {
                         playBeepEvent = true
                     }
                     if (currentDurationSecondsLeft != null && currentDurationSecondsLeft!! > 0) {
@@ -365,7 +376,8 @@ fun SimpleScreen(
                                         playRestBeepEvent = true
                                         isRestMode = true
 
-                                        val seriesDuration = (initialDurationSeconds ?: 1) * (numberOfRepetitions ?: 1) // Avoid 0 if null
+                                        //val seriesDuration = (initialDurationSeconds ?: 1) * (numberOfRepetitions ?: 1) // Avoid 0 if null
+                                        val seriesDuration = (sessionDurationSeconds ?: 1) * (sessionRepetitionsNumber ?: 1) // Avoid 0 if null
                                         initialRestTime = (seriesDuration / 2).coerceAtLeast(endOfRestBeepTime + 2) // Ensure rest is at least 5s for the beep logic
                                         currentRestTimeLeft = initialRestTime
 
@@ -392,7 +404,7 @@ fun SimpleScreen(
                                 }
                             } else {
                                 // let's start a new repetition into current series
-                                currentDurationSecondsLeft = initialDurationSeconds
+                                currentDurationSecondsLeft = sessionDurationSeconds  //initialDurationSeconds
                             }
                         } else { // currentRepetitionsLeft is null -> should never happen
                             isTimerRunning = false
@@ -422,7 +434,7 @@ fun SimpleScreen(
                         isTimerRunning = true
                         isDimmedState = false
                         isTimerStopped = false
-                        currentRepetitionsLeft = numberOfRepetitions
+                        currentRepetitionsLeft = sessionRepetitionsNumber  // numberOfRepetitions // Reset for new cycle
                         currentSeriesLeft = currentSeriesLeft!! - 1
 
                         /*
@@ -498,11 +510,18 @@ fun SimpleScreen(
                 val circleRadius = min(constraints.maxWidth, constraints.maxHeight) / 2f * 0.9f
                 val strokeWidthPx = with(LocalDensity.current) { mainTimerStrokeWidth.toPx() } // Ensure mainTimerStrokeWidth is defined
 
+                val sweepAngle = if (sessionRepetitionsNumber != null && sessionRepetitionsNumber!! > 0 && currentRepetitionsLeft != null) {
+                    ((sessionRepetitionsNumber!! - currentRepetitionsLeft!!) / sessionRepetitionsNumber!!.toFloat()) * 360f
+                } else {
+                    0f
+                }
+                /*
                 val sweepAngle = if (numberOfRepetitions != null && numberOfRepetitions!! > 0 && currentRepetitionsLeft != null) {
                     ((numberOfRepetitions!! - currentRepetitionsLeft!!) / numberOfRepetitions!!.toFloat()) * 360f
                 } else {
                     0f
                 }
+                */
 
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     val canvasCenterX = size.width / 2f
@@ -548,7 +567,8 @@ fun SimpleScreen(
                     // AdaptiveText for the main duration
                     val durationToDisplayValue = if (showDimmedTimers) 0 else if (isRestMode) currentRestTimeLeft else currentDurationSecondsLeft
                     val durationToDisplayString = durationToDisplayValue?.toString() ?:
-                    initialDurationSeconds?.toString() ?:
+                    //initialDurationSeconds?.toString() ?:
+                    sessionDurationSeconds?.toString() ?:
                     selectedDurationString?.split(" ")?.firstOrNull() ?: ""
 
                     if (durationToDisplayString.isNotEmpty()) {
@@ -618,16 +638,19 @@ fun SimpleScreen(
                                     currentSeriesLeft = numberOfSeries
                                     currentRepetitionsLeft = numberOfRepetitions
                                     currentDurationSecondsLeft = initialDurationSeconds
+                                    sessionSeriesNumber = numberOfSeries
+                                    sessionRepetitionsNumber = numberOfRepetitions
+                                    sessionDurationSeconds = initialDurationSeconds
                                 } else {  // CAUTION: is this dead code? Let's check...
                                     // Handle cases where selections might have been cleared or timer never run
                                     if (currentDurationSecondsLeft == null || currentDurationSecondsLeft == 0) {
-                                        currentDurationSecondsLeft = initialDurationSeconds
+                                        currentDurationSecondsLeft = sessionDurationSeconds  //initialDurationSeconds
                                     }
                                     if (currentRepetitionsLeft == null) { // This should ideally not happen if allSelectionsMade is true
-                                        currentRepetitionsLeft = numberOfRepetitions
+                                        currentRepetitionsLeft = sessionRepetitionsNumber  //numberOfRepetitions
                                     }
                                     if (currentSeriesLeft == null) { // This should ideally not happen if allSelectionsMade is true
-                                        currentSeriesLeft = numberOfSeries
+                                        currentSeriesLeft = sessionSeriesNumber  //numberOfSeries
                                     }
                                 }
                                 isTimerRunning = true  // Start - running state
@@ -676,8 +699,7 @@ fun SimpleScreen(
                     val seriesToDisplayValue = currentSeriesLeft
                     val seriesToDisplayString = seriesToDisplayValue?.toString() ?:
                     currentSeriesLeft?.toString() ?: ""
-                    //currentRepetitionsLeft?.toString() ?: ""
-                    //numberOfRepetitions?.toString() ?: ""
+                    sessionRepetitionsNumber?.toString() ?: ""
 
                     if (seriesToDisplayString.isNotEmpty()) {
                         AdaptiveText(
@@ -694,8 +716,6 @@ fun SimpleScreen(
         }
 
         // --- Settings Sections (Repetitions duration, Number of repetitions, etc.) ---
-        // ... (No changes to the settings sections themselves) ...
-
         Text( // Repetitions duration title
             text = "Repetitions duration",
             style = customInteractiveTextStyle,
@@ -717,7 +737,9 @@ fun SimpleScreen(
                     Button(
                         onClick = { selectedDurationString = if (isSelected) null else duration },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isSelected) SelectedButtonBackgroundColor else AppButtonColor.copy(alpha = 0.38f),
+                            containerColor = if (isSelected) SelectedButtonBackgroundColor
+                                else if (isTimerRunning || isTimerStopped) AppButtonColor.copy(alpha = 0.8f)
+                                else AppButtonDarkerColor,
                             contentColor = AppButtonTextColor
                         ),
                         border = if (isSelected) BorderStroke(
@@ -727,6 +749,7 @@ fun SimpleScreen(
                             borderStrokeWidth,
                             AppBackgroundColor
                         ),
+                        enabled = isSelected || !(isTimerRunning || isTimerStopped),
                         modifier = Modifier
                             .width(durationButtonWidth)
                             //.scale(horizontalScaleFactor)
@@ -737,7 +760,7 @@ fun SimpleScreen(
                     ) { Text(text = duration,
                         style =  TextStyle(
                                 fontSize = (13f * durationsScaling).toInt().sp,
-                                color = if (isSelected) AppButtonTextColor else AppTextColor
+                                color = if (isSelected) AppButtonTextColor else if (isTimerRunning || isTimerStopped) AppDimmedTextColor else AppTextColor
                             )
                         ) }
                 }
@@ -764,9 +787,10 @@ fun SimpleScreen(
         ) {
             items(repetitionRange) { number ->
                 val isNumberSelected = number == numberOfRepetitions
+                val isClickable = !(isTimerRunning || isTimerStopped)
                 Box(
                     modifier = Modifier
-                        .size(repetitionBoxSize)  //48.dp)
+                        .size(repetitionBoxSize)
                         .then(
                             if (isNumberSelected) Modifier.border(
                                 BorderStroke(
@@ -778,16 +802,23 @@ fun SimpleScreen(
                         .padding(if (isNumberSelected) deviceScaling(4).dp else 0.dp)
                         .clip(CircleShape)
                         .background(
-                            color = if (isNumberSelected) AppTitleColor else AppButtonColor.copy(
-                                alpha = 0.38f
+                            color = if (isNumberSelected) AppTitleColor
+                                else if (isClickable) AppButtonDarkerColor
+                                else AppDimmedButtonColor
                             )
-                        )
-                        .clickable { numberOfRepetitions = if (isNumberSelected) null else number },
+                        .clickable {
+                            if (isClickable)
+                                numberOfRepetitions = if (isNumberSelected) null else number
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = "$number",
-                        style = customInteractiveTextStyle.copy(color = if (isNumberSelected) AppButtonTextColor else AppTextColor),
+                        style = customInteractiveTextStyle.copy(
+                            color = if (isNumberSelected) AppButtonTextColor
+                                else if (isTimerRunning || isTimerStopped) AppDimmedTextColor
+                                else AppTextColor
+                        ),
                         fontWeight = if (isNumberSelected) FontWeight.Bold else FontWeight.Normal
                     )
                 }
@@ -813,6 +844,7 @@ fun SimpleScreen(
             Row(horizontalArrangement = Arrangement.spacedBy(deviceScaling(10).dp)) {
                 seriesOptions.forEach { seriesCount ->
                     val isSeriesSelected = seriesCount == numberOfSeries
+                    val isClickable = !(isTimerRunning || isTimerStopped)
                     Box(
                         modifier = Modifier
                             .size(repetitionBoxSize)  //48.dp)
@@ -827,18 +859,23 @@ fun SimpleScreen(
                             .padding(if (isSeriesSelected) deviceScaling(4).dp else 0.dp)
                             .clip(CircleShape)
                             .background(
-                                color = if (isSeriesSelected) AppTitleColor else AppButtonColor.copy(
-                                    alpha = 0.38f
-                                )
+                                color = if (isSeriesSelected) AppTitleColor
+                                    else if (isClickable) AppButtonDarkerColor
+                                    else AppDimmedButtonColor
                             )
                             .clickable {
-                                numberOfSeries = if (isSeriesSelected) null else seriesCount
+                                if (isClickable)
+                                    numberOfSeries = if (isSeriesSelected) null else seriesCount
                             },
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = "$seriesCount",
-                            style = customInteractiveTextStyle.copy(color = if (isSeriesSelected) AppButtonTextColor else AppTextColor),
+                            style = customInteractiveTextStyle.copy(
+                                color = if (isSeriesSelected) AppButtonTextColor
+                                else if (isTimerRunning || isTimerStopped) AppDimmedTextColor
+                                else AppTextColor
+                            ),
                             fontWeight = if (isSeriesSelected) FontWeight.Bold else FontWeight.Normal
                         )
                     }
@@ -869,7 +906,7 @@ fun SimpleScreen(
                     uncheckedColor = AppTextColor.copy(alpha = if (allSelectionsMade) 1f else 0.5f),
                     checkmarkColor = AppButtonTextColor,
                     disabledCheckedColor = AppTitleColor.copy(alpha = 0.5f),
-                    disabledUncheckedColor = AppTextColor.copy(alpha = 0.38f)
+                    disabledUncheckedColor = AppButtonDarkerColor
                 ),
                 modifier = Modifier.scale(scaleFactor)
             )

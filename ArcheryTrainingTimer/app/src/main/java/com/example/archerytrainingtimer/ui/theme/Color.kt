@@ -11,8 +11,11 @@ val WAWhiteColor = Color(0xFFFFFFFF)
 val AppBackgroundColor = Color(0xFF2F3133)
 val AppTimerRowBackgroundColor = Color(0xFF111213)
 val AppTextColor = WAWhiteColor
+val AppDimmedTextColor = Color(0xFF313233) // Dimmed text color for less emphasis
 val AppTitleColor = WAYellowColor
 val AppButtonColor = Color(0xFF00B4E4)
+val AppButtonDarkerColor = AppButtonColor.copy(alpha = 0.38f)
+val AppDimmedButtonColor = Color(0xFF484A4C)
 val AppButtonTextColor = Color(0xFF33373F)
 
 val SelectedButtonBackgroundColor = AppTitleColor // Background for selected button
