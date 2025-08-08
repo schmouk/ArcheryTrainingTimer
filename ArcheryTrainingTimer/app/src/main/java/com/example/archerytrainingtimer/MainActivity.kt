@@ -35,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
@@ -81,13 +82,14 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-// AdaptiveText composable (no change from before)
+// AdaptiveText composable
 @Composable
 fun AdaptiveText(
     text: String,
     modifier: Modifier = Modifier,
-    color: androidx.compose.ui.graphics.Color = androidx.compose.ui.graphics.Color.Unspecified,
+    color: Color = Color.Unspecified,
     fontWeight: FontWeight? = null,
+    fontStyle: FontStyle? = null,
     targetWidth: Dp,
     maxLines: Int = 1,
     initialFontSize: TextUnit = 80.sp // Slightly reduced initial size for faster convergence
@@ -102,6 +104,7 @@ fun AdaptiveText(
         ),
         color = color,
         fontWeight = fontWeight,
+        fontStyle = fontStyle,
         fontSize = textSize,
         textAlign = TextAlign.Center,
         maxLines = maxLines,
@@ -185,11 +188,14 @@ fun SimpleScreen(
     // Play sound effect - end beep
     LaunchedEffect(playEndBeepEvent) {
         if (playEndBeepEvent && soundPoolLoaded && endBeepSoundId != null) {
-            soundPool.play(endBeepSoundId!!, 1f, 1f, 1, 0, 1f)
+            //soundPool.play(endBeepSoundId!!, 1f, 1f, 1, 0, 1f)
+            soundPool.play(beepSoundId!!, 1f, 1f, 1, 0, 1f)
             delay(340L)
-            soundPool.play(endBeepSoundId!!, 1f, 1f, 1, 0, 1f)
+            //soundPool.play(endBeepSoundId!!, 1f, 1f, 1, 0, 1f)
+            soundPool.play(beepSoundId!!, 1f, 1f, 1, 0, 1f)
             delay(340L)
-            soundPool.play(endBeepSoundId!!, 1f, 1f, 1, 0, 1f)
+            //soundPool.play(endBeepSoundId!!, 1f, 1f, 1, 0, 1f)
+            soundPool.play(beepSoundId!!, 1f, 1f, 1, 0, 1f)
             playEndBeepEvent = false // Reset trigger
         }
     }
@@ -216,8 +222,9 @@ fun SimpleScreen(
 
     // --- Dynamic Sizes & SPs ---
     val mainTimerStrokeWidth = deviceScaling(14).dp
-    val adaptiveInitialMainFontSize = deviceScaling(76).sp
-    val adaptiveInitialSeriesFontSize = deviceScaling(34).sp
+    val adaptiveInitialMainFontSize = horizontalDeviceScaling(76).sp
+    val adaptiveInitialRestFontSize = horizontalDeviceScaling(17).sp
+    val adaptiveInitialSeriesFontSize = horizontalDeviceScaling(34).sp
     val repetitionBoxSize = deviceScaling(48).dp
     val majorSpacerHeight = deviceScaling(8).dp
     val generalPadding = deviceScaling(12).dp  // 16
@@ -382,17 +389,6 @@ fun SimpleScreen(
                                     currentSeriesLeft = 0
                                     playEndBeepEvent = true
                                     break
-                                    /*
-                                    playRestBeepEvent = true
-                                    isRestMode = true
-
-                                    val seriesDuration = (initialDurationSeconds ?: 1) * (numberOfRepetitions ?: 1) // Avoid 0 if null
-                                    initialRestTime = (seriesDuration / 2).coerceAtLeast(endOfRestBeepTime + 2) // Ensure rest is at least 5s for the beep logic
-                                    currentRestTimeLeft = initialRestTime
-
-                                    currentDurationSecondsLeft = initialDurationSeconds
-                                    currentRepetitionsLeft = numberOfRepetitions
-                                    */
                                 }
                             } else {
                                 // let's start a new repetition into current series
@@ -558,7 +554,7 @@ fun SimpleScreen(
                     if (durationToDisplayString.isNotEmpty()) {
                         AdaptiveText(
                             text = durationToDisplayString,
-                            modifier = Modifier.padding(generalPadding),
+                            modifier = Modifier.padding(generalPadding, generalPadding, generalPadding, deviceScaling(4).dp),
                             color = if (isRestMode) WABlueColor else if (isDimmedState) DimmedTimerBorderColor else TimerBorderColor,
                             fontWeight = FontWeight.Bold,
                             targetWidth = Dp(circleRadius * 1.2f),
@@ -567,6 +563,16 @@ fun SimpleScreen(
                     }
 
                     // "Rest..." Text, displayed only during rest mode
+                    AdaptiveText(
+                        text = if (isRestMode) "Rest..." else "",
+                        modifier = Modifier.padding(top = 0.dp),
+                        color = WABlueColor,
+                        fontWeight = FontWeight.Bold,
+                        fontStyle = FontStyle.Italic,
+                        targetWidth = Dp(circleRadius * 1.2f),
+                        initialFontSize = adaptiveInitialRestFontSize
+                    )
+                    /*
                     Text(
                         text = if (isRestMode) "Rest..." else "",
                         style = MaterialTheme.typography.bodyLarge.copy( // Or bodyMedium, adjust size as needed
@@ -575,8 +581,9 @@ fun SimpleScreen(
                         ),
                         modifier = Modifier.padding(top = 0.dp) // Minimal padding from numbers
                     )
+                    */
 
-                    Spacer(modifier = Modifier.weight(0.8f)) // Less weight below, so numbers are slightly above true center
+                    Spacer(modifier = Modifier.weight(0.65f)) // Less weight below, so numbers are slightly above true center
                     // to make space for "Rest..." text to appear "below center".
                     // Adjust these weights (e.g., 1f and 1f for true center of the block)
                 }
