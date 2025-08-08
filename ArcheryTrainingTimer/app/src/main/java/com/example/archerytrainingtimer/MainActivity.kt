@@ -1,7 +1,6 @@
 package com.example.archerytrainingtimer
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.media.AudioAttributes
 import android.media.SoundPool
 import android.os.Bundle
@@ -29,8 +28,8 @@ import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+//import androidx.compose.runtime.getValue
+//import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,6 +39,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+import com.example.archerytrainingtimer.R
 import com.example.archerytrainingtimer.ui.theme.*
 
 import kotlinx.coroutines.delay
@@ -439,21 +440,6 @@ fun SimpleScreen(
                         isTimerStopped = false
                         currentRepetitionsLeft = sessionRepetitionsNumber  // numberOfRepetitions // Reset for new cycle
                         currentSeriesLeft = currentSeriesLeft!! - 1
-
-                        /*
-                        // If currentSeriesLeft becomes 0 here, it means that was the rest *after* the final series,
-                        // which shouldn't happen based on the check currentSeriesLeft!! > 1 before entering rest.
-                        // However, as a safeguard:
-                        if (currentSeriesLeft == 0) {
-                            isTimerRunning = false // All series and rests are complete
-                            currentRepetitionsLeft = 0
-                            currentDurationSecondsLeft = 0
-                        } else {
-                            // Setup for the next series of repetitions
-                            // The main loop of LaunchedEffect(isTimerRunning) will re-enter the !isRestMode block
-                            // which will then initialize currentRepetitionsLeft and currentDurationSecondsLeft.
-                        }
-                        */
                         break // Exit rest loop
                     }
                 }
@@ -485,7 +471,8 @@ fun SimpleScreen(
             .padding(deviceScaling(16).dp)
     ) {
         Text( // Title
-            text = "Series Training Timer",
+            text = stringResource(id = R.string.series_view_title),
+            //text = "Series Training Timer",
             style = MaterialTheme.typography.titleLarge,
             color = AppTitleColor,
             modifier = Modifier
@@ -590,7 +577,8 @@ fun SimpleScreen(
 
                     // "Rest..." Text, displayed only during rest mode
                     AdaptiveText(
-                        text = if (isRestMode) "Rest..." else "",
+                        text = stringResource(id = if (isRestMode) R.string.rest_indicator else R.string.empty_string),
+                        //text = if (isRestMode) "Rest..." else "",
                         modifier = Modifier.padding(top = 0.dp),
                         color = WABlueColor,
                         fontWeight = FontWeight.Bold,
@@ -598,16 +586,6 @@ fun SimpleScreen(
                         targetWidth = Dp(circleRadius * 1.2f),
                         initialFontSize = adaptiveInitialRestFontSize
                     )
-                    /*
-                    Text(
-                        text = if (isRestMode) "Rest..." else "",
-                        style = MaterialTheme.typography.bodyLarge.copy( // Or bodyMedium, adjust size as needed
-                            color = WABlueColor,
-                            fontStyle = FontStyle.Italic
-                        ),
-                        modifier = Modifier.padding(top = 0.dp) // Minimal padding from numbers
-                    )
-                    */
 
                     Spacer(modifier = Modifier.weight(0.65f)) // Less weight below, so numbers are slightly above true center
                     // to make space for "Rest..." text to appear "below center".
@@ -676,7 +654,8 @@ fun SimpleScreen(
                         .scale(horizontalScaleFactor)
                 ) {
                     Text(
-                        text = if (isTimerRunning) "Stop" else "Start",
+                        text = stringResource(id = if (isTimerRunning) R.string.stop_button else R.string.start_button),
+                        //text = if (isTimerRunning) "Stop" else "Start",
                         style = customInteractiveTextStyle.copy(color = if (allSelectionsMade && !isRestMode) AppButtonTextColor else AppButtonTextColor.copy(alpha = 0.5f))
                         //style = customInteractiveTextStyle.copy(color = if (isTimerRunning || allSelectionsMade) AppButtonTextColor else AppButtonTextColor.copy(alpha = 0.5f))
                     )
@@ -723,7 +702,8 @@ fun SimpleScreen(
 
         // --- Settings Sections (Repetitions duration, Number of repetitions, etc.) ---
         Text( // Repetitions duration title
-            text = "Repetitions duration",
+            text = stringResource(id = R.string.repetitions_duration_label),
+            //text = "Repetitions duration",
             style = customInteractiveTextStyle,
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier
@@ -776,7 +756,8 @@ fun SimpleScreen(
         Spacer(modifier = Modifier.height(majorSpacerHeight))
 
         Text( // Number of repetitions title
-            text = "Number of repetitions per series",
+            text = stringResource(id = R.string.repetitions_number_label),
+            //text = "Number of repetitions per series",
             style = customInteractiveTextStyle,
             color = AppTextColor,
             modifier = Modifier
@@ -834,7 +815,8 @@ fun SimpleScreen(
         Spacer(modifier = Modifier.height(majorSpacerHeight))
 
         Text( // Number of series title
-            text = "Number of series",
+            text = stringResource(id = R.string.series_number_label),
+            //text = "Number of series",
             style = customInteractiveTextStyle,
             color = AppTextColor,
             modifier = Modifier
@@ -918,7 +900,8 @@ fun SimpleScreen(
             )
             Spacer(modifier = Modifier.width(deviceScaling(6).dp))
             Text(
-                text = "Save current selection",
+                text = stringResource(id = R.string.save_selection_label),
+                //text = "Save current selection",
                 style = smallerTextStyle,
                 color = AppTextColor.copy(alpha = if (allSelectionsMade) 1f else 0.38f)
             )
@@ -938,7 +921,11 @@ fun SimpleScreen(
                 .padding(top = deviceScaling(8).dp)
                 .scale(horizontalScaleFactor)
         ) {
-            Text("Close", style = customInteractiveTextStyle)
+            Text(
+                stringResource(id = R.string.close_button),
+                style = customInteractiveTextStyle
+            )
+            //Text("Close", style = customInteractiveTextStyle)
         }
     }
 }
