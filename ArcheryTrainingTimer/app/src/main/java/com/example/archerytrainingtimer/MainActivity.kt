@@ -12,8 +12,12 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
@@ -28,8 +32,6 @@ import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-//import androidx.compose.runtime.getValue
-//import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,6 +41,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
@@ -247,7 +250,7 @@ fun SimpleScreen(
     var initialDurationSeconds by rememberSaveable { mutableStateOf<Int?>(null) }
     var sessionDurationSeconds by rememberSaveable { mutableStateOf<Int?>(null) }
     var sessionRepetitionsNumber by rememberSaveable { mutableStateOf<Int?>(null) }
-    var sessionSeriesNumber by rememberSaveable { mutableStateOf<Int?>(null) }
+    //var sessionSeriesNumber by rememberSaveable { mutableStateOf<Int?>(null) }
     var currentDurationSecondsLeft by rememberSaveable { mutableStateOf<Int?>(null) }
     var currentRepetitionsLeft by rememberSaveable { mutableStateOf<Int?>(null) }
     var currentSeriesLeft by rememberSaveable { mutableStateOf<Int?>(null) }
@@ -295,7 +298,7 @@ fun SimpleScreen(
                 currentSeriesLeft = numberOfSeries  //loadedPrefs.numberOfSeries
                 sessionDurationSeconds = initialDurationSeconds
                 sessionRepetitionsNumber = numberOfRepetitions
-                sessionSeriesNumber = numberOfSeries
+                // sessionSeriesNumber = numberOfSeries
             }
         }
     }
@@ -317,7 +320,7 @@ fun SimpleScreen(
                 currentSeriesLeft = numberOfSeries
                 sessionDurationSeconds = durationValue
                 sessionRepetitionsNumber = numberOfRepetitions
-                sessionSeriesNumber = numberOfSeries
+                //sessionSeriesNumber = numberOfSeries
             }
             // Always update currentRepetitionsLeft from selection if timer is neither running nor stopped
             //currentRepetitionsLeft = numberOfRepetitions
@@ -345,7 +348,7 @@ fun SimpleScreen(
                         currentRepetitionsLeft = numberOfRepetitions  //numberOfRepetitions
                     }
                     if (currentSeriesLeft == null) {
-                        sessionSeriesNumber = numberOfSeries
+                        //sessionSeriesNumber = numberOfSeries
                         currentSeriesLeft = numberOfSeries  //numberOfSeries
                     }
                 }
@@ -430,7 +433,7 @@ fun SimpleScreen(
 
             // --- Rest Mode Countdown ---
             if (isRestMode) { // Check isRestMode again, as it could have been set in the block above
-                while (isTimerRunning && isRestMode && isActive) {
+                while (isTimerRunning && isActive) {
                     if (currentRestTimeLeft != null && currentRestTimeLeft!! > 0) {
                         // Check for 5 seconds left to play beeps
                         if (currentRestTimeLeft == endOfRestBeepTime) {
@@ -470,469 +473,509 @@ fun SimpleScreen(
         }
     }
 
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(deviceScaling(16).dp)
+    Box( // PARENT BOX - This is crucial for Modifier.align(Alignment.BottomStart) on the Image
+        modifier = Modifier.fillMaxSize()
     ) {
-        Text( // Title
-            text = stringResource(id = R.string.series_view_title),
-            //text = "Series Training Timer",
-            style = MaterialTheme.typography.titleLarge,
-            color = AppTitleColor,
-            modifier = Modifier
-                .padding(bottom = generalPadding)
-                .align(Alignment.CenterHorizontally)
-                .scale(scaleFactor)
-        )
 
-        Row( // Timer Row
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .background(AppTimerRowBackgroundColor)
-                .padding(vertical = deviceScaling(4).dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Left Cell (Square Timer Display)
-            BoxWithConstraints(
+        Column(
                 modifier = Modifier
-                    .weight(0.6f)
-                    .aspectRatio(1f)
-                    .padding(deviceScaling(4/*8*/).dp),  //8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                val circleRadius = min(constraints.maxWidth, constraints.maxHeight) / 2f * 0.9f
-                val strokeWidthPx = with(LocalDensity.current) { mainTimerStrokeWidth.toPx() } // Ensure mainTimerStrokeWidth is defined
-
-                val sweepAngle = if (sessionRepetitionsNumber != null && sessionRepetitionsNumber!! > 0 && currentRepetitionsLeft != null) {
-                    if (currentRepetitionsLeft!! > 1)
-                        ((sessionRepetitionsNumber!! - currentRepetitionsLeft!!) / sessionRepetitionsNumber!!.toFloat()) * 360f
-                    else
-                        ((sessionRepetitionsNumber!! * sessionDurationSeconds!! - currentDurationSecondsLeft!! + 1) / (sessionRepetitionsNumber!! * sessionDurationSeconds!!).toFloat()) * 360f
-                } else {
-                    0f
-                }
-                /*
-                val sweepAngle = if (numberOfRepetitions != null && numberOfRepetitions!! > 0 && currentRepetitionsLeft != null) {
-                    ((numberOfRepetitions!! - currentRepetitionsLeft!!) / numberOfRepetitions!!.toFloat()) * 360f
-                } else {
-                    0f
-                }
-                */
-
-                Canvas(modifier = Modifier.fillMaxSize()) {
-                    val canvasCenterX = size.width / 2f
-                    val canvasCenterY = size.height / 2f
-
-                    // 1. Draw the main circle border
-                    drawCircle(
-                        color = if (isRestMode) WABlueColor else if (isDimmedState) DimmedTimerBorderColor else TimerBorderColor,
-                        radius = circleRadius - strokeWidthPx / 2f, // Radius to the center of the stroke
-                        style = Stroke(width = strokeWidthPx),
-                        center = Offset(canvasCenterX, canvasCenterY)
-                    )
-
-                    // 2. Draw the progress arc
-                    if (!isRestMode && sweepAngle > 0f) {
-                        val arcDiameter = (circleRadius - strokeWidthPx / 2f) * 2f
-                        val arcTopLeftX = canvasCenterX - arcDiameter / 2f
-                        val arcTopLeftY = canvasCenterY - arcDiameter / 2f
-
-                        val progressStrokeWidth =
-                            (0.72 * mainTimerStrokeWidth.value).dp.toPx() //10.dp.toPx() //
-
-                        drawArc(
-                            color = if (isDimmedState) DimmedProgressBorderColor else ProgressBorderColor,
-                            startAngle = -90f,
-                            sweepAngle = sweepAngle,
-                            useCenter = false,
-                            style = Stroke(width = progressStrokeWidth),
-                            topLeft = Offset(arcTopLeftX, arcTopLeftY),
-                            size = androidx.compose.ui.geometry.Size(arcDiameter, arcDiameter)
-                        )
-                    }
-                }
-
-                // --- Column to hold Countdown numbers and "Rest..." text ---
-                Column(
-                    modifier = Modifier.fillMaxSize(), // Allow Column to fill the Box to help with alignment
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    //verticalArrangement = Arrangement.Center // To center items if they don't fill the space
-                ) {
-                    Spacer(modifier = Modifier.weight(1f)) // Pushes content downwards
-
-                    // AdaptiveText for the main duration
-                    val durationToDisplayValue = if (showDimmedTimers) 0 else if (isRestMode) currentRestTimeLeft else currentDurationSecondsLeft
-                    val durationToDisplayString = durationToDisplayValue?.toString() ?:
-                    //initialDurationSeconds?.toString() ?:
-                    sessionDurationSeconds?.toString() ?:
-                    selectedDurationString?.split(" ")?.firstOrNull() ?: ""
-
-                    if (durationToDisplayString.isNotEmpty()) {
-                        AdaptiveText(
-                            text = durationToDisplayString,
-                            modifier = Modifier.padding(generalPadding, generalPadding, generalPadding, deviceScaling(4).dp),
-                            color = if (isRestMode) WABlueColor else if (isDimmedState) DimmedTimerBorderColor else TimerBorderColor,
-                            fontWeight = FontWeight.Bold,
-                            targetWidth = Dp(circleRadius * 1.2f),
-                            initialFontSize = adaptiveInitialMainFontSize
-                        )
-                    }
-
-                    // "Rest..." Text, displayed only during rest mode
-                    AdaptiveText(
-                        text = stringResource(id = if (isRestMode) R.string.rest_indicator else R.string.empty_string),
-                        //text = if (isRestMode) "Rest..." else "",
-                        modifier = Modifier.padding(top = 0.dp),
-                        color = WABlueColor,
-                        fontWeight = FontWeight.Bold,
-                        fontStyle = FontStyle.Italic,
-                        targetWidth = Dp(circleRadius * 1.2f),
-                        initialFontSize = adaptiveInitialRestFontSize
-                    )
-
-                    Spacer(modifier = Modifier.weight(0.65f)) // Less weight below, so numbers are slightly above true center
-                    // to make space for "Rest..." text to appear "below center".
-                    // Adjust these weights (e.g., 1f and 1f for true center of the block)
-                }
-            }
-
-            // Right Control Cell
-            val localPadding = deviceScaling(8).dp // 8.dp
-            Column(
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(deviceScaling(16).dp)
+            )
+        {
+            Text( // Title
+                text = stringResource(id = R.string.series_view_title),
+                //text = "Series Training Timer",
+                style = MaterialTheme.typography.titleLarge,
+                color = AppTitleColor,
                 modifier = Modifier
-                    .weight(0.4f)
-                    .fillMaxHeight()
-                    .padding(start = localPadding, end = localPadding),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Button( // Start/Stop Button
-                    onClick = {
-                        if (isTimerRunning) {  // Just pause - stop state
-                            isTimerRunning = false
-                            isTimerStopped = true
-                            isDimmedState = true
-                        }
-                        else if (isTimerStopped) {  // Resume from stop state
-                            isTimerStopped = false
-                            isTimerRunning = true
-                            isDimmedState = false
-                        } else { // Trying to Start or Restart after session completion
-                            if (allSelectionsMade) {
-                                // If currentRepetitionsLeft is 0, it means a cycle just finished (dimmed state).
-                                // Reset both countdowns for a new cycle.
-                                if (currentSeriesLeft == null || currentSeriesLeft == 0) {
-                                    currentSeriesLeft = numberOfSeries
-                                    currentRepetitionsLeft = numberOfRepetitions
-                                    currentDurationSecondsLeft = initialDurationSeconds
-                                    sessionSeriesNumber = numberOfSeries
-                                    sessionRepetitionsNumber = numberOfRepetitions
-                                    sessionDurationSeconds = initialDurationSeconds
-                                } else {  // CAUTION: is this dead code? Let's check...
-                                    // Handle cases where selections might have been cleared or timer never run
-                                    if (currentDurationSecondsLeft == null || currentDurationSecondsLeft == 0) {
-                                        currentDurationSecondsLeft = sessionDurationSeconds  //initialDurationSeconds
-                                    }
-                                    if (currentRepetitionsLeft == null) { // This should ideally not happen if allSelectionsMade is true
-                                        currentRepetitionsLeft = sessionRepetitionsNumber  //numberOfRepetitions
-                                    }
-                                    if (currentSeriesLeft == null) { // This should ideally not happen if allSelectionsMade is true
-                                        currentSeriesLeft = sessionSeriesNumber  //numberOfSeries
-                                    }
-                                }
-                                isTimerRunning = true  // Start - running state
-                                isDimmedState = false
-                            }
-                        }
-                    },
-                    enabled = (isTimerRunning || allSelectionsMade) && !isRestMode,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = AppButtonColor,
-                        contentColor = AppButtonTextColor,
-                        disabledContainerColor = AppButtonColor.copy(alpha = 0.5f),
-                        disabledContentColor = AppButtonTextColor.copy(alpha = 0.5f)
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth(0.92f)
-                        .scale(horizontalScaleFactor)
-                ) {
-                    Text(
-                        text = stringResource(id = if (isTimerRunning) R.string.stop_button else R.string.start_button),
-                        //text = if (isTimerRunning) "Stop" else "Start",
-                        style = customInteractiveTextStyle.copy(color = if (allSelectionsMade && !isRestMode) AppButtonTextColor else AppButtonTextColor.copy(alpha = 0.5f))
-                        //style = customInteractiveTextStyle.copy(color = if (isTimerRunning || allSelectionsMade) AppButtonTextColor else AppButtonTextColor.copy(alpha = 0.5f))
-                    )
-                }
+                    .padding(bottom = generalPadding)
+                    .align(Alignment.CenterHorizontally)
+                    .scale(scaleFactor)
+            )
 
-                BoxWithConstraints( // Series Countdown Circle
+            Row( // Timer Row
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .background(AppTimerRowBackgroundColor)
+                    .padding(vertical = deviceScaling(4).dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Left Cell (Square Timer Display)
+                BoxWithConstraints(
                     modifier = Modifier
-                        .fillMaxWidth(0.8f)
+                        .weight(0.6f)
                         .aspectRatio(1f)
-                        .padding(deviceScaling(4).dp),
+                        .padding(deviceScaling(4/*8*/).dp),  //8.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    val seriesCircleRadius = min(constraints.maxWidth, constraints.maxHeight) / 2f * 0.85f
-                    val seriesStrokeWidthPx = with(LocalDensity.current) { deviceScaling(7).dp.toPx() }
+                    val circleRadius = min(constraints.maxWidth, constraints.maxHeight) / 2f * 0.9f
+                    val strokeWidthPx =
+                        with(LocalDensity.current) { mainTimerStrokeWidth.toPx() } // Ensure mainTimerStrokeWidth is defined
+
+                    val sweepAngle =
+                        if (sessionRepetitionsNumber != null && sessionRepetitionsNumber!! > 0 && currentRepetitionsLeft != null) {
+                            if (currentRepetitionsLeft!! > 1)
+                                ((sessionRepetitionsNumber!! - currentRepetitionsLeft!!) / sessionRepetitionsNumber!!.toFloat()) * 360f
+                            else
+                                ((sessionRepetitionsNumber!! * sessionDurationSeconds!! - currentDurationSecondsLeft!! + 1) / (sessionRepetitionsNumber!! * sessionDurationSeconds!!).toFloat()) * 360f
+                        } else {
+                            0f
+                        }
+                    /*
+                    val sweepAngle = if (numberOfRepetitions != null && numberOfRepetitions!! > 0 && currentRepetitionsLeft != null) {
+                        ((numberOfRepetitions!! - currentRepetitionsLeft!!) / numberOfRepetitions!!.toFloat()) * 360f
+                    } else {
+                        0f
+                    }
+                    */
 
                     Canvas(modifier = Modifier.fillMaxSize()) {
+                        val canvasCenterX = size.width / 2f
+                        val canvasCenterY = size.height / 2f
+
+                        // 1. Draw the main circle border
                         drawCircle(
-                            color = if (isDimmedState) DimmedTimerBorderColor else TimerBorderColor,
-                            radius = seriesCircleRadius - seriesStrokeWidthPx / 2,
-                            style = Stroke(width = seriesStrokeWidthPx),
-                            center = Offset(size.width / 2, size.height / 2)
+                            color = if (isRestMode) WABlueColor else if (isDimmedState) DimmedTimerBorderColor else TimerBorderColor,
+                            radius = circleRadius - strokeWidthPx / 2f, // Radius to the center of the stroke
+                            style = Stroke(width = strokeWidthPx),
+                            center = Offset(canvasCenterX, canvasCenterY)
+                        )
+
+                        // 2. Draw the progress arc
+                        if (!isRestMode && sweepAngle > 0f) {
+                            val arcDiameter = (circleRadius - strokeWidthPx / 2f) * 2f
+                            val arcTopLeftX = canvasCenterX - arcDiameter / 2f
+                            val arcTopLeftY = canvasCenterY - arcDiameter / 2f
+
+                            val progressStrokeWidth =
+                                (0.72 * mainTimerStrokeWidth.value).dp.toPx() //10.dp.toPx() //
+
+                            drawArc(
+                                color = if (isDimmedState) DimmedProgressBorderColor else ProgressBorderColor,
+                                startAngle = -90f,
+                                sweepAngle = sweepAngle,
+                                useCenter = false,
+                                style = Stroke(width = progressStrokeWidth),
+                                topLeft = Offset(arcTopLeftX, arcTopLeftY),
+                                size = androidx.compose.ui.geometry.Size(arcDiameter, arcDiameter)
+                            )
+                        }
+                    }
+
+                    // --- Column to hold Countdown numbers and "Rest..." text ---
+                    Column(
+                        modifier = Modifier.fillMaxSize(), // Allow Column to fill the Box to help with alignment
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        //verticalArrangement = Arrangement.Center // To center items if they don't fill the space
+                    ) {
+                        Spacer(modifier = Modifier.weight(1f)) // Pushes content downwards
+
+                        // AdaptiveText for the main duration
+                        val durationToDisplayValue =
+                            if (showDimmedTimers) 0 else if (isRestMode) currentRestTimeLeft else currentDurationSecondsLeft
+                        val durationToDisplayString = durationToDisplayValue?.toString() ?:
+                        //initialDurationSeconds?.toString() ?:
+                        sessionDurationSeconds?.toString() ?: selectedDurationString?.split(" ")
+                            ?.firstOrNull() ?: ""
+
+                        if (durationToDisplayString.isNotEmpty()) {
+                            AdaptiveText(
+                                text = durationToDisplayString,
+                                modifier = Modifier.padding(
+                                    generalPadding,
+                                    generalPadding,
+                                    generalPadding,
+                                    deviceScaling(4).dp
+                                ),
+                                color = if (isRestMode) WABlueColor else if (isDimmedState) DimmedTimerBorderColor else TimerBorderColor,
+                                fontWeight = FontWeight.Bold,
+                                targetWidth = Dp(circleRadius * 1.2f),
+                                initialFontSize = adaptiveInitialMainFontSize
+                            )
+                        }
+
+                        // "Rest..." Text, displayed only during rest mode
+                        AdaptiveText(
+                            text = stringResource(id = if (isRestMode) R.string.rest_indicator else R.string.empty_string),
+                            //text = if (isRestMode) "Rest..." else "",
+                            modifier = Modifier.padding(top = 0.dp),
+                            color = WABlueColor,
+                            fontWeight = FontWeight.Bold,
+                            fontStyle = FontStyle.Italic,
+                            targetWidth = Dp(circleRadius * 1.2f),
+                            initialFontSize = adaptiveInitialRestFontSize
+                        )
+
+                        Spacer(modifier = Modifier.weight(0.65f)) // Less weight below, so numbers are slightly above true center
+                        // to make space for "Rest..." text to appear "below center".
+                        // Adjust these weights (e.g., 1f and 1f for true center of the block)
+                    }
+                }
+
+                // Right Control Cell
+                val localPadding = deviceScaling(8).dp // 8.dp
+                Column(
+                    modifier = Modifier
+                        .weight(0.4f)
+                        .fillMaxHeight()
+                        .padding(start = localPadding, end = localPadding),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    Button( // Start/Stop Button
+                        onClick = {
+                            if (isTimerRunning) {  // Just pause - stop state
+                                isTimerRunning = false
+                                isTimerStopped = true
+                                isDimmedState = true
+                            } else if (isTimerStopped) {  // Resume from stop state
+                                isTimerStopped = false
+                                isTimerRunning = true
+                                isDimmedState = false
+                            } else { // Trying to Start or Restart after session completion
+                                if (allSelectionsMade) {
+                                    // If currentRepetitionsLeft is 0, it means a cycle just finished (dimmed state).
+                                    // Reset both countdowns for a new cycle.
+                                    if (currentSeriesLeft == null || currentSeriesLeft == 0) {
+                                        currentSeriesLeft = numberOfSeries
+                                        currentRepetitionsLeft = numberOfRepetitions
+                                        currentDurationSecondsLeft = initialDurationSeconds
+                                        //sessionSeriesNumber = numberOfSeries
+                                        sessionRepetitionsNumber = numberOfRepetitions
+                                        sessionDurationSeconds = initialDurationSeconds
+                                    } else {  // CAUTION: is this dead code? Let's check...
+                                        // Handle cases where selections might have been cleared or timer never run
+                                        if (currentDurationSecondsLeft == null || currentDurationSecondsLeft == 0) {
+                                            currentDurationSecondsLeft =
+                                                sessionDurationSeconds  //initialDurationSeconds
+                                        }
+                                        if (currentRepetitionsLeft == null) { // This should ideally not happen if allSelectionsMade is true
+                                            currentRepetitionsLeft =
+                                                sessionRepetitionsNumber  //numberOfRepetitions
+                                        }
+                                        /* is always false
+                                        if (currentSeriesLeft == null) { // This should ideally not happen if allSelectionsMade is true
+                                            currentSeriesLeft = sessionSeriesNumber  //numberOfSeries
+                                        }
+                                        */
+                                    }
+                                    isTimerRunning = true  // Start - running state
+                                    isDimmedState = false
+                                }
+                            }
+                        },
+                        enabled = (isTimerRunning || allSelectionsMade) && !isRestMode,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = AppButtonColor,
+                            contentColor = AppButtonTextColor,
+                            disabledContainerColor = AppButtonColor.copy(alpha = 0.5f),
+                            disabledContentColor = AppButtonTextColor.copy(alpha = 0.5f)
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth(0.92f)
+                            .scale(horizontalScaleFactor)
+                    ) {
+                        Text(
+                            text = stringResource(id = if (isTimerRunning) R.string.stop_button else R.string.start_button),
+                            //text = if (isTimerRunning) "Stop" else "Start",
+                            style = customInteractiveTextStyle.copy(
+                                color = if (allSelectionsMade && !isRestMode) AppButtonTextColor else AppButtonTextColor.copy(
+                                    alpha = 0.5f
+                                )
+                            )
+                            //style = customInteractiveTextStyle.copy(color = if (isTimerRunning || allSelectionsMade) AppButtonTextColor else AppButtonTextColor.copy(alpha = 0.5f))
                         )
                     }
 
-                    // Series display will show 0 when dimmed
-                    val seriesToDisplayValue = currentSeriesLeft
-                    val seriesToDisplayString = seriesToDisplayValue?.toString() ?:
-                    currentSeriesLeft?.toString() ?: ""
-                    sessionRepetitionsNumber?.toString() ?: ""
+                    BoxWithConstraints( // Series Countdown Circle
+                        modifier = Modifier
+                            .fillMaxWidth(0.8f)
+                            .aspectRatio(1f)
+                            .padding(deviceScaling(4).dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        val seriesCircleRadius =
+                            min(constraints.maxWidth, constraints.maxHeight) / 2f * 0.85f
+                        val seriesStrokeWidthPx =
+                            with(LocalDensity.current) { deviceScaling(7).dp.toPx() }
 
-                    if (seriesToDisplayString.isNotEmpty()) {
-                        AdaptiveText(
-                            text = seriesToDisplayString,
-                            modifier = Modifier.padding(localPadding),
-                            color = if (isDimmedState) DimmedTimerBorderColor else TimerBorderColor,
-                            fontWeight = FontWeight.Normal,
-                            targetWidth = Dp(seriesCircleRadius * 1.1f),
-                            initialFontSize = adaptiveInitialSeriesFontSize
-                        )
+                        Canvas(modifier = Modifier.fillMaxSize()) {
+                            drawCircle(
+                                color = if (isDimmedState) DimmedTimerBorderColor else TimerBorderColor,
+                                radius = seriesCircleRadius - seriesStrokeWidthPx / 2,
+                                style = Stroke(width = seriesStrokeWidthPx),
+                                center = Offset(size.width / 2, size.height / 2)
+                            )
+                        }
+
+                        // Series display will show 0 when dimmed
+                        val seriesToDisplayValue = currentSeriesLeft
+                        val seriesToDisplayString =
+                            seriesToDisplayValue?.toString() ?: currentSeriesLeft?.toString() ?: ""
+                        sessionRepetitionsNumber?.toString() ?: ""
+
+                        if (seriesToDisplayString.isNotEmpty()) {
+                            AdaptiveText(
+                                text = seriesToDisplayString,
+                                modifier = Modifier.padding(localPadding),
+                                color = if (isDimmedState) DimmedTimerBorderColor else TimerBorderColor,
+                                fontWeight = FontWeight.Normal,
+                                targetWidth = Dp(seriesCircleRadius * 1.1f),
+                                initialFontSize = adaptiveInitialSeriesFontSize
+                            )
+                        }
                     }
                 }
             }
-        }
 
-        // --- Settings Sections (Repetitions duration, Number of repetitions, etc.) ---
-        Text( // Repetitions duration title
-            text = stringResource(id = R.string.repetitions_duration_label),
-            //text = "Repetitions duration",
-            style = customInteractiveTextStyle,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier
-                .padding(top = deviceScaling(24).dp)
-                .align(Alignment.CenterHorizontally)
-        )
-        Row( // Duration Buttons Row
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 0.dp),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            val borderStrokeWidth = deviceScaling(5).dp
-            Row(horizontalArrangement = Arrangement.spacedBy(deviceScaling(0).dp)) {
-                durationOptions.forEach { duration ->
-                    val isSelected = selectedDurationString == duration
-                    Button(
-                        onClick = { selectedDurationString = if (isSelected) null else duration },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isSelected) SelectedButtonBackgroundColor
+            // --- Settings Sections (Repetitions duration, Number of repetitions, etc.) ---
+            Text( // Repetitions duration title
+                text = stringResource(id = R.string.repetitions_duration_label),
+                //text = "Repetitions duration",
+                style = customInteractiveTextStyle,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier
+                    .padding(top = deviceScaling(24).dp)
+                    .align(Alignment.CenterHorizontally)
+            )
+            Row( // Duration Buttons Row
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 0.dp),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                val borderStrokeWidth = deviceScaling(5).dp
+                Row(horizontalArrangement = Arrangement.spacedBy(deviceScaling(0).dp)) {
+                    durationOptions.forEach { duration ->
+                        val isSelected = selectedDurationString == duration
+                        Button(
+                            onClick = {
+                                selectedDurationString = if (isSelected) null else duration
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isSelected) SelectedButtonBackgroundColor
                                 else if (isTimerRunning || isTimerStopped) AppButtonColor.copy(alpha = 0.8f)
                                 else AppButtonDarkerColor,
-                            contentColor = AppButtonTextColor
-                        ),
-                        border = if (isSelected) BorderStroke(
-                            borderStrokeWidth,
-                            SelectedButtonBorderColor
-                        ) else BorderStroke(  //null
-                            borderStrokeWidth,
-                            AppBackgroundColor
-                        ),
-                        enabled = isSelected || !(isTimerRunning || isTimerStopped),
-                        modifier = Modifier
-                            .width(durationButtonWidth)
+                                contentColor = AppButtonTextColor
+                            ),
+                            border = if (isSelected) BorderStroke(
+                                borderStrokeWidth,
+                                SelectedButtonBorderColor
+                            ) else BorderStroke(  //null
+                                borderStrokeWidth,
+                                AppBackgroundColor
+                            ),
+                            enabled = isSelected || !(isTimerRunning || isTimerStopped),
+                            modifier = Modifier
+                                .width(durationButtonWidth)
                             //.scale(horizontalScaleFactor)
                             /*.padding(
-                                horizontal = if (isSelected) borderStrokeWidth else 0.dp,
-                                vertical = 0.dp  //if (isSelected) 0.dp else borderStrokeWidth
-                            )*/
-                    ) { Text(text = duration,
-                        style =  TextStyle(
-                                fontSize = (13f * durationsScaling).toInt().sp,
-                                color = if (isSelected) AppButtonTextColor else if (isTimerRunning || isTimerStopped) AppDimmedTextColor else AppTextColor
+                                    horizontal = if (isSelected) borderStrokeWidth else 0.dp,
+                                    vertical = 0.dp  //if (isSelected) 0.dp else borderStrokeWidth
+                                )*/
+                        ) {
+                            Text(
+                                text = duration,
+                                style = TextStyle(
+                                    fontSize = (13f * durationsScaling).toInt().sp,
+                                    color = if (isSelected) AppButtonTextColor else if (isTimerRunning || isTimerStopped) AppDimmedTextColor else AppTextColor
+                                )
                             )
-                        ) }
+                        }
+                    }
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(majorSpacerHeight))
+            Spacer(modifier = Modifier.height(majorSpacerHeight))
 
-        Text( // Number of repetitions title
-            text = stringResource(id = R.string.repetitions_number_label),
-            //text = "Number of repetitions per series",
-            style = customInteractiveTextStyle,
-            color = AppTextColor,
-            modifier = Modifier
-                .padding(top = generalPadding)
-                .align(Alignment.CenterHorizontally)
-        )
-        LazyRow( // Repetitions LazyRow
-            state = repetitionsLazyListState,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = deviceScaling(12).dp, bottom = deviceScaling(8).dp),
-            horizontalArrangement = Arrangement.spacedBy(deviceScaling(10).dp),
-            contentPadding = PaddingValues(horizontal = generalPadding)
-        ) {
-            items(repetitionRange) { number ->
-                val isNumberSelected = number == numberOfRepetitions
-                val isClickable = !(isTimerRunning || isTimerStopped)
-                Box(
-                    modifier = Modifier
-                        .size(repetitionBoxSize)
-                        .then(
-                            if (isNumberSelected) Modifier.border(
-                                BorderStroke(
-                                    deviceScaling(4).dp,
-                                    SelectedButtonBorderColor
-                                ), shape = CircleShape
-                            ) else Modifier
-                        )
-                        .padding(if (isNumberSelected) deviceScaling(4).dp else 0.dp)
-                        .clip(CircleShape)
-                        .background(
-                            color = if (isNumberSelected) AppTitleColor
-                                else if (isClickable) AppButtonDarkerColor
-                                else AppDimmedButtonColor
-                            )
-                        .clickable {
-                            if (isClickable)
-                                numberOfRepetitions = if (isNumberSelected) null else number
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "$number",
-                        style = customInteractiveTextStyle.copy(
-                            color = if (isNumberSelected) AppButtonTextColor
-                                else if (isTimerRunning || isTimerStopped) AppDimmedTextColor
-                                else AppTextColor
-                        ),
-                        fontWeight = if (isNumberSelected) FontWeight.Bold else FontWeight.Normal
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(majorSpacerHeight))
-
-        Text( // Number of series title
-            text = stringResource(id = R.string.series_number_label),
-            //text = "Number of series",
-            style = customInteractiveTextStyle,
-            color = AppTextColor,
-            modifier = Modifier
-                .padding(top = generalPadding)
-                .align(Alignment.CenterHorizontally)
-        )
-        Row( // Series Selector Row
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = deviceScaling(12).dp, bottom = deviceScaling(8).dp),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(deviceScaling(10).dp)) {
-                seriesOptions.forEach { seriesCount ->
-                    val isSeriesSelected = seriesCount == numberOfSeries
+            Text( // Number of repetitions title
+                text = stringResource(id = R.string.repetitions_number_label),
+                //text = "Number of repetitions per series",
+                style = customInteractiveTextStyle,
+                color = AppTextColor,
+                modifier = Modifier
+                    .padding(top = generalPadding)
+                    .align(Alignment.CenterHorizontally)
+            )
+            LazyRow( // Repetitions LazyRow
+                state = repetitionsLazyListState,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = deviceScaling(12).dp, bottom = deviceScaling(8).dp),
+                horizontalArrangement = Arrangement.spacedBy(deviceScaling(10).dp),
+                contentPadding = PaddingValues(horizontal = generalPadding)
+            ) {
+                items(repetitionRange) { number ->
+                    val isNumberSelected = number == numberOfRepetitions
                     val isClickable = !(isTimerRunning || isTimerStopped)
                     Box(
                         modifier = Modifier
-                            .size(repetitionBoxSize)  //48.dp)
+                            .size(repetitionBoxSize)
                             .then(
-                                if (isSeriesSelected) Modifier.border(
+                                if (isNumberSelected) Modifier.border(
                                     BorderStroke(
                                         deviceScaling(4).dp,
                                         SelectedButtonBorderColor
                                     ), shape = CircleShape
                                 ) else Modifier
                             )
-                            .padding(if (isSeriesSelected) deviceScaling(4).dp else 0.dp)
+                            .padding(if (isNumberSelected) deviceScaling(4).dp else 0.dp)
                             .clip(CircleShape)
                             .background(
-                                color = if (isSeriesSelected) AppTitleColor
-                                    else if (isClickable) AppButtonDarkerColor
-                                    else AppDimmedButtonColor
+                                color = if (isNumberSelected) AppTitleColor
+                                else if (isClickable) AppButtonDarkerColor
+                                else AppDimmedButtonColor
                             )
                             .clickable {
                                 if (isClickable)
-                                    numberOfSeries = if (isSeriesSelected) null else seriesCount
+                                    numberOfRepetitions = if (isNumberSelected) null else number
                             },
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "$seriesCount",
+                            text = "$number",
                             style = customInteractiveTextStyle.copy(
-                                color = if (isSeriesSelected) AppButtonTextColor
+                                color = if (isNumberSelected) AppButtonTextColor
                                 else if (isTimerRunning || isTimerStopped) AppDimmedTextColor
                                 else AppTextColor
                             ),
-                            fontWeight = if (isSeriesSelected) FontWeight.Bold else FontWeight.Normal
+                            fontWeight = if (isNumberSelected) FontWeight.Bold else FontWeight.Normal
                         )
                     }
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(majorSpacerHeight))
+            Spacer(modifier = Modifier.height(majorSpacerHeight))
 
-        Row( // Checkbox Row
-            modifier = Modifier
-                .padding(top = deviceScaling(4).dp, bottom = generalPadding)
-                .toggleable(
-                    value = saveSelectionChecked,
-                    role = Role.Checkbox,
+            Text( // Number of series title
+                text = stringResource(id = R.string.series_number_label),
+                //text = "Number of series",
+                style = customInteractiveTextStyle,
+                color = AppTextColor,
+                modifier = Modifier
+                    .padding(top = generalPadding)
+                    .align(Alignment.CenterHorizontally)
+            )
+            Row( // Series Selector Row
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = deviceScaling(12).dp, bottom = deviceScaling(8).dp),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(deviceScaling(10).dp)) {
+                    seriesOptions.forEach { seriesCount ->
+                        val isSeriesSelected = seriesCount == numberOfSeries
+                        val isClickable = !(isTimerRunning || isTimerStopped)
+                        Box(
+                            modifier = Modifier
+                                .size(repetitionBoxSize)  //48.dp)
+                                .then(
+                                    if (isSeriesSelected) Modifier.border(
+                                        BorderStroke(
+                                            deviceScaling(4).dp,
+                                            SelectedButtonBorderColor
+                                        ), shape = CircleShape
+                                    ) else Modifier
+                                )
+                                .padding(if (isSeriesSelected) deviceScaling(4).dp else 0.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    color = if (isSeriesSelected) AppTitleColor
+                                    else if (isClickable) AppButtonDarkerColor
+                                    else AppDimmedButtonColor
+                                )
+                                .clickable {
+                                    if (isClickable)
+                                        numberOfSeries = if (isSeriesSelected) null else seriesCount
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "$seriesCount",
+                                style = customInteractiveTextStyle.copy(
+                                    color = if (isSeriesSelected) AppButtonTextColor
+                                    else if (isTimerRunning || isTimerStopped) AppDimmedTextColor
+                                    else AppTextColor
+                                ),
+                                fontWeight = if (isSeriesSelected) FontWeight.Bold else FontWeight.Normal
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(majorSpacerHeight))
+
+            Row( // Checkbox Row
+                modifier = Modifier
+                    .padding(top = deviceScaling(4).dp, bottom = generalPadding)
+                    .toggleable(
+                        value = saveSelectionChecked,
+                        role = Role.Checkbox,
+                        enabled = allSelectionsMade,
+                        onValueChange = { saveSelectionChecked = !saveSelectionChecked }
+                    )
+                    .align(Alignment.CenterHorizontally),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(
+                    checked = saveSelectionChecked,
+                    onCheckedChange = null,
                     enabled = allSelectionsMade,
-                    onValueChange = { saveSelectionChecked = !saveSelectionChecked }
+                    colors = CheckboxDefaults.colors(
+                        checkedColor = AppTitleColor,
+                        uncheckedColor = AppTextColor.copy(alpha = if (allSelectionsMade) 1f else 0.5f),
+                        checkmarkColor = AppButtonTextColor,
+                        disabledCheckedColor = AppTitleColor.copy(alpha = 0.5f),
+                        disabledUncheckedColor = AppButtonDarkerColor
+                    ),
+                    modifier = Modifier.scale(scaleFactor)
                 )
-                .align(Alignment.CenterHorizontally),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Checkbox(
-                checked = saveSelectionChecked,
-                onCheckedChange = null,
-                enabled = allSelectionsMade,
-                colors = CheckboxDefaults.colors(
-                    checkedColor = AppTitleColor,
-                    uncheckedColor = AppTextColor.copy(alpha = if (allSelectionsMade) 1f else 0.5f),
-                    checkmarkColor = AppButtonTextColor,
-                    disabledCheckedColor = AppTitleColor.copy(alpha = 0.5f),
-                    disabledUncheckedColor = AppButtonDarkerColor
+                Spacer(modifier = Modifier.width(deviceScaling(6).dp))
+                Text(
+                    text = stringResource(id = R.string.save_selection_label),
+                    //text = "Save current selection",
+                    style = smallerTextStyle,
+                    color = AppTextColor.copy(alpha = if (allSelectionsMade) 1f else 0.38f)
+                )
+            }
+
+            //Spacer(Modifier.weight(0.05f))
+            Spacer(modifier = Modifier.height(majorSpacerHeight))
+
+            Button( // Close Button
+                onClick = { processCloseAppActions() },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = AppButtonColor,
+                    contentColor = AppButtonTextColor
                 ),
-                modifier = Modifier.scale(scaleFactor)
-            )
-            Spacer(modifier = Modifier.width(deviceScaling(6).dp))
-            Text(
-                text = stringResource(id = R.string.save_selection_label),
-                //text = "Save current selection",
-                style = smallerTextStyle,
-                color = AppTextColor.copy(alpha = if (allSelectionsMade) 1f else 0.38f)
-            )
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .padding(top = deviceScaling(8).dp)
+                    .scale(horizontalScaleFactor)
+            ) {
+                Text(
+                    stringResource(id = R.string.close_button),
+                    style = customInteractiveTextStyle
+                )
+                //Text("Close", style = customInteractiveTextStyle)
+            }
         }
 
-        //Spacer(Modifier.weight(0.05f))
-        Spacer(modifier = Modifier.height(majorSpacerHeight))
-
-        Button( // Close Button
-            onClick = { processCloseAppActions() },
-            colors = ButtonDefaults.buttonColors(
-                containerColor = AppButtonColor,
-                contentColor = AppButtonTextColor
-            ),
+        // --- Add Your Logo Here, Aligned to Bottom-Left ---
+        Image(
+            painter = painterResource(id = R.drawable.ps_logo),
+            contentDescription = null, // Important for accessibility - provide a meaningful description (e.g. "Editor Logo")or null if purely decorative
             modifier = Modifier
-                .align(Alignment.End)
-                .padding(top = deviceScaling(8).dp)
-                .scale(horizontalScaleFactor)
-        ) {
-            Text(
-                stringResource(id = R.string.close_button),
-                style = customInteractiveTextStyle
-            )
-            //Text("Close", style = customInteractiveTextStyle)
-        }
+                .align(Alignment.BottomStart) // Aligns this Image to the bottom start (left) of the parent Box
+                .padding(
+                    start = 16.dp,
+                    bottom = 16.dp
+                ) // Add some padding from the screen edges
+                .size(34.dp) // Set the size of the image on screen
+        )
     }
 }
