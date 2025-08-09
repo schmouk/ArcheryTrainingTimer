@@ -571,7 +571,9 @@ fun SimpleScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         //verticalArrangement = Arrangement.Center // To center items if they don't fill the space
                     ) {
-                        Spacer(modifier = Modifier.weight(1f)) // Pushes content downwards
+                        val topWeight = if (textHorizontalScaleFactor <= 1.5f) 1f
+                                        else (1f - 0.35f * (textHorizontalScaleFactor - 1.0f))
+                        Spacer(modifier = Modifier.weight(topWeight))  //1f)) // Pushes content downwards
 
                         // AdaptiveText for the main duration
                         val durationToDisplayValue =
