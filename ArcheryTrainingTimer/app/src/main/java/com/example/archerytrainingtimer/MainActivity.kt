@@ -192,14 +192,14 @@ fun SimpleScreen(
     // Play sound effect - end beep
     LaunchedEffect(playEndBeepEvent) {
         if (playEndBeepEvent && soundPoolLoaded && endBeepSoundId != null) {
-            //soundPool.play(endBeepSoundId!!, 1f, 1f, 1, 0, 1f)
-            soundPool.play(beepSoundId!!, 1f, 1f, 1, 0, 1f)
+            soundPool.play(endBeepSoundId!!, 1f, 1f, 1, 0, 1f)
+            //soundPool.play(beepSoundId!!, 1f, 1f, 1, 0, 1f)
             delay(340L)
-            //soundPool.play(endBeepSoundId!!, 1f, 1f, 1, 0, 1f)
-            soundPool.play(beepSoundId!!, 1f, 1f, 1, 0, 1f)
+            soundPool.play(endBeepSoundId!!, 1f, 1f, 1, 0, 1f)
+            //soundPool.play(beepSoundId!!, 1f, 1f, 1, 0, 1f)
             delay(340L)
-            //soundPool.play(endBeepSoundId!!, 1f, 1f, 1, 0, 1f)
-            soundPool.play(beepSoundId!!, 1f, 1f, 1, 0, 1f)
+            soundPool.play(endBeepSoundId!!, 1f, 1f, 1, 0, 1f)
+            //soundPool.play(beepSoundId!!, 1f, 1f, 1, 0, 1f)
             playEndBeepEvent = false // Reset trigger
         }
     }
@@ -248,9 +248,6 @@ fun SimpleScreen(
     var isDimmedState by remember { mutableStateOf(false) }
 
     var initialDurationSeconds by rememberSaveable { mutableStateOf<Int?>(null) }
-    var sessionDurationSeconds by rememberSaveable { mutableStateOf<Int?>(null) }
-    var sessionRepetitionsNumber by rememberSaveable { mutableStateOf<Int?>(null) }
-    //var sessionSeriesNumber by rememberSaveable { mutableStateOf<Int?>(null) }
     var currentDurationSecondsLeft by rememberSaveable { mutableStateOf<Int?>(null) }
     var currentRepetitionsLeft by rememberSaveable { mutableStateOf<Int?>(null) }
     var currentSeriesLeft by rememberSaveable { mutableStateOf<Int?>(null) }
@@ -296,9 +293,6 @@ fun SimpleScreen(
                 }
                 currentRepetitionsLeft = numberOfRepetitions  //loadedPrefs.numberOfRepetitions
                 currentSeriesLeft = numberOfSeries  //loadedPrefs.numberOfSeries
-                sessionDurationSeconds = initialDurationSeconds
-                sessionRepetitionsNumber = numberOfRepetitions
-                // sessionSeriesNumber = numberOfSeries
             }
         }
     }
@@ -318,13 +312,7 @@ fun SimpleScreen(
                 currentDurationSecondsLeft = durationValue
                 currentRepetitionsLeft = numberOfRepetitions
                 currentSeriesLeft = numberOfSeries
-                sessionDurationSeconds = durationValue
-                sessionRepetitionsNumber = numberOfRepetitions
-                //sessionSeriesNumber = numberOfSeries
             }
-            // Always update currentRepetitionsLeft from selection if timer is neither running nor stopped
-            //currentRepetitionsLeft = numberOfRepetitions
-            //currentSeriesLeft = numberOfSeries
         }
     }
 
@@ -335,26 +323,23 @@ fun SimpleScreen(
                 // Ensure values are sane before starting countdown loop
                 // If starting from a dimmed state (reps=0, duration=0), reset them.
                 if (currentRepetitionsLeft == 0) { // Indicates a previous cycle was completed
-                    currentRepetitionsLeft = sessionRepetitionsNumber  //numberOfRepetitions // Reset for new cycle
-                    currentDurationSecondsLeft = sessionDurationSeconds  //initialDurationSeconds // Reset for new cycle
+                    currentRepetitionsLeft = numberOfRepetitions  // Reset for new cycle
+                    currentDurationSecondsLeft = initialDurationSeconds  // Reset for new cycle
                     currentSeriesLeft = currentSeriesLeft!! - 1
                 } else { // Normal start or resume
                     if (currentDurationSecondsLeft == null || currentDurationSecondsLeft == 0) {
-                        sessionDurationSeconds = initialDurationSeconds
                         currentDurationSecondsLeft = initialDurationSeconds  //initialDurationSeconds
                     }
                     if (currentRepetitionsLeft == null) {
-                        sessionRepetitionsNumber = numberOfRepetitions
                         currentRepetitionsLeft = numberOfRepetitions  //numberOfRepetitions
                     }
                     if (currentSeriesLeft == null) {
-                        //sessionSeriesNumber = numberOfSeries
                         currentSeriesLeft = numberOfSeries  //numberOfSeries
                     }
                 }
 
                 while (isTimerRunning && !isRestMode && isActive) {
-                    if (currentDurationSecondsLeft != null && currentDurationSecondsLeft == sessionDurationSeconds) {  // initialDurationSeconds) {
+                    if (currentDurationSecondsLeft != null && currentDurationSecondsLeft == initialDurationSeconds) {
                         playBeepEvent = true
                     }
                     if (currentDurationSecondsLeft != null && currentDurationSecondsLeft!! > 0) {
@@ -390,8 +375,7 @@ fun SimpleScreen(
                                         playRestBeepEvent = true
                                         isRestMode = true
 
-                                        //val seriesDuration = (initialDurationSeconds ?: 1) * (numberOfRepetitions ?: 1) // Avoid 0 if null
-                                        val seriesDuration = (sessionDurationSeconds ?: 1) * (sessionRepetitionsNumber ?: 1) // Avoid 0 if null
+                                        val seriesDuration = (initialDurationSeconds ?: 1) * (numberOfRepetitions ?: 1) // Avoid 0 if null
                                         initialRestTime = (seriesDuration * restingRatio).roundToInt().coerceAtLeast(endOfRestBeepTime + 2) // Ensure rest is at least 5s for the beep logic
                                         currentRestTimeLeft = initialRestTime
 
@@ -418,7 +402,7 @@ fun SimpleScreen(
                                 }
                             } else {
                                 // let's start a new repetition into current series
-                                currentDurationSecondsLeft = sessionDurationSeconds  //initialDurationSeconds
+                                currentDurationSecondsLeft = initialDurationSeconds
                             }
                         } else { // currentRepetitionsLeft is null -> should never happen
                             isTimerRunning = false
@@ -448,7 +432,7 @@ fun SimpleScreen(
                         isTimerRunning = true
                         isDimmedState = false
                         isTimerStopped = false
-                        currentRepetitionsLeft = sessionRepetitionsNumber  // numberOfRepetitions // Reset for new cycle
+                        currentRepetitionsLeft = numberOfRepetitions // Reset for new cycle
                         currentSeriesLeft = currentSeriesLeft!! - 1
                         break // Exit rest loop
                     }
@@ -516,21 +500,14 @@ fun SimpleScreen(
                         with(LocalDensity.current) { mainTimerStrokeWidth.toPx() } // Ensure mainTimerStrokeWidth is defined
 
                     val sweepAngle =
-                        if (sessionRepetitionsNumber != null && sessionRepetitionsNumber!! > 0 && currentRepetitionsLeft != null) {
+                        if (numberOfRepetitions != null && numberOfRepetitions!! > 0 && currentRepetitionsLeft != null) {
                             if (currentRepetitionsLeft!! > 1)
-                                ((sessionRepetitionsNumber!! - currentRepetitionsLeft!!) / sessionRepetitionsNumber!!.toFloat()) * 360f
+                                ((numberOfRepetitions!! - currentRepetitionsLeft!!) / numberOfRepetitions!!.toFloat()) * 360f
                             else
-                                ((sessionRepetitionsNumber!! * sessionDurationSeconds!! - currentDurationSecondsLeft!! + 1) / (sessionRepetitionsNumber!! * sessionDurationSeconds!!).toFloat()) * 360f
+                                ((numberOfRepetitions!! * initialDurationSeconds!! - currentDurationSecondsLeft!! + 1) / (numberOfRepetitions!! * initialDurationSeconds!!).toFloat()) * 360f
                         } else {
                             0f
                         }
-                    /*
-                    val sweepAngle = if (numberOfRepetitions != null && numberOfRepetitions!! > 0 && currentRepetitionsLeft != null) {
-                        ((numberOfRepetitions!! - currentRepetitionsLeft!!) / numberOfRepetitions!!.toFloat()) * 360f
-                    } else {
-                        0f
-                    }
-                    */
 
                     Canvas(modifier = Modifier.fillMaxSize()) {
                         val canvasCenterX = size.width / 2f
@@ -579,8 +556,7 @@ fun SimpleScreen(
                         val durationToDisplayValue =
                             if (showDimmedTimers) 0 else if (isRestMode) currentRestTimeLeft else currentDurationSecondsLeft
                         val durationToDisplayString = durationToDisplayValue?.toString() ?:
-                        //initialDurationSeconds?.toString() ?:
-                        sessionDurationSeconds?.toString() ?: selectedDurationString?.split(" ")
+                        initialDurationSeconds?.toString() ?: selectedDurationString?.split(" ")
                             ?.firstOrNull() ?: ""
 
                         if (durationToDisplayString.isNotEmpty()) {
@@ -645,24 +621,14 @@ fun SimpleScreen(
                                         currentSeriesLeft = numberOfSeries
                                         currentRepetitionsLeft = numberOfRepetitions
                                         currentDurationSecondsLeft = initialDurationSeconds
-                                        //sessionSeriesNumber = numberOfSeries
-                                        sessionRepetitionsNumber = numberOfRepetitions
-                                        sessionDurationSeconds = initialDurationSeconds
                                     } else {  // CAUTION: is this dead code? Let's check...
                                         // Handle cases where selections might have been cleared or timer never run
                                         if (currentDurationSecondsLeft == null || currentDurationSecondsLeft == 0) {
-                                            currentDurationSecondsLeft =
-                                                sessionDurationSeconds  //initialDurationSeconds
+                                            currentDurationSecondsLeft = initialDurationSeconds
                                         }
                                         if (currentRepetitionsLeft == null) { // This should ideally not happen if allSelectionsMade is true
-                                            currentRepetitionsLeft =
-                                                sessionRepetitionsNumber  //numberOfRepetitions
+                                            currentRepetitionsLeft = numberOfRepetitions
                                         }
-                                        /* is always false
-                                        if (currentSeriesLeft == null) { // This should ideally not happen if allSelectionsMade is true
-                                            currentSeriesLeft = sessionSeriesNumber  //numberOfSeries
-                                        }
-                                        */
                                     }
                                     isTimerRunning = true  // Start - running state
                                     isDimmedState = false
@@ -717,7 +683,6 @@ fun SimpleScreen(
                         val seriesToDisplayValue = currentSeriesLeft
                         val seriesToDisplayString =
                             seriesToDisplayValue?.toString() ?: currentSeriesLeft?.toString() ?: ""
-                        sessionRepetitionsNumber?.toString() ?: ""
 
                         if (seriesToDisplayString.isNotEmpty()) {
                             AdaptiveText(
