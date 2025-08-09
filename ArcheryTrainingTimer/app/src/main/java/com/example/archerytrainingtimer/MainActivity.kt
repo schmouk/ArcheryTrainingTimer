@@ -49,7 +49,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-import com.example.archerytrainingtimer.R
 import com.example.archerytrainingtimer.ui.theme.*
 
 import kotlinx.coroutines.delay
@@ -138,8 +137,9 @@ fun SimpleScreen(
     val refScreenWidthDp = 411.dp // Your baseline for good proportions
     val refScreenHeightDp = 914.dp // Your baseline for good proportions
     // Calculate scale factor, ensure it's not Dp / Dp if you need a raw float
-    val horizontalScaleFactor = (currentScreenWidthDp.value / refScreenWidthDp.value).coerceIn(0.60f, 1.5f)
-    val verticalScaleFactor = (currentScreenHeightDp.value / refScreenHeightDp.value).coerceIn(0.40f, 1f)
+    val textHorizontalScaleFactor = currentScreenWidthDp.value / refScreenWidthDp.value
+    val horizontalScaleFactor = textHorizontalScaleFactor.coerceIn(0.60f, 1.0f)
+    val verticalScaleFactor = (currentScreenHeightDp.value / refScreenHeightDp.value).coerceIn(0.40f, 1.5f)
     val scaleFactor = min(horizontalScaleFactor, verticalScaleFactor)
 
     // Playing sound
@@ -221,11 +221,17 @@ fun SimpleScreen(
         return horizontalScaleFactor * dim
     }
 
+    // scales big text dimension (width or height) according to the running device horizontalScaleFactor factor
+    fun bigTextHorizontalDeviceScaling(dim: Int) : Float {
+        return textHorizontalScaleFactor * dim
+    }
+
+
     // --- Dynamic Sizes & SPs ---
     val mainTimerStrokeWidth = deviceScaling(14).dp
-    val adaptiveInitialMainFontSize = horizontalDeviceScaling(76).sp
-    val adaptiveInitialRestFontSize = horizontalDeviceScaling(17).sp
-    val adaptiveInitialSeriesFontSize = horizontalDeviceScaling(34).sp
+    val adaptiveInitialMainFontSize = bigTextHorizontalDeviceScaling(76).sp
+    val adaptiveInitialRestFontSize = bigTextHorizontalDeviceScaling(17).sp
+    val adaptiveInitialSeriesFontSize = bigTextHorizontalDeviceScaling(34).sp
     val repetitionBoxSize = deviceScaling(48).dp
     val majorSpacerHeight = deviceScaling(8).dp
     val generalPadding = deviceScaling(12).dp  // 16
@@ -250,6 +256,7 @@ fun SimpleScreen(
     var isRestMode by rememberSaveable { mutableStateOf(false) }
     var currentRestTimeLeft by rememberSaveable { mutableStateOf<Int?>(null) }
     var initialRestTime by rememberSaveable { mutableStateOf<Int?>(null) } // To store calculated rest time
+    val restingRatio = 0.5f
     val endOfRestBeepTime = 7 // seconds before end of rest to play beep
 
     val durationOptions = listOf("10 s", "15 s", "20 s", "30 s")
@@ -382,7 +389,7 @@ fun SimpleScreen(
 
                                         //val seriesDuration = (initialDurationSeconds ?: 1) * (numberOfRepetitions ?: 1) // Avoid 0 if null
                                         val seriesDuration = (sessionDurationSeconds ?: 1) * (sessionRepetitionsNumber ?: 1) // Avoid 0 if null
-                                        initialRestTime = (seriesDuration / 2).coerceAtLeast(endOfRestBeepTime + 2) // Ensure rest is at least 5s for the beep logic
+                                        initialRestTime = (seriesDuration * restingRatio).roundToInt().coerceAtLeast(endOfRestBeepTime + 2) // Ensure rest is at least 5s for the beep logic
                                         currentRestTimeLeft = initialRestTime
 
                                         // reset duration for next repetition in the same series
@@ -689,11 +696,11 @@ fun SimpleScreen(
                     if (seriesToDisplayString.isNotEmpty()) {
                         AdaptiveText(
                             text = seriesToDisplayString,
-                            modifier = Modifier.padding(localPadding),  //8.dp),
+                            modifier = Modifier.padding(localPadding),
                             color = if (isDimmedState) DimmedTimerBorderColor else TimerBorderColor,
                             fontWeight = FontWeight.Normal,
                             targetWidth = Dp(seriesCircleRadius * 1.1f),
-                            initialFontSize = adaptiveInitialSeriesFontSize  //34.sp
+                            initialFontSize = adaptiveInitialSeriesFontSize
                         )
                     }
                 }
