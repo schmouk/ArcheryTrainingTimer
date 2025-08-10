@@ -15,7 +15,16 @@ A second scenario, not yet implemented, is a timed simulation of individual duel
 ---
 ## User documentation
 
-...to come with Release 0.1 - not yet released.
+When launching the app a single screen shows.
+
+![launched app](./picts/001.jpg)
+
+The first thing to doit to select the options for the training session:
+* duration of each repetition  
+you will be helped to not do successive exercises at a faster or slower pace, beeps and display will help you
+* number of repetitions in each series  
+a graphical display will help you know how much of current series you have already completed. A double beep will inform you that you have completed a series.  
+Notice:  
 
 
 ---
