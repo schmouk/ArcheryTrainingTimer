@@ -16,8 +16,7 @@ A second scenario, not yet implemented, is a timed simulation of individual duel
 ## User documentation
 
 When launching the app a single screen shows.
-
-![launched app](./picts/001.jpg)
+<img src="./picts/001.jpg" alt="launched app screen" width="300"/>
 
 The first thing to doit to select the options for the training session:
 * duration of each repetition  
