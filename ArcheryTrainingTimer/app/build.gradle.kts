@@ -1,65 +1,176 @@
+import java.util.Properties // Ensure this import is present
+import org.gradle.api.plugins.BasePluginExtension
+
+// Plugins block is usually essential
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose)
+    id("com.android.application")
+    id("base")
+    id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.compose") // OR alias(libs.plugins.kotlin.compose) if using version catalog
 }
 
+// Set archivesBaseName DIRECTLY
+// Given the methods list, this should work
+//project.extensions.getByType(BasePluginExtension::class.java).archivesBaseName = "ArcheryTrainingTimer"
+// --- OR, even simpler if 'base' extension resolves directly and correctly ---
+base.archivesBaseName = "ArcheryTrainingTimer"
+// Try the more explicit project.extensions.getByType first, as it's less ambiguous.
+
+// Load properties from keystore.properties
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties()
+
+if (keystorePropertiesFile.exists() && keystorePropertiesFile.isFile) {
+    try {
+        keystorePropertiesFile.inputStream().use { input ->
+            keystoreProperties.load(input)
+        }
+        println("INFO: Keystore properties loaded from ${keystorePropertiesFile.absolutePath}")
+    } catch (e: Exception) {
+        println("ERROR: Failed to load keystore.properties: ${e.message}")
+        // Optionally throw an error if signing is mandatory for this configuration phase
+        // throw GradleException("Failed to load keystore.properties", e)
+    }
+} else {
+    println("WARNING: keystore.properties file not found at ${keystorePropertiesFile.absolutePath}. Release signing will be unconfigured.")
+}
+
+// Minimal Android block
 android {
-    namespace = "com.example.archerytrainingtimer"
-    compileSdk = 36
+    namespace = "com.example.archerytrainingtimer" // Replace if different
+    compileSdk = 36 // Or your current compileSdk
+
+    // This sets the base name for archives (APKs, AABs)
+    // It's a bit of a legacy setting but often still respected for the base.
+    //setProperty("archivesBaseName", "ArcheryTrainingTimer-${defaultConfig.versionName}")
 
     defaultConfig {
         applicationId = "com.example.archerytrainingtimer"
-        minSdk = 24
-        targetSdk = 36
+        minSdk = 24 // Or your current minSdk
+        targetSdk = 36 // Or your current targetSdk
         versionCode = 1
-        versionName = "1.0"
+        versionName = "0.1.0"
+    }
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    // --- Start of Naming Configuration ---
+
+    // If you need more specific control per variant, especially if the above
+    // doesn't give you the exact "-vVERSION-BUILDTYPE.apk" format consistently,
+    // we might need to iterate variants, but using modern APIs.
+    // --- End of Naming Configuration ---
+
+    signingConfigs {
+        create("release") {
+            // Only configure signing if all properties are available
+            if (keystoreProperties.containsKey("storeFile") &&
+                keystoreProperties.containsKey("storePassword") &&
+                keystoreProperties.containsKey("keyAlias") &&
+                keystoreProperties.containsKey("keyPassword")) {
+
+                storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            } else {
+                println("WARNING: Release signing configuration is incomplete due to missing properties in keystore.properties.")
+                // You might want to make this an error if release signing is critical
+                // For CI/CD environments, you might use environment variables instead of keystore.properties
+            }
+        }
+        // You can also define a debug signingConfig if needed, but usually not necessary
+        // as Android Studio uses a default debug keystore automatically.
     }
 
     buildTypes {
-        release {
-            isMinifyEnabled = false
+        getByName("release") {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
         }
+
+        getByName("debug") {
+            // Debug builds are usually signed with a default debug keystore
+            // No explicit signingConfig needed unless you have specific needs
+        }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "1.8"
     }
     buildFeatures {
         compose = true
     }
+    composeOptions {
+        // Ensure you have a valid Compose Compiler version.
+        // If using BOM, this is often managed by it.
+        // If not using BOM or using a version catalog, it might look like:
+        kotlinCompilerExtensionVersion = "1.5.3" // REPLACE with your actual/compatible version or libs.versions.compose.compiler.get()
+    }
+    packaging { // Added from your original, good for excluding duplicate metadata
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+    }
 }
 
-dependencies {
 
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.activity.compose)
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.ui)
-    implementation(libs.androidx.ui.graphics)
-    implementation(libs.androidx.ui.tooling.preview)
-    implementation(libs.androidx.material3)
-    implementation("androidx.compose.material:material-icons-core:1.7.8") // Or the latest version
-    implementation("androidx.compose.material:material-icons-extended:1.7.8") // For a wider range of icons, optional if you only need Add/Remove
-    implementation("androidx.datastore:datastore-preferences:1.0.0") // Or the latest version
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0") // For lifecycleScope
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0") // For viewModel
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.ui.test.junit4)
-    debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
+// --- Configure APK Naming with Version ---
+// This uses the modern AndroidComponentsExtension API
+// Ensure your AGP version supports this (AGP 7.0+ is typical)
+androidComponents {
+    onVariants { variant -> // 'variant' here is an instance of com.android.build.api.variant.Variant
+        variant.outputs.forEach { output ->
+            val baseName = project.property("archivesBaseName").toString()
+            val version = android.defaultConfig.versionName ?: "" // Using the Elvis operator for null safety
+            val variantName = variant.name // e.g., "debug", "release"
+
+            // Ensure outputFileName is settable on the specific output type
+            // The type of 'output' can vary. For APKs, it's often related to ApkVariantOutput.
+            // Let's try to find a common settable property.
+            // In many AGP versions, variant.outputs are of type com.android.build.api.variant.VariantOutput
+            // which has a property for outputFileName (or similar) on its concrete implementations.
+            // This is a common pattern for AGP 7+
+            (output as? com.android.build.api.variant.impl.VariantOutputImpl)?.outputFileName?.set(
+                if (version == "") "$baseName-$variantName.apk" else "$baseName-v$version-$variantName.apk"
+            )
+            // If the above cast fails or outputFileName is not settable,
+            // it means the specific AGP version has a slightly different API structure.
+            // The exact type of 'output' and how to set its name can be version-dependent.
+        }
+    }
+}
+
+// Minimal dependencies block
+dependencies {
+    implementation("androidx.activity:activity-compose:1.10.1") // Or the latest stable version
+
+    implementation("androidx.core:core-ktx:1.16.0") // Example minimal dependency
+
+    // Compose Bill of Materials (BOM) - Recommended
+    // The BOM ensures that versions of different Compose libraries are compatible.
+    implementation(platform("androidx.compose:compose-bom:2024.05.00")) // REPLACE with latest BOM version
+
+    // Essential Compose UI libraries (versions managed by BOM if used)
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.ui:ui-graphics")
+    implementation("androidx.compose.material3:material3") // If you use Material 3 components
+    // implementation("androidx.compose.material:material") // If you use Material 2 components
+
+    // Tooling for Previews (optional but very helpful)
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    debugImplementation("androidx.compose.ui:ui-tooling") // For tools like Layout Inspector
+
+    // DataStore Preferences
+    implementation("androidx.datastore:datastore-preferences:1.1.7") // Or the latest stable version
+
+    // Lifecycle KTX (often useful with Compose)
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.2") // Or your version
 
 }
