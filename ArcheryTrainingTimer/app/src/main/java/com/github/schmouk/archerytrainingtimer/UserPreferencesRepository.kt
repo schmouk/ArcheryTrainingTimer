@@ -1,4 +1,4 @@
-package com.example.archerytrainingtimer
+package com.github.schmouk.archerytrainingtimer
 
 import android.content.Context
 import android.util.Log
@@ -14,8 +14,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import java.io.IOException
-import kotlin.collections.remove
-import kotlin.text.clear
 
 // Define the DataStore instance at the top level, associated with the application context
 // The name "user_preferences" will be the filename for the DataStore file.

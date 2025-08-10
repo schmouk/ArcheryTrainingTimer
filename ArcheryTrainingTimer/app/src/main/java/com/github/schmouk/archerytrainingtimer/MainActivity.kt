@@ -1,4 +1,4 @@
-package com.example.archerytrainingtimer
+package com.github.schmouk.archerytrainingtimer
 
 import android.annotation.SuppressLint
 import android.media.AudioAttributes

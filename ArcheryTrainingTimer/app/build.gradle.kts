@@ -37,7 +37,7 @@ if (keystorePropertiesFile.exists() && keystorePropertiesFile.isFile) {
 
 // Minimal Android block
 android {
-    namespace = "com.example.archerytrainingtimer" // Replace if different
+    namespace = "com.github.schmouk.archerytrainingtimer"
     compileSdk = 36 // Or your current compileSdk
 
     // This sets the base name for archives (APKs, AABs)
@@ -45,7 +45,7 @@ android {
     //setProperty("archivesBaseName", "ArcheryTrainingTimer-${defaultConfig.versionName}")
 
     defaultConfig {
-        applicationId = "com.example.archerytrainingtimer"
+        applicationId = namespace  //"com.github.schmouk.archerytrainingtimer"
         minSdk = 24 // Or your current minSdk
         targetSdk = 36 // Or your current targetSdk
         versionCode = 1
