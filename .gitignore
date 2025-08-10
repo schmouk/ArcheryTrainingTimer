@@ -24,11 +24,16 @@ deploymentTargetDropDown.xml
 render.experimental.xml
 
 # Keystore files
+.ks
 *.jks
 *.keystore
+keystore.properties
 
 # Google Services (e.g. APIs or Firebase)
 google-services.json
 
 # Android Profiling
 *.hprof
+
+# Archery Training Timer specifics
+archive
