@@ -568,7 +568,8 @@ fun SimpleScreen(
                         )
 
                         // 2. Draw the progress arc
-                        if (!isRestMode && sweepAngle > 0f) {
+                        //if (!isRestMode && sweepAngle > 0f) {
+                        if (!isRestMode && (isTimerRunning || isTimerStopped) && sweepAngle > 0f) {
                             val arcDiameter = (circleRadius - strokeWidthPx / 2f) * 2f
                             val arcTopLeftX = canvasCenterX - arcDiameter / 2f
                             val arcTopLeftY = canvasCenterY - arcDiameter / 2f
