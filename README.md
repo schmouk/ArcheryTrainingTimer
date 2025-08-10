@@ -16,20 +16,40 @@ A second scenario, not yet implemented, is a timed simulation of individual duel
 ## User documentation
 
 When launching the app a single screen shows.
-<img src="./picts/001.jpg" alt="launched app screen" width="300"/>
 
-The first thing to doit to select the options for the training session:
+The first thing to do is to select there the options for the training session:
 * duration of each repetition  
 you will be helped to not do successive exercises at a faster or slower pace, beeps and display will help you
-* number of repetitions in each series  
-a graphical display will help you know how much of current series you have already completed. A double beep will inform you that you have completed a series.  
-Notice:  
+* number of repetitions in each series
+* number of series in the training session.
+
+You may choose to save these preferences by clicking a check box.
+
+Once choices are done you can "Start" the countdown of the first repetition duration. A beep sound is played at the beginning of the repetition. Once completed the duration countdown is reset to its starting value, a beep is played to inform you of the beginning of next repetition and a red circle arc appears to show your progression within the current series of repetition.
+
+You may stop the duration countdown at whish with button "Stop", then "Start" it again to resume countdown. This is a single toggle button whose text changes according to your last click opn it.
+
+Once any series (but the last one of the session) is completed, two beeps are played and a resting time countdown is started. You cannot stop it. The resting time is forced to be 50% of the series duration.
+
+Before the resting period ends, two beeps are played again (7 seconds before completion) to warn you that the next series will be starting. Once the resting period completes, the first repetition of next series begins, a beep sound is played and duration countdown starts.
+
+When the whole training session completes, a dedicated sound is played and the countdown screen is dimmed with all countdowns set to 0.
+
+Countdowns are displayed in two circles with a colored border (yellow).
+* The biggest one shows time countdown for every repetition. The progression of repetitions in a series is shown with a growing circle arc of a different color (red) superimposed to the yellow border.
+* the smaller circle shows series countdown.
+
+When resting time raises, the biggest circle appears with blue border and with blue countdown.
+
+You may quit the application at any moment. Launching it back will restart countdowns to your last saved preferences, or with no selection at all if the related box was unchecked the last time you closed the application.
+
+That's it!
 
 
 ---
 ## Developer documentation
 
-...to come with Release 0.1 - not yet released.  
+ 
 Branch `release-0-1` contains current devs. Have a look to it if you are curious.
 
 
