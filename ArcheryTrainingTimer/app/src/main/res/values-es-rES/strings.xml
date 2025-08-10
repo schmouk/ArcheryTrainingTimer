@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ArcheryTrainingTimer</string>
+    <string name="close_button">Salir</string>
+    <string name="close_app_dialog_title">¿Cerrar la aplicación?</string>
+    <string name="close_app_dialog_message">¿Seguro que quieres salir del Archery Training Timer?</string>
+    <string name="close_app_dialog_confirm">Salir</string>
+    <string name="close_app_dialog_cancel">Cancelar</string>
+    <string name="empty_string"></string>
+    <string name="please_select">Seleccione los controles de su sesión :</string>
+    <string name="repetitions_number_label">Número de repeticiones por serie</string>
+    <string name="repetitions_duration_label">Duración de las repeticiones</string>
+    <string name="rest_indicator">Descanso</string>
+    <string name="save_selection_label">Guardar selección actual</string>
+    <string name="series_number_label">Número de series</string>
+    <string name="series_view_title">Series Training Timer</string>
+    <string name="start_button">Iniciar</string>
+    <string name="stop_button">Detener</string>
+</resources>
