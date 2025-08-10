@@ -43,14 +43,49 @@ When resting time raises, the biggest circle appears with blue border and with b
 
 You may quit the application at any moment. Launching it back will restart countdowns to your last saved preferences, or with no selection at all if the related box was unchecked the last time you closed the application.
 
+
+The application has been developed for and tested on 4 virtual devices and on two physical devices with different screen resolutions and sizes. The targeted Android version runs on nearly 99% of today devices. So, you should not experience any issue on your device, unless you are particularly unlucky.
+
 That's it!
 
 
 ---
 ## Developer documentation
 
- 
-Branch `release-0-1` contains current devs. Have a look to it if you are curious.
+Current version of code is v0.1. It is released as release v0.1.0 
+
+Release 0.1.0 code is a very first version of the application code. It is minimalist, not well architectured, and is released as is mainly because:
+1. code executes with no detected bug
+2. the application is simple enough
+3. it allows the playing of the app for tests and evaluations performed by users
+
+We expect this will help improving quickly and greatly the application functionalities.
+
+A Release 0.2 will add at least one feature and will give us an opportunity of refactoring the code in a satisfaying manner.
+
+The important thing to notice is that current code has been created by an AI Agent supervised by the conceptor of the app. Not knowing anything about Android OS specs as well as kotlin programming, learning and understanding the whole would have needed weeks if not few months of reading and testing.  
+Installing Android Studio, abandoning the proposed default tutorials (definitively of no use) and connecting to Gemini to provide its AI Agent with short and progressive prompts led to:
+* a very quick development of correctly running code;
+* an easy way to refine specs and reqs by our side;
+* a quick overview of Android concepts and kotlin programming;
+* a surprising capacity of the AI agent to greatly understand the prompts in natural language - really suprising;
+* a much bigger surprising capacity of the AI agent to understand what was asked to it and what would have been next steps without having told them to it - far more much surprising;
+* a provided architecture for code which is far not optimal about future maintenance, for sure because of the step-by-step way we decided to ask for the code.
+* a scarry feeling about the near future for coders - but not for long;
+
+Well, until the AI agent began to provide buggy code - finally reassuring about the near future of coders.
+
+The behavior of the AI Agent has been a little bit deceptive in that it was proposing buggy code, was informed of bugs with their related error messages (at compile time or after testing the running code), and then was totally able to propose correct fixes on its own bugs (sometimes after some rounds of tests and errors). So, the related AI is able to fix its own errors but still first propose them without preliminar verifications!
+
+Finally, the explanations provided by the AI Agent were intelligible. They have been of great help for progressing and for learning. Interesting to see also that they were complete - as long as we can get it - but not always provided with the latest avalaible informations (libraries versions for instance, or latest version of Android Studio, i.e. Narwhal by Aug. 2025).
+
+So, Release v0.1 code is small code that works well but which is rotten. Discussing via prompts with Gemini AI Agent helped providing a fully running app in an 8 days long journey while not knowing anything about the environment, the platform, the IDE and the programming language (while being a computer scientist which for sure helped a little bit).
+
+Much conclusive:
+* interacting with a very specialized AI is of great help;
+* it considerably speeds-up a first version code development;
+* it considerably speeds-up as well as the learning of the environment;
+* meanwhile, it seems that it can't yet be successfully used by a novice coder or a no-coder-at-all to get a full running application which embeds even minimalist complexity.
 
 
 ---
