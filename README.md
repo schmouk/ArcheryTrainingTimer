@@ -7,7 +7,7 @@ A small Android application that provides timers for Archery Training
 Archery activity involves timers. Shooting during competitons is time constrained, for instance. Training sessions may be time constrained also.  
 This small Android application aims at providing timers for some of these activities.
 
-A first implemented scenario is a training session organized as series of repetitions of exercises. This is the **Archery Training Timer** scenario. This is currently under development process.
+A first implemented scenario is a training session organized as series of repetitions of exercises. This is the **Series Training Timer** scenario. It is currently under development process - see branch `release-0-1`.
 
 A second scenario, not yet implemented, is a timed simulation of individual duels: **Archery Duels Simulator**.
 
