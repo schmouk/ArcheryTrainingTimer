@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.media.AudioAttributes
 import android.media.SoundPool
 import android.os.Bundle
+import android.view.WindowManager
 
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -69,9 +70,11 @@ import kotlin.math.roundToInt
 // MainActivity class definition (no change from before)
 class MainActivity : ComponentActivity() {
     private lateinit var userPreferencesRepository: UserPreferencesRepository
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         userPreferencesRepository = UserPreferencesRepository(applicationContext)
+        keepScreenOn()
         setContent {
             ArcheryTrainingTimerTheme {
                 SimpleScreen(
@@ -83,6 +86,39 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onResume() {
+        super.onResume()
+        // Keep screen on when the activity is active and in the foreground
+        keepScreenOn()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        // Allow screen to turn off when the activity is no longer in the foreground
+        allowScreenTimeout()
+    }
+
+    // Call this function when you want to allow the screen to turn off normally again
+    // e.g., when your timer stops or the user navigates away from the critical section.
+    private fun allowScreenTimeout() {
+        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    }
+
+    // Call this function when you want to force the screen to stay on
+    // e.g., when your timer starts.
+    private fun keepScreenOn() {
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // It's good practice to clear the flag when the activity is destroyed
+        // to ensure it doesn't leak or affect other parts of the system if not
+        // cleared explicitly elsewhere.
+        allowScreenTimeout()
+    }
+
 }
 
 // AdaptiveText composable
@@ -157,6 +193,7 @@ fun SimpleScreen(
             .setUsage(AudioAttributes.USAGE_MEDIA)  //USAGE_ASSISTANCE_SONIFICATION) // Or USAGE_GAME, USAGE_MEDIA
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
             .build()
+
         SoundPool.Builder()
             .setMaxStreams(1) // Only need to play one beep at a time
             .setAudioAttributes(audioAttributes)
@@ -317,6 +354,15 @@ fun SimpleScreen(
     }
 
     LaunchedEffect(isTimerRunning) {
+        if (isTimerRunning)
+            (this as? ComponentActivity)?.window?.addFlags(
+                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+            )
+        else
+            (this as? ComponentActivity)?.window?.clearFlags(
+                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+            )
+
         while (isTimerRunning) {
             // --- Normal Repetition Countdown ---
             if (!isRestMode) {
