@@ -7,6 +7,7 @@
     <string name="close_app_dialog_confirm">Salir</string>
     <string name="close_app_dialog_cancel">Cancelar</string>
     <string name="empty_string"></string>
+    <string name="please_select">Seleccione los controles de su sesión :</string>
     <string name="repetitions_number_label">Número de repeticiones por serie</string>
     <string name="repetitions_duration_label">Duración de las repeticiones</string>
     <string name="rest_indicator">Descanso</string>

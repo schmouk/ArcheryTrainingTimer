@@ -700,7 +700,6 @@ fun SimpleScreen(
                                     alpha = 0.5f
                                 )
                             )
-                            //style = customInteractiveTextStyle.copy(color = if (isTimerRunning || allSelectionsMade) AppButtonTextColor else AppButtonTextColor.copy(alpha = 0.5f))
                         )
                     }
 
@@ -745,13 +744,28 @@ fun SimpleScreen(
             }
 
             // --- Settings Sections (Repetitions duration, Number of repetitions, etc.) ---
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = deviceScaling(16).dp, bottom = deviceScaling(4).dp),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text( // Select Session parameters Row
+                    text = stringResource(id = R.string.please_select),
+                    style = smallerTextStyle,
+                    fontStyle = FontStyle.Italic,
+                    color = AppTitleColor.copy(alpha = if (allSelectionsMade) 0f else 1f)
+
+                )
+            }
+
             Text( // Repetitions duration title
                 text = stringResource(id = R.string.repetitions_duration_label),
-                //text = "Repetitions duration",
                 style = customInteractiveTextStyle,
                 color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier
-                    .padding(top = deviceScaling(24).dp)
+                    .padding(top = deviceScaling(8).dp)
                     .align(Alignment.CenterHorizontally)
             )
             Row( // Duration Buttons Row
@@ -924,7 +938,7 @@ fun SimpleScreen(
 
             Row( // Checkbox Row
                 modifier = Modifier
-                    .padding(top = deviceScaling(4).dp, bottom = generalPadding)
+                    .padding(top = deviceScaling(4).dp, bottom = 0.dp)
                     .toggleable(
                         value = saveSelectionChecked,
                         role = Role.Checkbox,
@@ -956,10 +970,9 @@ fun SimpleScreen(
                 )
             }
 
-            //Spacer(Modifier.weight(0.05f))
-            Spacer(modifier = Modifier.height(majorSpacerHeight))
+            //Spacer(modifier = Modifier.height(majorSpacerHeight))
 
-            Button( // Close Button
+            Button( // Quit Button
                 onClick = { processCloseAppActions() },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = AppButtonColor,
@@ -974,7 +987,6 @@ fun SimpleScreen(
                     stringResource(id = R.string.close_button),
                     style = customInteractiveTextStyle
                 )
-                //Text("Close", style = customInteractiveTextStyle)
             }
         }
 
@@ -990,5 +1002,6 @@ fun SimpleScreen(
                 ) // Add some padding from the screen edges
                 .size(34.dp) // Set the size of the image on screen
         )
+
     }
 }

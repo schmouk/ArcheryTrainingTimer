@@ -7,6 +7,7 @@
     <string name="close_app_dialog_confirm">Esci</string>
     <string name="close_app_dialog_cancel">Annulla</string>
     <string name="empty_string"></string>
+    <string name="please_select">Seleziona i controlli della sessione :</string>
     <string name="repetitions_number_label">Numero di ripetizioni per serie</string>
     <string name="repetitions_duration_label">Durata delle ripetizioni</string>
     <string name="rest_indicator">Riposo</string>

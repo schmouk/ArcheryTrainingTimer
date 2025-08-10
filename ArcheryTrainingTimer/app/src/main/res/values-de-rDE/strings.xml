@@ -7,6 +7,7 @@
     <string name="close_app_dialog_confirm">Ausfahrt</string>
     <string name="close_app_dialog_cancel">Abbrechen</string>
     <string name="empty_string"></string>
+    <string name="please_select">Wählen Sie Ihre Sitzungssteuerung aus :</string>
     <string name="repetitions_number_label">Anzahl der Wiederholungen pro Serie</string>
     <string name="repetitions_duration_label">Wiederholungsdauer</string>
     <string name="rest_indicator">Pause...</string>
