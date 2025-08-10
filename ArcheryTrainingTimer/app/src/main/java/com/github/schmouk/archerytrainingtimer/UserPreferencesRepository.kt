@@ -34,7 +34,6 @@ class UserPreferencesRepository(context: Context) {
     private val dataStore = context.dataStore
 
     // Define keys for each preference
-    // It's good practice to make these private object properties
     private object PreferencesKeys {
         val SELECTED_DURATION = stringPreferencesKey("selected_duration")
         val NUMBER_OF_REPETITIONS = intPreferencesKey("number_of_repetitions")
@@ -59,7 +58,6 @@ class UserPreferencesRepository(context: Context) {
             val numberOfSeries = preferences[PreferencesKeys.NUMBER_OF_SERIES]
             val loadedSaveFlag = preferences[PreferencesKeys.SAVE_SELECTION] // ADD THIS
             val saveSelection = loadedSaveFlag ?: false
-                //preferences[PreferencesKeys.SAVE_SELECTION] ?: false // Default to false if not set
 
             UserPreferences(selectedDuration, numberOfRepetitions, numberOfSeries, saveSelection)
         }
@@ -91,7 +89,7 @@ class UserPreferencesRepository(context: Context) {
     suspend fun clearAllPreferencesIfSaveIsUnchecked() {
         dataStore.edit { preferences ->
             preferences.clear() // Clears all preferences
-            // Or you could selectively remove them:
+            // Or could selectively remove them:
             // preferences.remove(PreferencesKeys.SELECTED_DURATION)
             // preferences.remove(PreferencesKeys.NUMBER_OF_REPETITIONS)
             // preferences.remove(PreferencesKeys.NUMBER_OF_SERIES)

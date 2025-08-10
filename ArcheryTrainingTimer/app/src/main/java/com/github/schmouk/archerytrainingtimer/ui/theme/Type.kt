@@ -1,4 +1,6 @@
-package com.example.archerytrainingtimer.ui.theme // Ensure this package is correct
+package com.github.schmouk.archerytrainingtimer.ui.theme
+
+// Notice: commented imports might be useful later, so we keep them here
 
 //import androidx.compose.foundation.layout.padding
 //import androidx.compose.material3.MaterialTheme
@@ -21,12 +23,12 @@ val AppTypography = Typography(
     ),
     titleLarge = TextStyle(
         fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Normal, // Title text is often bold
-        fontSize = 36.sp,             // Match the size you used in SimpleScreen
+        fontWeight = FontWeight.Normal, // Notice: Title text is often bold
+        fontSize = 36.sp,
         lineHeight = 40.sp,
         letterSpacing = 0.sp
     )
 
-    // Add other styles if you need them, e.g., for button text if different
+    // Add other styles if needed, e.g. for button text if different
 
 )

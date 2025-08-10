@@ -1,4 +1,4 @@
-package com.example.archerytrainingtimer.ui.theme
+package com.github.schmouk.archerytrainingtimer.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

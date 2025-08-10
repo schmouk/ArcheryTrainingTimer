@@ -1,5 +1,5 @@
-import java.util.Properties // Ensure this import is present
-import org.gradle.api.plugins.BasePluginExtension
+import java.util.Properties
+//import org.gradle.api.plugins.BasePluginExtension
 
 // Plugins block is usually essential
 plugins {
@@ -9,12 +9,8 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose") // OR alias(libs.plugins.kotlin.compose) if using version catalog
 }
 
-// Set archivesBaseName DIRECTLY
-// Given the methods list, this should work
-//project.extensions.getByType(BasePluginExtension::class.java).archivesBaseName = "ArcheryTrainingTimer"
-// --- OR, even simpler if 'base' extension resolves directly and correctly ---
+// Set archivesBaseName
 base.archivesBaseName = "ArcheryTrainingTimer"
-// Try the more explicit project.extensions.getByType first, as it's less ambiguous.
 
 // Load properties from keystore.properties
 val keystorePropertiesFile = rootProject.file("keystore.properties")
@@ -29,7 +25,7 @@ if (keystorePropertiesFile.exists() && keystorePropertiesFile.isFile) {
     } catch (e: Exception) {
         println("ERROR: Failed to load keystore.properties: ${e.message}")
         // Optionally throw an error if signing is mandatory for this configuration phase
-        // throw GradleException("Failed to load keystore.properties", e)
+        //throw GradleException("Failed to load keystore.properties", e)
     }
 } else {
     println("WARNING: keystore.properties file not found at ${keystorePropertiesFile.absolutePath}. Release signing will be unconfigured.")
@@ -38,11 +34,7 @@ if (keystorePropertiesFile.exists() && keystorePropertiesFile.isFile) {
 // Minimal Android block
 android {
     namespace = "com.github.schmouk.archerytrainingtimer"
-    compileSdk = 36 // Or your current compileSdk
-
-    // This sets the base name for archives (APKs, AABs)
-    // It's a bit of a legacy setting but often still respected for the base.
-    //setProperty("archivesBaseName", "ArcheryTrainingTimer-${defaultConfig.versionName}")
+    compileSdk = 36 // Or the current compileSdk
 
     defaultConfig {
         applicationId = namespace  //"com.github.schmouk.archerytrainingtimer"
@@ -51,13 +43,6 @@ android {
         versionCode = 1
         versionName = "0.1.0"
     }
-
-    // --- Start of Naming Configuration ---
-
-    // If you need more specific control per variant, especially if the above
-    // doesn't give you the exact "-vVERSION-BUILDTYPE.apk" format consistently,
-    // we might need to iterate variants, but using modern APIs.
-    // --- End of Naming Configuration ---
 
     signingConfigs {
         create("release") {
@@ -77,7 +62,7 @@ android {
                 // For CI/CD environments, you might use environment variables instead of keystore.properties
             }
         }
-        // You can also define a debug signingConfig if needed, but usually not necessary
+        // We can also define a debug signingConfig if needed, but usually not necessary
         // as Android Studio uses a default debug keystore automatically.
     }
 
@@ -108,10 +93,10 @@ android {
         compose = true
     }
     composeOptions {
-        // Ensure you have a valid Compose Compiler version.
+        // Ensure we have a valid Compose Compiler version.
         // If using BOM, this is often managed by it.
         // If not using BOM or using a version catalog, it might look like:
-        kotlinCompilerExtensionVersion = "1.5.3" // REPLACE with your actual/compatible version or libs.versions.compose.compiler.get()
+        kotlinCompilerExtensionVersion = "1.5.3" // REPLACE with the actual/compatible version or libs.versions.compose.compiler.get()
     }
     packaging { // Added from your original, good for excluding duplicate metadata
         resources {
@@ -123,13 +108,13 @@ android {
 
 // --- Configure APK Naming with Version ---
 // This uses the modern AndroidComponentsExtension API
-// Ensure your AGP version supports this (AGP 7.0+ is typical)
+// Ensure our AGP version supports this (AGP 7.0+ is typical)
 androidComponents {
     onVariants { variant -> // 'variant' here is an instance of com.android.build.api.variant.Variant
         variant.outputs.forEach { output ->
             val baseName = project.property("archivesBaseName").toString()
             val version = android.defaultConfig.versionName ?: "" // Using the Elvis operator for null safety
-            val variantName = variant.name // e.g., "debug", "release"
+            val variantName = variant.name // i.e., "debug", "release"
 
             // Ensure outputFileName is settable on the specific output type
             // The type of 'output' can vary. For APKs, it's often related to ApkVariantOutput.
@@ -160,8 +145,8 @@ dependencies {
     // Essential Compose UI libraries (versions managed by BOM if used)
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
-    implementation("androidx.compose.material3:material3") // If you use Material 3 components
-    // implementation("androidx.compose.material:material") // If you use Material 2 components
+    implementation("androidx.compose.material3:material3") // If use of Material 3 components
+    // implementation("androidx.compose.material:material") // If use of Material 2 components
 
     // Tooling for Previews (optional but very helpful)
     implementation("androidx.compose.ui:ui-tooling-preview")
@@ -171,6 +156,6 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.1.7") // Or the latest stable version
 
     // Lifecycle KTX (often useful with Compose)
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.2") // Or your version
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.2") // Or our version
 
 }

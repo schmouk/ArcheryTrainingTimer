@@ -21,8 +21,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
@@ -33,41 +33,42 @@ import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.TextUnit
 
-import com.example.archerytrainingtimer.ui.theme.*
+import com.github.schmouk.archerytrainingtimer.ui.theme.*
+
+import kotlin.math.min
+import kotlin.math.roundToInt
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.text.font.FontStyle
-import kotlin.math.min
-import kotlin.math.roundToInt
 
 // import android.util.Log
 
-// MainActivity class definition (no change from before)
+// MainActivity class definition
 class MainActivity : ComponentActivity() {
     private lateinit var userPreferencesRepository: UserPreferencesRepository
 
@@ -175,6 +176,7 @@ fun SimpleScreen(
     val currentScreenHeightDp = configuration.screenHeightDp.dp
     val refScreenWidthDp = 411.dp // Your baseline for good proportions
     val refScreenHeightDp = 914.dp // Your baseline for good proportions
+
     // Calculate scale factor, ensure it's not Dp / Dp if you need a raw float
     val textHorizontalScaleFactor = currentScreenWidthDp.value / refScreenWidthDp.value
     val horizontalScaleFactor = textHorizontalScaleFactor.coerceIn(0.60f, 1.0f)
@@ -424,14 +426,10 @@ fun SimpleScreen(
                                         val seriesDuration = (initialDurationSeconds ?: 1) * (numberOfRepetitions ?: 1) // Avoid 0 if null
                                         initialRestTime = (seriesDuration * restingRatio).roundToInt().coerceAtLeast(endOfRestBeepTime + 2) // Ensure rest is at least 5s for the beep logic
                                         currentRestTimeLeft = initialRestTime
-
-                                        // reset duration for next repetition in the same series
-                                        //currentDurationSecondsLeft = initialDurationSeconds
-                                        //currentRepetitionsLeft = numberOfRepetitions
                                     }
                                 } else {
                                     // (currentSeriesLeft != null && currentSeriesLeft!! > 0)
-                                    // this is the end of the training session
+                                    // --> this is the end of the training session
                                     // notice: dead code? Let's check...
 
                                     // If no more series left, stop the timer and show dimmed state
@@ -440,10 +438,10 @@ fun SimpleScreen(
                                     isDimmedState = true
                                     isRestMode = false
                                     playRestBeepEvent = false
+                                    playEndBeepEvent = true
                                     currentDurationSecondsLeft = 0
                                     currentRepetitionsLeft = 0
                                     currentSeriesLeft = 0
-                                    playEndBeepEvent = true
                                     break
                                 }
                             } else {
@@ -465,12 +463,13 @@ fun SimpleScreen(
             if (isRestMode) { // Check isRestMode again, as it could have been set in the block above
                 while (isTimerRunning && isActive) {
                     if (currentRestTimeLeft != null && currentRestTimeLeft!! > 0) {
-                        // Check for 5 seconds left to play beeps
+                        // Check for some seconds left --> to play rest-beeps
                         if (currentRestTimeLeft == endOfRestBeepTime) {
                             playRestBeepEvent = true
                         }
                         delay(1000L)
-                        if (!isTimerRunning || !isRestMode) break
+                        if (!isTimerRunning || !isRestMode)
+                            break
                         currentRestTimeLeft = currentRestTimeLeft!! - 1
                     } else {
                         // Rest time ended (currentRestTimeLeft is 0 or null)
@@ -506,7 +505,6 @@ fun SimpleScreen(
     Box( // PARENT BOX - This is crucial for Modifier.align(Alignment.BottomStart) on the Image
         modifier = Modifier.fillMaxSize()
     ) {
-
         Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -516,7 +514,6 @@ fun SimpleScreen(
         {
             Text( // Title
                 text = stringResource(id = R.string.series_view_title),
-                //text = "Series Training Timer",
                 style = MaterialTheme.typography.titleLarge,
                 color = AppTitleColor,
                 modifier = Modifier
@@ -568,8 +565,10 @@ fun SimpleScreen(
                         )
 
                         // 2. Draw the progress arc
-                        //if (!isRestMode && sweepAngle > 0f) {
                         if (!isRestMode && (isTimerRunning || isTimerStopped) && sweepAngle > 0f) {
+                            // Notice, reminder:
+                            //  (isTimerRunning || isTimerStopped) avoids red-ghost display
+                            //  in big timer border when selecting number of repetitions
                             val arcDiameter = (circleRadius - strokeWidthPx / 2f) * 2f
                             val arcTopLeftX = canvasCenterX - arcDiameter / 2f
                             val arcTopLeftY = canvasCenterY - arcDiameter / 2f
@@ -593,11 +592,12 @@ fun SimpleScreen(
                     Column(
                         modifier = Modifier.fillMaxSize(), // Allow Column to fill the Box to help with alignment
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        //verticalArrangement = Arrangement.Center // To center items if they don't fill the space
                     ) {
                         val topWeight = if (textHorizontalScaleFactor <= 1.5f) 1f
                                         else (1f - 0.35f * (textHorizontalScaleFactor - 1.0f))
-                        Spacer(modifier = Modifier.weight(topWeight))  //1f)) // Pushes content downwards
+
+                        // Pushes content downwards
+                        Spacer(modifier = Modifier.weight(topWeight))
 
                         // AdaptiveText for the main duration
                         val durationToDisplayValue =
@@ -625,7 +625,6 @@ fun SimpleScreen(
                         // "Rest..." Text, displayed only during rest mode
                         AdaptiveText(
                             text = stringResource(id = if (isRestMode) R.string.rest_indicator else R.string.empty_string),
-                            //text = if (isRestMode) "Rest..." else "",
                             modifier = Modifier.padding(top = 0.dp),
                             color = WABlueColor,
                             fontWeight = FontWeight.Bold,
@@ -634,9 +633,8 @@ fun SimpleScreen(
                             initialFontSize = adaptiveInitialRestFontSize
                         )
 
-                        Spacer(modifier = Modifier.weight(0.65f)) // Less weight below, so numbers are slightly above true center
+                        Spacer(modifier = Modifier.weight(0.65f))
                         // to make space for "Rest..." text to appear "below center".
-                        // Adjust these weights (e.g., 1f and 1f for true center of the block)
                     }
                 }
 
@@ -695,7 +693,6 @@ fun SimpleScreen(
                     ) {
                         Text(
                             text = stringResource(id = if (isTimerRunning) R.string.stop_button else R.string.start_button),
-                            //text = if (isTimerRunning) "Stop" else "Start",
                             style = customInteractiveTextStyle.copy(
                                 color = if (allSelectionsMade && !isRestMode) AppButtonTextColor else AppButtonTextColor.copy(
                                     alpha = 0.5f
@@ -799,11 +796,6 @@ fun SimpleScreen(
                             enabled = isSelected || !(isTimerRunning || isTimerStopped),
                             modifier = Modifier
                                 .width(durationButtonWidth)
-                            //.scale(horizontalScaleFactor)
-                            /*.padding(
-                                    horizontal = if (isSelected) borderStrokeWidth else 0.dp,
-                                    vertical = 0.dp  //if (isSelected) 0.dp else borderStrokeWidth
-                                )*/
                         ) {
                             Text(
                                 text = duration,
@@ -821,7 +813,6 @@ fun SimpleScreen(
 
             Text( // Number of repetitions title
                 text = stringResource(id = R.string.repetitions_number_label),
-                //text = "Number of repetitions per series",
                 style = customInteractiveTextStyle,
                 color = AppTextColor,
                 modifier = Modifier
@@ -880,7 +871,6 @@ fun SimpleScreen(
 
             Text( // Number of series title
                 text = stringResource(id = R.string.series_number_label),
-                //text = "Number of series",
                 style = customInteractiveTextStyle,
                 color = AppTextColor,
                 modifier = Modifier
@@ -965,13 +955,10 @@ fun SimpleScreen(
                 Spacer(modifier = Modifier.width(deviceScaling(6).dp))
                 Text(
                     text = stringResource(id = R.string.save_selection_label),
-                    //text = "Save current selection",
                     style = smallerTextStyle,
                     color = AppTextColor.copy(alpha = if (allSelectionsMade) 1f else 0.38f)
                 )
             }
-
-            //Spacer(modifier = Modifier.height(majorSpacerHeight))
 
             Button( // Quit Button
                 onClick = { processCloseAppActions() },

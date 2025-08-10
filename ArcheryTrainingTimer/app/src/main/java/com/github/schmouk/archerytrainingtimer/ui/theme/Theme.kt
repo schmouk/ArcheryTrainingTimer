@@ -1,11 +1,11 @@
-package com.example.archerytrainingtimer.ui.theme // Ensure this package is correct
+package com.github.schmouk.archerytrainingtimer.ui.theme // Ensure this package is correct
 
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-// Define your single, fixed ColorScheme using the colors from Color.kt
+// Define our single, fixed ColorScheme using the colors from Color.kt
 private val FixedDarkColorScheme = ColorScheme(
     primary = AppTextColor,
     onPrimary = AppBackgroundColor,
