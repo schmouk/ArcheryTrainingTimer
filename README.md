@@ -1,4 +1,6 @@
 # ArcheryTrainingTimer
+[![license](http://img.shields.io/github/license/schmouk/archerytrainingtimer.svg?style=plastic&labelColor=blueviolet&color=lightblue)](https://github.com/schmouk/archerytrainingtimer/license)  [![Latest release](http://img.shields.io/github/release/schmouk/archerytrainingtimer.svg?style=plastic&labelColor=blueviolet&color=success)](https://github.com/schmouk/archerytrainingtimer/releases)
+
 A small Android application that provides timers for Archery Training
 
 
