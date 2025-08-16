@@ -85,7 +85,7 @@ class UserPreferencesRepository(context: Context) {
     }
 
     // Function to clear preferences if the user unchecks "saveSelection"
-    // and we decide not to keep the values.
+    // and we decide not to keep the values-rFR-en-rEN.
     suspend fun clearAllPreferencesIfSaveIsUnchecked() {
         dataStore.edit { preferences ->
             preferences.clear() // Clears all preferences

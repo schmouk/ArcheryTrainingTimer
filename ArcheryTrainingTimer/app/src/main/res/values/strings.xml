@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">ArcheryTrainingTimer</string>
-    <string name="close_button">Quit</string>
-    <string name="close_app_dialog_title">Close App?</string>
-    <string name="close_app_dialog_message">Are you sure you want to exit the Archery Training Timer?</string>
-    <string name="close_app_dialog_confirm">Exit</string>
-    <string name="close_app_dialog_cancel">Cancel</string>
-    <string name="empty_string"></string>
-    <string name="please_select">Select your session controls:</string>
-    <string name="repetitions_number_label">Number of repetitions per series</string>
-    <string name="repetitions_duration_label">Repetitions duration</string>
-    <string name="rest_indicator">Rest...</string>
-    <string name="save_selection_label">Save current selection</string>
-    <string name="series_number_label">Number of series</string>
+    <string name="close_button">Quitter</string>
+    <string name="close_app_dialog_title">Fermer ?</string>
+    <string name="close_app_dialog_message">Êtes vous sûr de vouloir quitter Archery Training Timer ?</string>
+    <string name="close_app_dialog_confirm">Quitter</string>
+    <string name="close_app_dialog_cancel">Annuler</string>
+    <string name="empty_string"> </string>
+    <string name="please_select">Choisissez les paramètres de votre séance :</string>
+    <string name="repetitions_number_label">Répétitions par série</string>
+    <string name="repetitions_duration_label">Durée de chaque répétition</string>
+    <string name="rest_indicator">Récup\'</string>
+    <string name="save_selection_label">Sauvegarder la sélection</string>
+    <string name="series_number_label">Nombre de séries</string>
     <string name="series_view_title">Series Training Timer</string>
-    <string name="start_button">Start</string>
-    <string name="stop_button">Stop</string>
+    <string name="start_button">Démarrer</string>
+    <string name="stop_button">Pause</string>
 </resources>
