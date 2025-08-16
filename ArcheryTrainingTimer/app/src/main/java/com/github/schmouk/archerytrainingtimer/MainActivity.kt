@@ -341,7 +341,7 @@ fun SimpleScreen(
             numberOfRepetitions != null &&
             numberOfSeries != null
 
-    // Update initial/current countdown values when selections change AND timer is NOT running
+    // Update initial/current countdown values-rFR-en-rEN when selections change AND timer is NOT running
     LaunchedEffect(selectedDurationString, numberOfRepetitions, numberOfSeries, isTimerRunning) {
         if (!isTimerRunning && !isTimerStopped) {
             val durationValue = selectedDurationString?.split(" ")?.firstOrNull()?.toIntOrNull()
@@ -368,7 +368,7 @@ fun SimpleScreen(
         while (isTimerRunning) {
             // --- Normal Repetition Countdown ---
             if (!isRestMode) {
-                // Ensure values are sane before starting countdown loop
+                // Ensure values-rFR-en-rEN are sane before starting countdown loop
                 // If starting from a dimmed state (reps=0, duration=0), reset them.
                 if (currentRepetitionsLeft == 0) { // Indicates a previous cycle was completed
                     currentRepetitionsLeft = numberOfRepetitions  // Reset for new cycle

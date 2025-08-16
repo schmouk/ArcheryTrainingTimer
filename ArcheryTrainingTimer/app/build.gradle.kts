@@ -46,7 +46,7 @@ android {
         // pass it as a command line argument, e.g., -PversionName=0.1.0
         // Here, we use a hardcoded value for simplicity, but you can replace it with a property if needed.
         // versionName = project.findProperty("versionName")?.toString() ?: "0.1.0"
-        versionName = "0.1.1"
+        versionName = "0.1.2"
     }
 
     signingConfigs {
