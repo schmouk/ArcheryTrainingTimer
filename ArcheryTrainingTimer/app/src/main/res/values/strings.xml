@@ -14,6 +14,6 @@
     <string name="save_selection_label">Sauvegarder la sélection</string>
     <string name="series_number_label">Nombre de séries</string>
     <string name="series_view_title">Series Training Timer</string>
-    <string name="start_button">Start</string>
-    <string name="stop_button">Stop</string>
+    <string name="start_button">Démarrer</string>
+    <string name="stop_button">Pause</string>
 </resources>
