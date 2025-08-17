@@ -1262,6 +1262,7 @@ fun SimpleScreen(
                     )
                 }
 
+                /*
                 Button( // Quit Button
                     onClick = { processCloseAppActions() },
                     colors = ButtonDefaults.buttonColors(
@@ -1281,6 +1282,7 @@ fun SimpleScreen(
                         style = customInteractiveTextStyle
                     )
                 }
+                */
             }
 
             // --- Add Your Logo Here, Aligned to Bottom-Left ---
