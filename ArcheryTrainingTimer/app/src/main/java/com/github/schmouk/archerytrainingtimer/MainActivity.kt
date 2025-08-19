@@ -1,9 +1,14 @@
 package com.github.schmouk.archerytrainingtimer
 
 import android.annotation.SuppressLint
+import android.graphics.Paint
+import android.graphics.Rect
+import android.graphics.Typeface
 import android.media.AudioAttributes
 import android.media.SoundPool
 import android.os.Bundle
+import android.text.TextPaint
+//import android.util.Log
 import android.view.WindowManager
 
 import androidx.activity.ComponentActivity
@@ -15,17 +20,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
-//import androidx.compose.foundation.layout.asPaddingValues
-//import androidx.compose.foundation.layout.Box
-//import androidx.compose.foundation.layout.Column
-//import androidx.compose.foundation.layout.fillMaxSize
-//import androidx.compose.foundation.layout.height
-//import androidx.compose.foundation.layout.padding
-//import androidx.compose.foundation.layout.safeDrawing // For overall safe drawing area
-//import androidx.compose.foundation.layout.size
-//import androidx.compose.foundation.layout.statusBars // For statusBars specific insets
-//import androidx.compose.foundation.layout.width
-//import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -61,8 +55,12 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+//import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -78,8 +76,6 @@ import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-
-import android.util.Log
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -234,7 +230,6 @@ fun MyCustomTopAppBar() {
         // Remove .padding(WindowInsets.statusBars.asPaddingValues()) if using the above
         */
         title = {
-            Log.d("TopAppBarDebug", "Title Composable recomposing") // Add a log
             Text(
                 text = stringResource(id = R.string.app_name), // Assuming app_name is "Archery Training Timer"
                 style = MaterialTheme.typography.titleLarge // Or your preferred style
@@ -561,6 +556,9 @@ fun SimpleScreen(
                 val repetitionsLazyListState = rememberLazyListState()
                 val coroutineScope = rememberCoroutineScope()
 
+                val restModeText = stringResource(R.string.rest_indicator).toString()
+
+
                 // This flag will determine if the timers should be dimmed
                 // It's true when a full cycle of repetitions is complete and timer is stopped
                 val showDimmedTimers = rememberSaveable(currentRepetitionsLeft, isTimerRunning) {
@@ -743,8 +741,7 @@ fun SimpleScreen(
                                     isTimerRunning = true
                                     isDimmedState = false
                                     isTimerStopped = false
-                                    currentRepetitionsLeft =
-                                        numberOfRepetitions // Reset for new cycle
+                                    currentRepetitionsLeft = numberOfRepetitions // Reset for new cycle
                                     currentSeriesLeft = currentSeriesLeft!! - 1
                                     break // Exit rest loop
                                 }
@@ -787,9 +784,10 @@ fun SimpleScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = deviceScaling(8).dp)
-                        .height(IntrinsicSize.Min), // Let the content determine height, or set fixed like 64.dp
+                        .height(deviceScaling(56).dp),
+                        //.height(IntrinsicSize.Min) // Let the content determine heigt, or set fixed like 64.dp
                     horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
+                    //verticalAlignment = Alignment.CenterVertically
                 ) {
                     //-- START Button --
                     Button(
@@ -840,11 +838,10 @@ fun SimpleScreen(
                         Text(
                             text = stringResource(id = if (isTimerRunning) R.string.stop_button else R.string.start_button),
                             style = customInteractiveTextStyle.copy(
-                                color = if (allSelectionsMade && !isRestMode) AppButtonTextColor else AppButtonTextColor.copy(
-                                    alpha = 0.5f
-                                )
+                                color = if (allSelectionsMade && !isRestMode) AppButtonTextColor
+                                        else AppButtonTextColor.copy(alpha = 0.5f)
                             ),
-                            fontSize = (20 * scaleFactor).sp // Example scaled font size
+                            fontSize = (18 * horizontalScaleFactor).sp // Example scaled font size
                         )
                     }
 
@@ -853,7 +850,7 @@ fun SimpleScreen(
                     // If so, let's adjust Arrangement.Center or use Spacers.
                 }
 
-                // --- 3. Second Row: Timers ---
+                // --- 3. Second Row: Timer and Countdowns ---
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -862,22 +859,17 @@ fun SimpleScreen(
                         .padding(vertical = deviceScaling(4).dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    //-- Left Cell (Square Big Timer Display) --
+                    //-- Left Cell (Big Timer Display) --
                     BoxWithConstraints(
                         modifier = Modifier
-                            .weight(0.65f)
+                            .weight(0.75f)
                             .fillMaxWidth()
-                            //.fillMaxHeight() // Fill the height of THIS Row
-                            .aspectRatio(1f)
-                        ,
+                            .fillMaxHeight(), // Fill the height of THIS Row
+                        //.aspectRatio(1f)
                         //.padding(deviceScaling(4).dp),
                         contentAlignment = Alignment.Center,
                     ) {
                         val circleRadius =
-                        //deviceScalingFloat(min(
-                        //    widthScalingFactor * constraints.maxWidth,
-                        //    heightScalingFactor * constraints.maxHeight) / 2f * 1.0f
-                            //)
                             min(
                                 widthScalingFactor * constraints.maxWidth,
                                 heightScalingFactor * constraints.maxHeight
@@ -903,7 +895,7 @@ fun SimpleScreen(
                             // 1. Draw the main circle border
                             drawCircle(
                                 color = if (isRestMode) WABlueColor else if (isDimmedState) DimmedTimerBorderColor else TimerBorderColor,
-                                radius = circleRadius - strokeWidthPx,  // / 2f, // Radius to the center of the stroke
+                                radius = circleRadius - strokeWidthPx / 2f, // Radius to the center of the stroke
                                 style = Stroke(width = strokeWidthPx),
                                 center = Offset(canvasCenterX, canvasCenterY)
                             )
@@ -914,12 +906,12 @@ fun SimpleScreen(
                                 //  (isTimerRunning || isTimerStopped) avoids red-ghost display
                                 //  in big timer border when selecting number of repetitions
                                 val arcDiameter =
-                                    (circleRadius - strokeWidthPx) * 2f  // / 2f) * 2f
+                                    (circleRadius - strokeWidthPx / 2f) * 2f  //) * 2f  //
                                 val arcTopLeftX = canvasCenterX - arcDiameter / 2f
                                 val arcTopLeftY = canvasCenterY - arcDiameter / 2f
 
                                 val progressStrokeWidth =
-                                    (0.72 * mainTimerStrokeWidth.value).dp.toPx() //10.dp.toPx() //
+                                    (0.72 * mainTimerStrokeWidth.value).dp.toPx()
 
                                 drawArc(
                                     color = if (isDimmedState) DimmedProgressBorderColor else ProgressBorderColor,
@@ -934,20 +926,12 @@ fun SimpleScreen(
                                     )
                                 )
                             }
-                        }
 
-                        // --- Column to hold Time Countdown numbers and "Rest..." text ---
-                        Column(
-                            modifier = Modifier.fillMaxSize(), // Allow Column to fill the Box to help with alignment
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                        ) {
+                            // --- Column to hold Time Countdown numbers and "Rest..." text ---
                             val topWeight = if (textHorizontalScaleFactor <= 1.5f) 1f
                                             else (1f - 0.35f * (textHorizontalScaleFactor - 1.0f))
 
-                            // Pushes content downwards
-                            Spacer(modifier = Modifier.weight(topWeight))
-
-                            // AdaptiveText for the main duration
+                            // Text for the main duration
                             val durationToDisplayValue =
                                 if (showDimmedTimers) 0 else if (isRestMode) currentRestTimeLeft else currentDurationSecondsLeft
                             val durationToDisplayString = durationToDisplayValue?.toString()
@@ -956,22 +940,56 @@ fun SimpleScreen(
                                     ?.firstOrNull() ?: ""
 
                             if (durationToDisplayString.isNotEmpty()) {
-                                AdaptiveText(
-                                    text = durationToDisplayString,
-                                    modifier = Modifier.padding(
-                                        generalPadding,
-                                        generalPadding,
-                                        generalPadding,
-                                        deviceScaling(4).dp
-                                    ),
-                                    color = if (isRestMode) WABlueColor else if (isDimmedState) DimmedTimerBorderColor else TimerBorderColor,
-                                    fontWeight = FontWeight.Bold,
-                                    targetWidth = Dp(circleRadius * 1.2f),
-                                    initialFontSize = adaptiveInitialMainFontSize
-                                )
-                            }
+                                val targetTextHeightPx = circleRadius * 0.9f
 
-                            // "Rest..." Text, displayed only during rest mode
+                                val countdownTextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+                                    color = (if (isRestMode) WABlueColor
+                                             else if (isDimmedState) DimmedTimerBorderColor
+                                             else TimerBorderColor
+                                            ).toArgb()
+                                    textSize = targetTextHeightPx
+                                    isAntiAlias = true
+                                    textAlign = Paint.Align.CENTER
+                                    typeface = Typeface.DEFAULT_BOLD
+                                }
+
+                                val countdownBounds = Rect()
+                                countdownTextPaint.getTextBounds(
+                                    "0",  //durationToDisplayString,
+                                    0,
+                                    1,
+                                    countdownBounds
+                                )
+
+                                val yBaseLine = canvasCenterY - countdownBounds.exactCenterY()
+
+                                drawContext.canvas.nativeCanvas.drawText(
+                                    durationToDisplayString,
+                                    canvasCenterX,
+                                    yBaseLine, // Draw at the calculated baseline
+                                    countdownTextPaint
+                                )
+
+                                // "Rest..." Text, displayed only during rest mode
+                                if (isRestMode) {
+                                    val restTextSizePx = targetTextHeightPx * 0.22f + 0.5f
+                                    val restTextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+                                        color = WABlueColor.toArgb()
+                                        textSize = if (restTextSizePx < 16f) 16f else restTextSizePx  //adaptiveInitialRestFontSize.toPx()
+                                        isAntiAlias = true
+                                        textAlign = Paint.Align.CENTER
+                                        typeface = Typeface.create(Typeface.DEFAULT_BOLD, Typeface.ITALIC)
+                                    }
+
+                                    drawContext.canvas.nativeCanvas.drawText(
+                                        restModeText,
+                                        canvasCenterX,
+                                        yBaseLine + 5 * restTextSizePx / 3,
+                                        restTextPaint
+                                    )
+                                }
+                            }
+                            /*
                             AdaptiveText(
                                 text = stringResource(id = if (isRestMode) R.string.rest_indicator else R.string.empty_string),
                                 modifier = Modifier.padding(top = 0.dp),
@@ -981,17 +999,14 @@ fun SimpleScreen(
                                 targetWidth = Dp(circleRadius * 1.2f),
                                 initialFontSize = adaptiveInitialRestFontSize
                             )
-
-                            Spacer(modifier = Modifier.weight(0.65f))
-                            // to make space for "Rest..." text to appear "below center".
+                            */
                         }
                     }
 
                     //-- Right Control Cell (Small Series Countdown Display) --
-                    //Box(
                     BoxWithConstraints(
                         modifier = Modifier
-                            .weight(0.35f) // 40% of this Row's width
+                            .weight(0.25f) // 25% of this Row's width
                             //.fillMaxHeight() // Fill the height of THIS Row
                             //.background(Color.Green.copy(alpha = 0.3f)) // Temp bg
                         ,
