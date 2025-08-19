@@ -780,11 +780,13 @@ fun SimpleScreen(
                 )
 
                 // --- 2. First Row: Start Button and related items ---
+                val buttonScaling = 1f / 17.8f
+                val buttonHeight = currentScreenHeightDp.value * buttonScaling  //deviceScaling(56)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = deviceScaling(8).dp)
-                        .height(deviceScaling(56).dp),
+                        .height(buttonHeight.dp),
                         //.height(IntrinsicSize.Min) // Let the content determine heigt, or set fixed like 64.dp
                     horizontalArrangement = Arrangement.Center,
                     //verticalAlignment = Alignment.CenterVertically
@@ -833,7 +835,8 @@ fun SimpleScreen(
                         ),
                         modifier = Modifier
                             .fillMaxWidth(0.75f)
-                            .scale(horizontalScaleFactor)
+                            .fillMaxHeight(1f)
+                            //.scale(horizontalScaleFactor)
                     ) {
                         Text(
                             text = stringResource(id = if (isTimerRunning) R.string.stop_button else R.string.start_button),
@@ -841,7 +844,8 @@ fun SimpleScreen(
                                 color = if (allSelectionsMade && !isRestMode) AppButtonTextColor
                                         else AppButtonTextColor.copy(alpha = 0.5f)
                             ),
-                            fontSize = (18 * horizontalScaleFactor).sp // Example scaled font size
+                            //fontSize = (18 * horizontalScaleFactor).sp
+                            fontSize = (18 * buttonHeight / 35f).sp
                         )
                     }
 
@@ -972,7 +976,7 @@ fun SimpleScreen(
 
                                 // "Rest..." Text, displayed only during rest mode
                                 if (isRestMode) {
-                                    val restTextSizePx = targetTextHeightPx * 0.22f + 0.5f
+                                    val restTextSizePx = targetTextHeightPx * 0.22f
                                     val restTextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
                                         color = WABlueColor.toArgb()
                                         textSize = if (restTextSizePx < 16f) 16f else restTextSizePx  //adaptiveInitialRestFontSize.toPx()
@@ -989,17 +993,6 @@ fun SimpleScreen(
                                     )
                                 }
                             }
-                            /*
-                            AdaptiveText(
-                                text = stringResource(id = if (isRestMode) R.string.rest_indicator else R.string.empty_string),
-                                modifier = Modifier.padding(top = 0.dp),
-                                color = WABlueColor,
-                                fontWeight = FontWeight.Bold,
-                                fontStyle = FontStyle.Italic,
-                                targetWidth = Dp(circleRadius * 1.2f),
-                                initialFontSize = adaptiveInitialRestFontSize
-                            )
-                            */
                         }
                     }
 
