@@ -380,7 +380,6 @@ fun SimpleScreen(
     userPreferencesRepository: UserPreferencesRepository,
     onCloseApp: () -> Unit
 ) {
-
     Scaffold(
         topBar = {
             Spacer(
@@ -394,25 +393,13 @@ fun SimpleScreen(
     ) { innerPaddingFromScaffold -> // This innerPadding from Scaffold handles the TOP spacer
         BoxWithConstraints(
             modifier = Modifier
-                // 1. Apply the Scaffold's inner padding (handles the top spacer)
                 .padding(innerPaddingFromScaffold)
-                // 2. THEN, add additional padding for the system navigation bar at the bottom.
-                //    We use .padding(WindowInsets.navigationBars.asPaddingValues())
-                //    This will add padding on the side where the navigation bar is (usually bottom).
                 .padding(WindowInsets.navigationBars.asPaddingValues())  // <-----
-                // 3. Make sure Column can fill the remaining size
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            // Inside this scope, `this.maxHeight` and `this.maxWidth` give you
-            // the actual available space for your content IN DP.
             val availableHeightForContentDp = this.maxHeight
             val availableWidthForContentDp = this.maxWidth
-
-            val tmpScaffold = innerPaddingFromScaffold
-            val tmpNavsBar = WindowInsets.navigationBars.asPaddingValues()
-            val tmpMaxWidth = this.maxWidth
-            val tmpWmaxHeight = this.maxHeight
 
             // adapt items size to screen width
             val configuration = LocalConfiguration.current
@@ -481,10 +468,10 @@ fun SimpleScreen(
                 if (playEndBeepEvent && soundPoolLoaded && endBeepSoundId != null) {
                     soundPool.play(endBeepSoundId!!, 1f, 1f, 1, 0, 1f)
                     //soundPool.play(beepSoundId!!, 1f, 1f, 1, 0, 1f)
-                    delay(340L)
+                    delay(500L)
                     soundPool.play(endBeepSoundId!!, 1f, 1f, 1, 0, 1f)
                     //soundPool.play(beepSoundId!!, 1f, 1f, 1, 0, 1f)
-                    delay(340L)
+                    delay(500L)
                     soundPool.play(endBeepSoundId!!, 1f, 1f, 1, 0, 1f)
                     //soundPool.play(beepSoundId!!, 1f, 1f, 1, 0, 1f)
                     playEndBeepEvent = false // Reset trigger
@@ -522,11 +509,13 @@ fun SimpleScreen(
             }
 
 
-            // --- The main content Column ---
-            // This Column is now a child of BoxWithConstraints
+            // --- The Main Column for the entire screen content ---
             Column(
-                modifier = Modifier.fillMaxSize(), // Fill the BoxWithConstraints
+                modifier = Modifier
+                    .padding(horizontal = deviceScaling(10).dp)
+                    .fillMaxSize(), // Fill the BoxWithConstraints
                 horizontalAlignment = Alignment.CenterHorizontally,
+
                 // Add verticalArrangement as needed, e.g., Arrangement.SpaceAround
             ) {
                 // --- Dynamic Sizes & SPs ---
@@ -780,17 +769,10 @@ fun SimpleScreen(
                     }
                 }
 
-                /*Box( // PARENT BOX - This is crucial for Modifier.align(Alignment.BottomStart) on the Image
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.background)
-                            .padding(deviceScaling(16).dp)
-                    )
-                    {*/
-                Text( // Title
+
+                // --- Main Column for the whole layout ---
+                // --- 1. Title of Series View ---
+                Text(
                     text = stringResource(id = R.string.series_view_title),
                     style = MaterialTheme.typography.titleLarge,
                     color = AppTitleColor,
@@ -800,31 +782,106 @@ fun SimpleScreen(
                         .scale(scaleFactor)
                 )
 
-                Row( // Timer Row
+                // --- 2. First Row: Start Button and related items ---
+                Row(
                     modifier = Modifier
-                        //.fillMaxWidth()
-                        .fillMaxSize()
+                        .fillMaxWidth()
+                        .padding(vertical = deviceScaling(8).dp)
+                        .height(IntrinsicSize.Min), // Let the content determine height, or set fixed like 64.dp
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    //-- START Button --
+                    Button(
+                        onClick = {
+                            if (isTimerRunning) {  // Just pause - stop state
+                                isTimerRunning = false
+                                isTimerStopped = true
+                                isDimmedState = true
+                            } else if (isTimerStopped) {  // Resume from stop state
+                                isTimerStopped = false
+                                isTimerRunning = true
+                                isDimmedState = false
+                            } else { // Trying to Start or Restart after session completion
+                                if (allSelectionsMade) {
+                                    // If currentRepetitionsLeft is 0, it means a cycle just finished (dimmed state).
+                                    // Reset both countdowns for a new cycle.
+                                    if (currentSeriesLeft == null || currentSeriesLeft == 0) {
+                                        currentSeriesLeft = numberOfSeries
+                                        currentRepetitionsLeft = numberOfRepetitions
+                                        currentDurationSecondsLeft =
+                                            initialDurationSeconds
+                                    } else {  // CAUTION: is this dead code? Let's check...
+                                        // Handle cases where selections might have been cleared or timer never run
+                                        if (currentDurationSecondsLeft == null || currentDurationSecondsLeft == 0) {
+                                            currentDurationSecondsLeft =
+                                                initialDurationSeconds
+                                        }
+                                        if (currentRepetitionsLeft == null) { // This should ideally not happen if allSelectionsMade is true
+                                            currentRepetitionsLeft = numberOfRepetitions
+                                        }
+                                    }
+                                    isTimerRunning = true  // Start - running state
+                                    isDimmedState = false
+                                }
+                            }
+                        },
+                        enabled = (isTimerRunning || allSelectionsMade) && !isRestMode,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = AppButtonColor,
+                            contentColor = AppButtonTextColor,
+                            disabledContainerColor = AppButtonColor.copy(alpha = 0.5f),
+                            disabledContentColor = AppButtonTextColor.copy(alpha = 0.5f)
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth(0.75f)
+                            .scale(horizontalScaleFactor)
+                    ) {
+                        Text(
+                            text = stringResource(id = if (isTimerRunning) R.string.stop_button else R.string.start_button),
+                            style = customInteractiveTextStyle.copy(
+                                color = if (allSelectionsMade && !isRestMode) AppButtonTextColor else AppButtonTextColor.copy(
+                                    alpha = 0.5f
+                                )
+                            ),
+                            fontSize = (20 * scaleFactor).sp // Example scaled font size
+                        )
+                    }
+
+                    // We can add other elements to this Row if needed,
+                    // for example, a small status icon or text next to the button.
+                    // If so, let's adjust Arrangement.Center or use Spacers.
+                }
+
+                // --- 3. Second Row: Timers ---
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
                         .weight(1f)
                         .background(AppTimerRowBackgroundColor)
                         .padding(vertical = deviceScaling(4).dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Left Cell (Square Timer Display)
+                    //-- Left Cell (Square Big Timer Display) --
                     BoxWithConstraints(
                         modifier = Modifier
-                            .weight(0.6f)
-                            .aspectRatio(1f),
-                            //.padding(deviceScaling(4).dp),
-                        contentAlignment = Alignment.Center
+                            .weight(0.65f)
+                            .fillMaxWidth()
+                            //.fillMaxHeight() // Fill the height of THIS Row
+                            .aspectRatio(1f)
+                        ,
+                        //.padding(deviceScaling(4).dp),
+                        contentAlignment = Alignment.Center,
                     ) {
                         val circleRadius =
-                            //deviceScalingFloat(min(
-                            //    widthScalingFactor * constraints.maxWidth,
-                            //    heightScalingFactor * constraints.maxHeight) / 2f * 1.0f
+                        //deviceScalingFloat(min(
+                        //    widthScalingFactor * constraints.maxWidth,
+                        //    heightScalingFactor * constraints.maxHeight) / 2f * 1.0f
                             //)
                             min(
                                 widthScalingFactor * constraints.maxWidth,
-                                heightScalingFactor * constraints.maxHeight) / 2f * 0.9f
+                                heightScalingFactor * constraints.maxHeight
+                            ) / 2f * 0.9f
 
                         val strokeWidthPx =
                             with(LocalDensity.current) { mainTimerStrokeWidth.toPx() }
@@ -856,7 +913,8 @@ fun SimpleScreen(
                                 // Notice, reminder:
                                 //  (isTimerRunning || isTimerStopped) avoids red-ghost display
                                 //  in big timer border when selecting number of repetitions
-                                val arcDiameter = (circleRadius - strokeWidthPx) * 2f  // / 2f) * 2f
+                                val arcDiameter =
+                                    (circleRadius - strokeWidthPx) * 2f  // / 2f) * 2f
                                 val arcTopLeftX = canvasCenterX - arcDiameter / 2f
                                 val arcTopLeftY = canvasCenterY - arcDiameter / 2f
 
@@ -878,13 +936,13 @@ fun SimpleScreen(
                             }
                         }
 
-                        // --- Column to hold Countdown numbers and "Rest..." text ---
+                        // --- Column to hold Time Countdown numbers and "Rest..." text ---
                         Column(
                             modifier = Modifier.fillMaxSize(), // Allow Column to fill the Box to help with alignment
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             val topWeight = if (textHorizontalScaleFactor <= 1.5f) 1f
-                            else (1f - 0.35f * (textHorizontalScaleFactor - 1.0f))
+                                            else (1f - 0.35f * (textHorizontalScaleFactor - 1.0f))
 
                             // Pushes content downwards
                             Spacer(modifier = Modifier.weight(topWeight))
@@ -929,7 +987,53 @@ fun SimpleScreen(
                         }
                     }
 
-                    // Right Control Cell
+                    //-- Right Control Cell (Small Series Countdown Display) --
+                    //Box(
+                    BoxWithConstraints(
+                        modifier = Modifier
+                            .weight(0.35f) // 40% of this Row's width
+                            //.fillMaxHeight() // Fill the height of THIS Row
+                            //.background(Color.Green.copy(alpha = 0.3f)) // Temp bg
+                        ,
+                        contentAlignment = Alignment.BottomCenter // Align small circle to bottom center of this cell
+                    ) {
+                        val seriesCircleRadius =
+                            min(
+                                constraints.maxWidth,
+                                constraints.maxHeight
+                            ) / 2f * 0.85f
+                        val seriesStrokeWidthPx =
+                            with(LocalDensity.current) { deviceScaling(7).dp.toPx() }
+
+                        Canvas(modifier = Modifier.fillMaxSize()) {
+                            drawCircle(
+                                color = if (isDimmedState) DimmedTimerBorderColor else TimerBorderColor,
+                                radius = seriesCircleRadius - seriesStrokeWidthPx / 2,
+                                style = Stroke(width = seriesStrokeWidthPx),
+                                center = Offset(size.width / 2, size.height / 2)
+                            )
+                        }
+
+                        // Series display will show 0 when dimmed
+                        val seriesToDisplayValue = currentSeriesLeft
+                        val seriesToDisplayString =
+                            seriesToDisplayValue?.toString()
+                                ?: currentSeriesLeft?.toString() ?: ""
+
+                        val localPadding = deviceScaling(8).dp // 8.dp
+                        if (seriesToDisplayString.isNotEmpty()) {
+                            AdaptiveText(
+                                text = seriesToDisplayString,
+                                modifier = Modifier.padding(localPadding),
+                                color = if (isDimmedState) DimmedTimerBorderColor else TimerBorderColor,
+                                fontWeight = FontWeight.Normal,
+                                targetWidth = Dp(seriesCircleRadius * 1.1f),
+                                initialFontSize = adaptiveInitialSeriesFontSize
+                            )
+                        }
+                    }
+
+                    /*
                     val localPadding = deviceScaling(8).dp // 8.dp
                     Column(
                         modifier = Modifier
@@ -1036,253 +1140,272 @@ fun SimpleScreen(
                             }
                         }
                     }
+                    */
                 }
 
-                // --- Settings Sections (Repetitions duration, Number of repetitions, etc.) ---
-
-                Row(
+                // --- 4. SECTION FOR SELECTABLE ITEMS & RELATED TEXTS ---
+                // (Repetitions duration, Number of repetitions, etc.)
+                // This section appears *under* the countdowns and has its own height.
+                /*Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .wrapContentHeight()
                         .padding(top = deviceScaling(16).dp, bottom = deviceScaling(4).dp),
                     horizontalArrangement = Arrangement.Center
+                )*/
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth() // Take full width
+                        .wrapContentHeight() // Take only necessary vertical space for its content
+                        .padding(top = deviceScaling(16).dp, bottom = deviceScaling(4).dp),
                 ) {
                     Text( // Select Session parameters Row
                         text = stringResource(id = R.string.please_select),
                         style = smallerTextStyle,
                         fontStyle = FontStyle.Italic,
-                        color = AppTitleColor.copy(alpha = if (allSelectionsMade) 0f else 1f)
-
+                        color = AppTitleColor.copy(alpha = if (allSelectionsMade) 0f else 1f),
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
                     )
-                }
 
-                Text( // Repetitions duration title
-                    text = stringResource(id = R.string.repetitions_duration_label),
-                    style = customInteractiveTextStyle,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier
-                        .padding(top = deviceScaling(8).dp)
-                        .align(Alignment.CenterHorizontally)
-                )
-                Row( // Duration Buttons Row
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 0.dp),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    val borderStrokeWidth = deviceScaling(5).dp
-                    Row(horizontalArrangement = Arrangement.spacedBy(deviceScaling(0).dp)) {
-                        durationOptions.forEach { duration ->
-                            val isSelected = selectedDurationString == duration
-                            Button(
-                                onClick = {
-                                    selectedDurationString =
-                                        if (isSelected) null else duration
-                                },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (isSelected) SelectedButtonBackgroundColor
-                                    else if (isTimerRunning || isTimerStopped) AppButtonColor.copy(
-                                        alpha = 0.8f
+                    Text( // Repetitions duration title
+                        text = stringResource(id = R.string.repetitions_duration_label),
+                        style = customInteractiveTextStyle,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier
+                            .padding(top = deviceScaling(8).dp)
+                            .wrapContentHeight()
+                            .align(Alignment.CenterHorizontally)
+                    )
+
+                    Row( // Duration Buttons Row
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                            .padding(top = 0.dp),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        val borderStrokeWidth = deviceScaling(5).dp
+                        Row(horizontalArrangement = Arrangement.spacedBy(deviceScaling(0).dp)) {
+                            durationOptions.forEach { duration ->
+                                val isSelected = selectedDurationString == duration
+                                Button(
+                                    onClick = {
+                                        selectedDurationString =
+                                            if (isSelected) null else duration
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (isSelected) SelectedButtonBackgroundColor
+                                        else if (isTimerRunning || isTimerStopped) AppButtonColor.copy(
+                                            alpha = 0.8f
+                                        )
+                                        else AppButtonDarkerColor,
+                                        contentColor = AppButtonTextColor
+                                    ),
+                                    border = if (isSelected) BorderStroke(
+                                        borderStrokeWidth,
+                                        SelectedButtonBorderColor
+                                    ) else BorderStroke(  //null
+                                        borderStrokeWidth,
+                                        AppBackgroundColor
+                                    ),
+                                    enabled = isSelected || !(isTimerRunning || isTimerStopped),
+                                    modifier = Modifier
+                                        .width(durationButtonWidth)
+                                ) {
+                                    Text(
+                                        text = duration,
+                                        style = TextStyle(
+                                            fontSize = (13f * durationsScaling).toInt().sp,
+                                            color = if (isSelected) AppButtonTextColor else if (isTimerRunning || isTimerStopped) AppDimmedTextColor else AppTextColor
+                                        )
                                     )
-                                    else AppButtonDarkerColor,
-                                    contentColor = AppButtonTextColor
-                                ),
-                                border = if (isSelected) BorderStroke(
-                                    borderStrokeWidth,
-                                    SelectedButtonBorderColor
-                                ) else BorderStroke(  //null
-                                    borderStrokeWidth,
-                                    AppBackgroundColor
-                                ),
-                                enabled = isSelected || !(isTimerRunning || isTimerStopped),
-                                modifier = Modifier
-                                    .width(durationButtonWidth)
-                            ) {
-                                Text(
-                                    text = duration,
-                                    style = TextStyle(
-                                        fontSize = (13f * durationsScaling).toInt().sp,
-                                        color = if (isSelected) AppButtonTextColor else if (isTimerRunning || isTimerStopped) AppDimmedTextColor else AppTextColor
-                                    )
-                                )
+                                }
                             }
                         }
                     }
-                }
 
-                Spacer(modifier = Modifier.height(majorSpacerHeight))
+                    Spacer(modifier = Modifier.height(majorSpacerHeight))
 
-                Text( // Number of repetitions title
-                    text = stringResource(id = R.string.repetitions_number_label),
-                    style = customInteractiveTextStyle,
-                    color = AppTextColor,
-                    modifier = Modifier
-                        .padding(top = generalPadding)
-                        .align(Alignment.CenterHorizontally)
-                )
-                LazyRow( // Repetitions LazyRow
-                    state = repetitionsLazyListState,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = deviceScaling(12).dp, bottom = deviceScaling(8).dp),
-                    horizontalArrangement = Arrangement.spacedBy(deviceScaling(10).dp),
-                    contentPadding = PaddingValues(horizontal = generalPadding)
-                ) {
-                    items(repetitionRange) { number ->
-                        val isNumberSelected = number == numberOfRepetitions
-                        val isClickable = !(isTimerRunning || isTimerStopped)
-                        Box(
-                            modifier = Modifier
-                                .size(repetitionBoxSize)
-                                .then(
-                                    if (isNumberSelected) Modifier.border(
-                                        BorderStroke(
-                                            deviceScaling(4).dp,
-                                            SelectedButtonBorderColor
-                                        ), shape = CircleShape
-                                    ) else Modifier
-                                )
-                                .padding(if (isNumberSelected) deviceScaling(4).dp else 0.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    color = if (isNumberSelected) AppTitleColor
-                                    else if (isClickable) AppButtonDarkerColor
-                                    else AppDimmedButtonColor
-                                )
-                                .clickable {
-                                    if (isClickable)
-                                        numberOfRepetitions =
-                                            if (isNumberSelected) null else number
-                                },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "$number",
-                                style = customInteractiveTextStyle.copy(
-                                    color = if (isNumberSelected) AppButtonTextColor
-                                    else if (isTimerRunning || isTimerStopped) AppDimmedTextColor
-                                    else AppTextColor
-                                ),
-                                fontWeight = if (isNumberSelected) FontWeight.Bold else FontWeight.Normal
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(majorSpacerHeight))
-
-                Text( // Number of series title
-                    text = stringResource(id = R.string.series_number_label),
-                    style = customInteractiveTextStyle,
-                    color = AppTextColor,
-                    modifier = Modifier
-                        .padding(top = generalPadding)
-                        .align(Alignment.CenterHorizontally)
-                )
-                Row( // Series Selector Row
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = deviceScaling(12).dp, bottom = deviceScaling(8).dp),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(deviceScaling(10).dp)) {
-                        seriesOptions.forEach { seriesCount ->
-                            val isSeriesSelected = seriesCount == numberOfSeries
+                    Text( // Number of repetitions title
+                        text = stringResource(id = R.string.repetitions_number_label),
+                        style = customInteractiveTextStyle,
+                        color = AppTextColor,
+                        modifier = Modifier
+                            .padding(top = generalPadding)
+                            .wrapContentHeight()
+                            .align(Alignment.CenterHorizontally)
+                    )
+                    LazyRow( // Repetitions LazyRow
+                        state = repetitionsLazyListState,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                            .padding(top = deviceScaling(12).dp, bottom = deviceScaling(8).dp),
+                        horizontalArrangement = Arrangement.spacedBy(deviceScaling(10).dp),
+                        contentPadding = PaddingValues(horizontal = generalPadding)
+                    ) {
+                        items(repetitionRange) { number ->
+                            val isNumberSelected = number == numberOfRepetitions
                             val isClickable = !(isTimerRunning || isTimerStopped)
                             Box(
                                 modifier = Modifier
-                                    .size(repetitionBoxSize)  //48.dp)
+                                    .size(repetitionBoxSize)
                                     .then(
-                                        if (isSeriesSelected) Modifier.border(
+                                        if (isNumberSelected) Modifier.border(
                                             BorderStroke(
                                                 deviceScaling(4).dp,
                                                 SelectedButtonBorderColor
                                             ), shape = CircleShape
                                         ) else Modifier
                                     )
-                                    .padding(if (isSeriesSelected) deviceScaling(4).dp else 0.dp)
+                                    .padding(if (isNumberSelected) deviceScaling(4).dp else 0.dp)
                                     .clip(CircleShape)
                                     .background(
-                                        color = if (isSeriesSelected) AppTitleColor
+                                        color = if (isNumberSelected) AppTitleColor
                                         else if (isClickable) AppButtonDarkerColor
                                         else AppDimmedButtonColor
                                     )
                                     .clickable {
                                         if (isClickable)
-                                            numberOfSeries =
-                                                if (isSeriesSelected) null else seriesCount
+                                            numberOfRepetitions =
+                                                if (isNumberSelected) null else number
                                     },
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = "$seriesCount",
+                                    text = "$number",
                                     style = customInteractiveTextStyle.copy(
-                                        color = if (isSeriesSelected) AppButtonTextColor
+                                        color = if (isNumberSelected) AppButtonTextColor
                                         else if (isTimerRunning || isTimerStopped) AppDimmedTextColor
                                         else AppTextColor
                                     ),
-                                    fontWeight = if (isSeriesSelected) FontWeight.Bold else FontWeight.Normal
+                                    fontWeight = if (isNumberSelected) FontWeight.Bold else FontWeight.Normal
                                 )
                             }
                         }
                     }
-                }
 
-                Spacer(modifier = Modifier.height(majorSpacerHeight))
+                    Spacer(modifier = Modifier.height(majorSpacerHeight))
 
-                Row( // Checkbox Row
-                    modifier = Modifier
-                        .padding(top = deviceScaling(4).dp, bottom = 0.dp)
-                        .toggleable(
-                            value = saveSelectionChecked,
-                            role = Role.Checkbox,
+                    Text( // Number of series title
+                        text = stringResource(id = R.string.series_number_label),
+                        style = customInteractiveTextStyle,
+                        color = AppTextColor,
+                        modifier = Modifier
+                            .padding(top = generalPadding)
+                            .wrapContentHeight()
+                            .align(Alignment.CenterHorizontally)
+                    )
+                    Row( // Series Selector Row
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                            .padding(top = deviceScaling(12).dp, bottom = deviceScaling(8).dp),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(deviceScaling(10).dp)) {
+                            seriesOptions.forEach { seriesCount ->
+                                val isSeriesSelected = seriesCount == numberOfSeries
+                                val isClickable = !(isTimerRunning || isTimerStopped)
+                                Box(
+                                    modifier = Modifier
+                                        .size(repetitionBoxSize)  //48.dp)
+                                        .then(
+                                            if (isSeriesSelected) Modifier.border(
+                                                BorderStroke(
+                                                    deviceScaling(4).dp,
+                                                    SelectedButtonBorderColor
+                                                ), shape = CircleShape
+                                            ) else Modifier
+                                        )
+                                        .padding(if (isSeriesSelected) deviceScaling(4).dp else 0.dp)
+                                        .clip(CircleShape)
+                                        .background(
+                                            color = if (isSeriesSelected) AppTitleColor
+                                            else if (isClickable) AppButtonDarkerColor
+                                            else AppDimmedButtonColor
+                                        )
+                                        .clickable {
+                                            if (isClickable)
+                                                numberOfSeries =
+                                                    if (isSeriesSelected) null else seriesCount
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "$seriesCount",
+                                        style = customInteractiveTextStyle.copy(
+                                            color = if (isSeriesSelected) AppButtonTextColor
+                                            else if (isTimerRunning || isTimerStopped) AppDimmedTextColor
+                                            else AppTextColor
+                                        ),
+                                        fontWeight = if (isSeriesSelected) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(majorSpacerHeight))
+
+                    Row( // Checkbox Row
+                        modifier = Modifier
+                            .wrapContentHeight()
+                            .padding(top = deviceScaling(4).dp, bottom = 0.dp)
+                            .toggleable(
+                                value = saveSelectionChecked,
+                                role = Role.Checkbox,
+                                enabled = allSelectionsMade,
+                                onValueChange = { saveSelectionChecked = !saveSelectionChecked }
+                            )
+                            .align(Alignment.CenterHorizontally),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = saveSelectionChecked,
+                            onCheckedChange = null,
                             enabled = allSelectionsMade,
-                            onValueChange = { saveSelectionChecked = !saveSelectionChecked }
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = AppTitleColor,
+                                uncheckedColor = AppTextColor.copy(alpha = if (allSelectionsMade) 1f else 0.5f),
+                                checkmarkColor = AppButtonTextColor,
+                                disabledCheckedColor = AppTitleColor.copy(alpha = 0.5f),
+                                disabledUncheckedColor = AppButtonDarkerColor
+                            ),
+                            modifier = Modifier.scale(scaleFactor)
                         )
-                        .align(Alignment.CenterHorizontally),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Checkbox(
-                        checked = saveSelectionChecked,
-                        onCheckedChange = null,
-                        enabled = allSelectionsMade,
-                        colors = CheckboxDefaults.colors(
-                            checkedColor = AppTitleColor,
-                            uncheckedColor = AppTextColor.copy(alpha = if (allSelectionsMade) 1f else 0.5f),
-                            checkmarkColor = AppButtonTextColor,
-                            disabledCheckedColor = AppTitleColor.copy(alpha = 0.5f),
-                            disabledUncheckedColor = AppButtonDarkerColor
-                        ),
-                        modifier = Modifier.scale(scaleFactor)
-                    )
-                    Spacer(modifier = Modifier.width(deviceScaling(6).dp))
-                    Text(
-                        text = stringResource(id = R.string.save_selection_label),
-                        style = smallerTextStyle,
-                        color = AppTextColor.copy(alpha = if (allSelectionsMade) 1f else 0.38f)
-                    )
-                }
+                        Spacer(modifier = Modifier.width(deviceScaling(6).dp))
+                        Text(
+                            text = stringResource(id = R.string.save_selection_label),
+                            style = smallerTextStyle,
+                            color = AppTextColor.copy(alpha = if (allSelectionsMade) 1f else 0.38f)
+                        )
+                    }
 
-                /*
-                Button( // Quit Button
-                    onClick = { processCloseAppActions() },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = AppButtonColor,
-                        contentColor = AppButtonTextColor
-                    ),
-                    modifier = Modifier
-                        .align(Alignment.End)
-                        .padding(
-                            end = deviceScaling(16).dp,
-                            top = deviceScaling(8).dp
+                    /*
+                    Button( // Quit Button
+                        onClick = { processCloseAppActions() },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = AppButtonColor,
+                            contentColor = AppButtonTextColor
+                        ),
+                        modifier = Modifier
+                            .align(Alignment.End)
+                            .wrapContentHeight()
+                            .padding(
+                                end = deviceScaling(16).dp,
+                                top = deviceScaling(8).dp
+                            )
+                            .scale(horizontalScaleFactor)
+                    ) {
+                        Text(
+                            stringResource(id = R.string.close_button),
+                            style = customInteractiveTextStyle
                         )
-                        .scale(horizontalScaleFactor)
-                ) {
-                    Text(
-                        stringResource(id = R.string.close_button),
-                        style = customInteractiveTextStyle
-                    )
+                    }
+                    */
                 }
-                */
             }
 
             // --- Add Your Logo Here, Aligned to Bottom-Left ---
@@ -1290,15 +1413,13 @@ fun SimpleScreen(
                 painter = painterResource(id = R.drawable.ps_logo),
                 contentDescription = null, // Important for accessibility - provide a meaningful description (e.g. "Editor Logo")or null if purely decorative
                 modifier = Modifier
-                    .align(Alignment.BottomStart) // Aligns this Image to the bottom start (left) of the parent Box
+                    .align(Alignment.BottomEnd) // Aligns this Image to the bottom start (left) of the parent Box
                     .padding(
-                        start = deviceScaling(16).dp,
-                        bottom = deviceScaling(8).dp
+                        end = deviceScaling(16).dp//,
+                        //bottom = deviceScaling(8).dp
                     ) // Add some padding from the screen edges
                     .size(34.dp) // Set the size of the image on screen
             )
-                //}
-            //}
         }
     }
 
