@@ -463,10 +463,10 @@ fun SimpleScreen(
                 if (playEndBeepEvent && soundPoolLoaded && endBeepSoundId != null) {
                     soundPool.play(endBeepSoundId!!, 1f, 1f, 1, 0, 1f)
                     //soundPool.play(beepSoundId!!, 1f, 1f, 1, 0, 1f)
-                    delay(500L)
+                    delay(380L)
                     soundPool.play(endBeepSoundId!!, 1f, 1f, 1, 0, 1f)
                     //soundPool.play(beepSoundId!!, 1f, 1f, 1, 0, 1f)
-                    delay(500L)
+                    delay(380L)
                     soundPool.play(endBeepSoundId!!, 1f, 1f, 1, 0, 1f)
                     //soundPool.play(beepSoundId!!, 1f, 1f, 1, 0, 1f)
                     playEndBeepEvent = false // Reset trigger
@@ -866,11 +866,9 @@ fun SimpleScreen(
                     //-- Left Cell (Big Timer Display) --
                     BoxWithConstraints(
                         modifier = Modifier
-                            .weight(0.75f)
+                            .weight(0.70f)
                             .fillMaxWidth()
                             .fillMaxHeight(), // Fill the height of THIS Row
-                        //.aspectRatio(1f)
-                        //.padding(deviceScaling(4).dp),
                         contentAlignment = Alignment.Center,
                     ) {
                         val circleRadius =
@@ -881,16 +879,6 @@ fun SimpleScreen(
 
                         val strokeWidthPx =
                             with(LocalDensity.current) { mainTimerStrokeWidth.toPx() }
-
-                        val sweepAngle =
-                            if (numberOfRepetitions != null && numberOfRepetitions!! > 0 && currentRepetitionsLeft != null) {
-                                if (currentRepetitionsLeft!! > 1)
-                                    ((numberOfRepetitions!! - currentRepetitionsLeft!!) / numberOfRepetitions!!.toFloat()) * 360f
-                                else
-                                    ((numberOfRepetitions!! * initialDurationSeconds!! - currentDurationSecondsLeft!! + 1) / (numberOfRepetitions!! * initialDurationSeconds!!).toFloat()) * 360f
-                            } else {
-                                0f
-                            }
 
                         Canvas(modifier = Modifier.fillMaxSize()) {
                             val canvasCenterX = size.width / 2f
@@ -905,6 +893,16 @@ fun SimpleScreen(
                             )
 
                             // 2. Draw the progress arc
+                            val sweepAngle =
+                                if (numberOfRepetitions != null && numberOfRepetitions!! > 0 && currentRepetitionsLeft != null) {
+                                    if (currentRepetitionsLeft!! > 1)
+                                        ((numberOfRepetitions!! - currentRepetitionsLeft!!) / numberOfRepetitions!!.toFloat()) * 360f
+                                    else
+                                        ((numberOfRepetitions!! * initialDurationSeconds!! - currentDurationSecondsLeft!! + 1) / (numberOfRepetitions!! * initialDurationSeconds!!).toFloat()) * 360f
+                                } else {
+                                    0f
+                                }
+
                             if (!isRestMode && (isTimerRunning || isTimerStopped) && sweepAngle > 0f) {
                                 // Notice, reminder:
                                 //  (isTimerRunning || isTimerStopped) avoids red-ghost display
@@ -932,9 +930,6 @@ fun SimpleScreen(
                             }
 
                             // --- Column to hold Time Countdown numbers and "Rest..." text ---
-                            val topWeight = if (textHorizontalScaleFactor <= 1.5f) 1f
-                                            else (1f - 0.35f * (textHorizontalScaleFactor - 1.0f))
-
                             // Text for the main duration
                             val durationToDisplayValue =
                                 if (showDimmedTimers) 0 else if (isRestMode) currentRestTimeLeft else currentDurationSecondsLeft
@@ -959,7 +954,7 @@ fun SimpleScreen(
 
                                 val countdownBounds = Rect()
                                 countdownTextPaint.getTextBounds(
-                                    "0",  //durationToDisplayString,
+                                    "0",  // one of the tallest digits to ensure proper centering
                                     0,
                                     1,
                                     countdownBounds
@@ -999,9 +994,7 @@ fun SimpleScreen(
                     //-- Right Control Cell (Small Series Countdown Display) --
                     BoxWithConstraints(
                         modifier = Modifier
-                            .weight(0.25f) // 25% of this Row's width
-                            //.fillMaxHeight() // Fill the height of THIS Row
-                            //.background(Color.Green.copy(alpha = 0.3f)) // Temp bg
+                            .weight(0.3f) // 30% of this Row's width
                         ,
                         contentAlignment = Alignment.BottomCenter // Align small circle to bottom center of this cell
                     ) {
@@ -1010,125 +1003,21 @@ fun SimpleScreen(
                                 constraints.maxWidth,
                                 constraints.maxHeight
                             ) / 2f * 0.85f
-                        val seriesStrokeWidthPx =
-                            with(LocalDensity.current) { deviceScaling(7).dp.toPx() }
+                        val seriesStrokeWidthPx = with(LocalDensity.current) {
+                            deviceScaling(7).dp.toPx()
+                        }
+                        val localPadding = deviceScaling(8).dp
 
                         Canvas(modifier = Modifier.fillMaxSize()) {
+                            val circleCenterX = size.width / 2
+                            val circleCenterY = size.height - seriesCircleRadius - localPadding.toPx()
                             drawCircle(
                                 color = if (isDimmedState) DimmedTimerBorderColor else TimerBorderColor,
                                 radius = seriesCircleRadius - seriesStrokeWidthPx / 2,
                                 style = Stroke(width = seriesStrokeWidthPx),
-                                center = Offset(size.width / 2, size.height / 2)
+                                center = Offset(circleCenterX, circleCenterY )
+                                //center = Offset(size.width / 2, size.height / 2)
                             )
-                        }
-
-                        // Series display will show 0 when dimmed
-                        val seriesToDisplayValue = currentSeriesLeft
-                        val seriesToDisplayString =
-                            seriesToDisplayValue?.toString()
-                                ?: currentSeriesLeft?.toString() ?: ""
-
-                        val localPadding = deviceScaling(8).dp // 8.dp
-                        if (seriesToDisplayString.isNotEmpty()) {
-                            AdaptiveText(
-                                text = seriesToDisplayString,
-                                modifier = Modifier.padding(localPadding),
-                                color = if (isDimmedState) DimmedTimerBorderColor else TimerBorderColor,
-                                fontWeight = FontWeight.Normal,
-                                targetWidth = Dp(seriesCircleRadius * 1.1f),
-                                initialFontSize = adaptiveInitialSeriesFontSize
-                            )
-                        }
-                    }
-
-                    /*
-                    val localPadding = deviceScaling(8).dp // 8.dp
-                    Column(
-                        modifier = Modifier
-                            .weight(0.4f)
-                            .fillMaxHeight()
-                            .padding(start = localPadding, end = localPadding),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        Button( // Start/Stop Button
-                            onClick = {
-                                if (isTimerRunning) {  // Just pause - stop state
-                                    isTimerRunning = false
-                                    isTimerStopped = true
-                                    isDimmedState = true
-                                } else if (isTimerStopped) {  // Resume from stop state
-                                    isTimerStopped = false
-                                    isTimerRunning = true
-                                    isDimmedState = false
-                                } else { // Trying to Start or Restart after session completion
-                                    if (allSelectionsMade) {
-                                        // If currentRepetitionsLeft is 0, it means a cycle just finished (dimmed state).
-                                        // Reset both countdowns for a new cycle.
-                                        if (currentSeriesLeft == null || currentSeriesLeft == 0) {
-                                            currentSeriesLeft = numberOfSeries
-                                            currentRepetitionsLeft = numberOfRepetitions
-                                            currentDurationSecondsLeft =
-                                                initialDurationSeconds
-                                        } else {  // CAUTION: is this dead code? Let's check...
-                                            // Handle cases where selections might have been cleared or timer never run
-                                            if (currentDurationSecondsLeft == null || currentDurationSecondsLeft == 0) {
-                                                currentDurationSecondsLeft =
-                                                    initialDurationSeconds
-                                            }
-                                            if (currentRepetitionsLeft == null) { // This should ideally not happen if allSelectionsMade is true
-                                                currentRepetitionsLeft = numberOfRepetitions
-                                            }
-                                        }
-                                        isTimerRunning = true  // Start - running state
-                                        isDimmedState = false
-                                    }
-                                }
-                            },
-                            enabled = (isTimerRunning || allSelectionsMade) && !isRestMode,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = AppButtonColor,
-                                contentColor = AppButtonTextColor,
-                                disabledContainerColor = AppButtonColor.copy(alpha = 0.5f),
-                                disabledContentColor = AppButtonTextColor.copy(alpha = 0.5f)
-                            ),
-                            modifier = Modifier
-                                .fillMaxWidth(0.92f)
-                                .scale(horizontalScaleFactor)
-                        ) {
-                            Text(
-                                text = stringResource(id = if (isTimerRunning) R.string.stop_button else R.string.start_button),
-                                style = customInteractiveTextStyle.copy(
-                                    color = if (allSelectionsMade && !isRestMode) AppButtonTextColor else AppButtonTextColor.copy(
-                                        alpha = 0.5f
-                                    )
-                                )
-                            )
-                        }
-
-                        BoxWithConstraints( // Series Countdown Circle
-                            modifier = Modifier
-                                .fillMaxWidth(0.8f)
-                                .aspectRatio(1f)
-                                .padding(deviceScaling(4).dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            val seriesCircleRadius =
-                                min(
-                                    constraints.maxWidth,
-                                    constraints.maxHeight
-                                ) / 2f * 0.85f
-                            val seriesStrokeWidthPx =
-                                with(LocalDensity.current) { deviceScaling(7).dp.toPx() }
-
-                            Canvas(modifier = Modifier.fillMaxSize()) {
-                                drawCircle(
-                                    color = if (isDimmedState) DimmedTimerBorderColor else TimerBorderColor,
-                                    radius = seriesCircleRadius - seriesStrokeWidthPx / 2,
-                                    style = Stroke(width = seriesStrokeWidthPx),
-                                    center = Offset(size.width / 2, size.height / 2)
-                                )
-                            }
 
                             // Series display will show 0 when dimmed
                             val seriesToDisplayValue = currentSeriesLeft
@@ -1137,30 +1026,43 @@ fun SimpleScreen(
                                     ?: currentSeriesLeft?.toString() ?: ""
 
                             if (seriesToDisplayString.isNotEmpty()) {
-                                AdaptiveText(
-                                    text = seriesToDisplayString,
-                                    modifier = Modifier.padding(localPadding),
-                                    color = if (isDimmedState) DimmedTimerBorderColor else TimerBorderColor,
-                                    fontWeight = FontWeight.Normal,
-                                    targetWidth = Dp(seriesCircleRadius * 1.1f),
-                                    initialFontSize = adaptiveInitialSeriesFontSize
+                                val targetTextHeightPx = seriesCircleRadius * 0.9f
+
+                                val countdownTextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+                                    color = (
+                                        if (isDimmedState)
+                                            DimmedTimerBorderColor
+                                        else
+                                            TimerBorderColor
+                                    ).toArgb()
+                                    textSize = targetTextHeightPx
+                                    isAntiAlias = true
+                                    textAlign = Paint.Align.CENTER
+                                    typeface = Typeface.DEFAULT_BOLD
+                                }
+
+                                val countdownBounds = Rect()
+                                countdownTextPaint.getTextBounds(
+                                    "0",  // one of the tallest digits to ensure proper centering
+                                    0,
+                                    1,
+                                    countdownBounds
+                                )
+
+                                drawContext.canvas.nativeCanvas.drawText(
+                                    seriesToDisplayString,
+                                    circleCenterX,
+                                    circleCenterY - countdownBounds.exactCenterY(), // Draw at the calculated baseline
+                                    countdownTextPaint
                                 )
                             }
                         }
                     }
-                    */
                 }
 
                 // --- 4. SECTION FOR SELECTABLE ITEMS & RELATED TEXTS ---
                 // (Repetitions duration, Number of repetitions, etc.)
                 // This section appears *under* the countdowns and has its own height.
-                /*Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight()
-                        .padding(top = deviceScaling(16).dp, bottom = deviceScaling(4).dp),
-                    horizontalArrangement = Arrangement.Center
-                )*/
                 Column(
                     modifier = Modifier
                         .fillMaxWidth() // Take full width
