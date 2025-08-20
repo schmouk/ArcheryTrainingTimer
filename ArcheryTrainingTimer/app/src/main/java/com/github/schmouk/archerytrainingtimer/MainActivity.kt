@@ -103,132 +103,9 @@ fun MainScreen() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreenWithExactStatusBarHeightSpacer() {
-    Scaffold(
-        topBar = {
-            Spacer(
-                Modifier
-                    .fillMaxWidth()
-                    .windowInsetsTopHeight(WindowInsets.statusBars) // Key: Spacer's height IS the status bar height
-                // .background(Color.Transparent) // Or your desired color if you want the status bar area to have a tint
-            )
-        }
-    ) { innerPadding -> // innerPadding will now be calculated based on the Spacer's height (status bar height)
-
-        Column(
-            modifier = Modifier
-                .padding(innerPadding) // Apply Scaffold's inner padding
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-        ) {
-            // Your "Simple View Title" - will start immediately below the status bar area
-            Text(
-                text = "My Simple View Title",
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp), // Padding for the title text itself
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
-            // Rest of your SimpleScreen content
-            Text(
-                "Main content of the simple view...",
-                modifier = Modifier.padding(16.dp),
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            // ... more content ...
-        }
-    }
-}
-
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun MainScreenWithInsetsHandled() { // Renamed for clarity
-    Scaffold(
-        topBar = {
-            Spacer(
-                Modifier
-                    .fillMaxWidth()
-                    .windowInsetsTopHeight(WindowInsets.statusBars)
-            )
-        }
-        // We don't use Scaffold's bottomBar for this,
-        // we will pad the content area directly.
-    ) { innerPaddingFromScaffold -> // This innerPadding from Scaffold handles the TOP spacer
-
-        Column(
-            modifier = Modifier
-                // 1. Apply the Scaffold's inner padding (handles the top spacer)
-                .padding(innerPaddingFromScaffold)
-                // 2. THEN, add additional padding for the system navigation bar at the bottom.
-                //    We use .padding(WindowInsets.navigationBars.asPaddingValues())
-                //    This will add padding on the side where the navigation bar is (usually bottom).
-                .padding(WindowInsets.navigationBars.asPaddingValues())
-                // 3. Make sure Column can fill the remaining size
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-        ) {
-            // Your "Simple View Title"
-            Text(
-                text = "My Simple View Title",
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
-            // Middle content - use Spacer with weight to push bottom content down
-            Spacer(modifier = Modifier.weight(1f))
-
-            // Your "Quit" button or other bottom content
-            Button(
-                onClick = { /* Handle Quit */ },
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally) // Example alignment
-                    .padding(bottom = 16.dp) // Add some extra padding if desired above nav bar
-            ) {
-                Text("Quit")
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
 fun MyCustomTopAppBar() {
     // Apply padding ONLY to the top of the TopAppBar to account for the status bar
     TopAppBar(
-        /*
-        title = { stringResource(id = R.string.app_name) },  //{ Text("Archery Training Timer") },
-        modifier = Modifier
-            // This adds padding to the top of the TopAppBar, effectively "pushing it down"
-            // below the system status bar.
-            .padding(WindowInsets.statusBars.asPaddingValues()), // or WindowInsets.safeDrawing for more comprehensive insets
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.primary, // Example color
-            titleContentColor = MaterialTheme.colorScheme.onPrimary
-        )
-        // If you are NOT using a Material TopAppBar and building your own Row/Column:
-        // You'd apply .padding(WindowInsets.statusBars.asPaddingValues()) to your top-level Row/Column
-        // that acts as your app bar.
-        */
-        /*
-        title = { Text("Hi", color = Color.Red) }, // Short text, explicit bright color
-
-        navigationIcon = { /* Temporarily remove or comment out */ },
-        actions = { /* Temporarily remove or comment out */ },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.Blue, // Explicit different background
-            // titleContentColor is overridden by Text's own color now
-        ),
-        windowInsets = WindowInsets.statusBars // Use this for M3
-        // Remove .padding(WindowInsets.statusBars.asPaddingValues()) if using the above
-        */
         title = {
             Text(
                 text = stringResource(id = R.string.app_name), // Assuming app_name is "Archery Training Timer"
@@ -404,10 +281,11 @@ fun SimpleScreen(
             val refScreenHeightDp = 914.dp // Your baseline for good proportions
 
             // Calculate scale factor, ensure it's not Dp / Dp if you need a raw float
-            val textHorizontalScaleFactor = /*currentScreenWidthDp*/availableWidthForContentDp.value / refScreenWidthDp.value
+            val textHorizontalScaleFactor = availableWidthForContentDp.value / refScreenWidthDp.value
             val horizontalScaleFactor = textHorizontalScaleFactor.coerceIn(0.60f, 1.0f)
-            val verticalScaleFactor =
-                (/*currentScreenHeightDp*/availableHeightForContentDp.value / refScreenHeightDp.value).coerceIn(0.40f, 1.5f)
+            val verticalScaleFactor =(
+                    availableHeightForContentDp.value / refScreenHeightDp.value
+                ).coerceIn(0.40f, 1.5f)
             val scaleFactor = min(horizontalScaleFactor, verticalScaleFactor)
 
             val heightScalingFactor = this.maxHeight.value / currentScreenHeightDp.value
@@ -515,9 +393,9 @@ fun SimpleScreen(
             ) {
                 // --- Dynamic Sizes & SPs ---
                 val mainTimerStrokeWidth = deviceScaling(14).dp
-                val adaptiveInitialMainFontSize = bigTextHorizontalDeviceScaling(76).sp
-                val adaptiveInitialRestFontSize = bigTextHorizontalDeviceScaling(17).sp
-                val adaptiveInitialSeriesFontSize = bigTextHorizontalDeviceScaling(34).sp
+                //val adaptiveInitialMainFontSize = bigTextHorizontalDeviceScaling(76).sp
+                //val adaptiveInitialRestFontSize = bigTextHorizontalDeviceScaling(17).sp
+                //val adaptiveInitialSeriesFontSize = bigTextHorizontalDeviceScaling(34).sp
                 val repetitionBoxSize = deviceScaling(48).dp
                 val majorSpacerHeight = deviceScaling(8).dp
                 val generalPadding = deviceScaling(12).dp  // 16
@@ -544,8 +422,9 @@ fun SimpleScreen(
 
                 val durationOptions = listOf("10 s", "15 s", "20 s", "30 s")
                 val durationsScaling = 4f / durationOptions.size
-                val durationButtonWidth =
-                    (currentScreenWidthDp.value / durationOptions.size - horizontalDeviceScaling(8)).dp
+                val durationButtonWidth = (
+                        currentScreenWidthDp.value / durationOptions.size - horizontalDeviceScaling(8)
+                    ).dp
                 val minRepetitions = 3
                 val maxRepetitions = 15
                 val repetitionRange = (minRepetitions..maxRepetitions).toList()
@@ -610,6 +489,13 @@ fun SimpleScreen(
                             currentSeriesLeft = numberOfSeries
                         }
                     }
+                    if (selectedDurationString != null)
+                        userPreferencesRepository.saveDurationPreference(selectedDurationString)
+                    if (numberOfRepetitions != null)
+                        userPreferencesRepository.saveRepetitionsPreference(numberOfRepetitions)
+                    if (numberOfSeries != null)
+                        userPreferencesRepository.saveSeriesPreference(numberOfSeries)
+                    userPreferencesRepository.saveSaveSelectionPreference(true)
                 }
 
                 LaunchedEffect(isTimerRunning) {
@@ -750,6 +636,7 @@ fun SimpleScreen(
                     }
                 }
 
+                /*
                 val processCloseAppActions = {
                     coroutineScope.launch {
                         if (saveSelectionChecked) {
@@ -765,6 +652,7 @@ fun SimpleScreen(
                         onCloseApp()
                     }
                 }
+                */
 
 
                 // --- Main Column for the whole layout ---
@@ -1257,8 +1145,9 @@ fun SimpleScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(majorSpacerHeight))
+                    Spacer(modifier = Modifier.height(deviceScaling(34).dp))  //majorSpacerHeight))
 
+                    /*
                     Row( // Checkbox Row
                         modifier = Modifier
                             .wrapContentHeight()
@@ -1292,6 +1181,7 @@ fun SimpleScreen(
                             color = AppTextColor.copy(alpha = if (allSelectionsMade) 1f else 0.38f)
                         )
                     }
+                    */
 
                     /*
                     Button( // Quit Button

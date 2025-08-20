@@ -56,7 +56,7 @@ class UserPreferencesRepository(context: Context) {
             val selectedDuration = preferences[PreferencesKeys.SELECTED_DURATION]
             val numberOfRepetitions = preferences[PreferencesKeys.NUMBER_OF_REPETITIONS]
             val numberOfSeries = preferences[PreferencesKeys.NUMBER_OF_SERIES]
-            val loadedSaveFlag = preferences[PreferencesKeys.SAVE_SELECTION] // ADD THIS
+            val loadedSaveFlag = preferences[PreferencesKeys.SAVE_SELECTION]
             val saveSelection = loadedSaveFlag ?: false
 
             UserPreferences(selectedDuration, numberOfRepetitions, numberOfSeries, saveSelection)
@@ -96,4 +96,36 @@ class UserPreferencesRepository(context: Context) {
             // preferences[PreferencesKeys.SAVE_SELECTION] = false // Keep the save flag as false
         }
     }
+
+    // Function to save only the duration preference
+    suspend fun saveDurationPreference(duration: String?) {
+        dataStore.edit { preferences ->
+            if (duration == null) preferences.remove(PreferencesKeys.SELECTED_DURATION)
+            else preferences[PreferencesKeys.SELECTED_DURATION] = duration
+        }
+    }
+
+    // Function to save only the repetitions preference
+    suspend fun saveRepetitionsPreference(repetitions: Int?) {
+        dataStore.edit { preferences ->
+            if (repetitions == null) preferences.remove(PreferencesKeys.NUMBER_OF_REPETITIONS)
+            else preferences[PreferencesKeys.NUMBER_OF_REPETITIONS] = repetitions
+        }
+    }
+
+    // Function to save only the series preference
+    suspend fun saveSeriesPreference(series: Int?) {
+        dataStore.edit { preferences ->
+            if (series == null) preferences.remove(PreferencesKeys.NUMBER_OF_SERIES)
+            else preferences[PreferencesKeys.NUMBER_OF_SERIES] = series
+        }
+    }
+
+    // Function to save only the saveSelection preference
+    suspend fun saveSaveSelectionPreference(saveSelection: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.SAVE_SELECTION] = saveSelection
+        }
+    }
+
 }
