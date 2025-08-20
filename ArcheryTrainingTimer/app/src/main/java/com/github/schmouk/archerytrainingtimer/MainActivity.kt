@@ -70,14 +70,15 @@ import androidx.core.view.WindowCompat
 
 import com.github.schmouk.archerytrainingtimer.ui.theme.*
 
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+//import kotlinx.coroutines.launch
+import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 
-
+/*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen() {
@@ -100,6 +101,7 @@ fun MainScreen() {
         }
     }
 }
+*/
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -108,13 +110,11 @@ fun MyCustomTopAppBar() {
     TopAppBar(
         title = {
             Text(
-                text = stringResource(id = R.string.app_name), // Assuming app_name is "Archery Training Timer"
-                style = MaterialTheme.typography.titleLarge // Or your preferred style
-                // Let TopAppBarDefaults handle the color by default, or set one explicitly if needed
-                // color = MaterialTheme.colorScheme.onPrimary
+                text = stringResource(id = R.string.app_name),
+                style = MaterialTheme.typography.titleLarge // Or some other preferred style
             )
         },
-        modifier = Modifier.fillMaxWidth(), // Keep it simple for now, or add specific background if testing
+        modifier = Modifier.fillMaxWidth(),
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.primary,
             titleContentColor = MaterialTheme.colorScheme.onPrimary
@@ -127,12 +127,13 @@ fun MyCustomTopAppBar() {
 @Composable
 fun AppTheme(content: @Composable () -> Unit) {
     MaterialTheme(
-        // your theme colors, typography, etc.
+        // our theme colors, typography, etc.
     ) {
         content()
     }
 }
 
+/*
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
@@ -140,6 +141,7 @@ fun DefaultPreview() {
         MainScreen()
     }
 }
+*/
 
 
 // MainActivity class definition
@@ -156,10 +158,6 @@ class MainActivity : ComponentActivity() {
         keepScreenOn()
         setContent {
             ArcheryTrainingTimerTheme {
-                //MainScreenWithInsetsHandled()
-
-                //MainScreenWithExactStatusBarHeightSpacer()
-
                 SimpleScreen(
                     userPreferencesRepository = userPreferencesRepository,
                     onCloseApp = {
@@ -182,14 +180,14 @@ class MainActivity : ComponentActivity() {
         allowScreenTimeout()
     }
 
-    // Call this function when you want to allow the screen to turn off normally again
-    // e.g., when your timer stops or the user navigates away from the critical section.
+    // Call this function when we want to allow the screen to turn off normally again
+    // e.g., when the timer stops or the user navigates away from the critical section.
     private fun allowScreenTimeout() {
         window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 
     // Call this function when you want to force the screen to stay on
-    // e.g., when your timer starts.
+    // e.g., when the timer starts.
     private fun keepScreenOn() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
@@ -205,6 +203,7 @@ class MainActivity : ComponentActivity() {
 }
 
 // AdaptiveText composable
+/*
 @Composable
 fun AdaptiveText(
     text: String,
@@ -244,6 +243,7 @@ fun AdaptiveText(
         }
     )
 }
+*/
 
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
@@ -296,6 +296,7 @@ fun SimpleScreen(
             var playBeepEvent by remember { mutableStateOf(false) }
             var playEndBeepEvent by remember { mutableStateOf(false) }
             var playRestBeepEvent by remember { mutableStateOf(false) }
+            var playIntermediateBeep by remember { mutableStateOf(false) }
 
             // SoundPool setup
             val soundPool = remember {
@@ -312,12 +313,14 @@ fun SimpleScreen(
 
             var beepSoundId by remember { mutableStateOf<Int?>(null) }
             var endBeepSoundId by remember { mutableStateOf<Int?>(null) }
+            var intermediateBeepSoundId by remember { mutableStateOf<Int?>(null) }
             var soundPoolLoaded by remember { mutableStateOf(false) }
 
             // Load sound and release SoundPool
             DisposableEffect(Unit) {
                 beepSoundId = soundPool.load(context, R.raw.beep, 1)
                 endBeepSoundId = soundPool.load(context, R.raw.beep_end, 1)
+                intermediateBeepSoundId = soundPool.load(context, R.raw.beep_intermediate, 1)
                 soundPool.setOnLoadCompleteListener { _, _, status ->
                     if (status == 0) {
                         soundPoolLoaded = true
@@ -340,15 +343,21 @@ fun SimpleScreen(
             LaunchedEffect(playEndBeepEvent) {
                 if (playEndBeepEvent && soundPoolLoaded && endBeepSoundId != null) {
                     soundPool.play(endBeepSoundId!!, 1f, 1f, 1, 0, 1f)
-                    //soundPool.play(beepSoundId!!, 1f, 1f, 1, 0, 1f)
                     delay(380L)
                     soundPool.play(endBeepSoundId!!, 1f, 1f, 1, 0, 1f)
-                    //soundPool.play(beepSoundId!!, 1f, 1f, 1, 0, 1f)
                     delay(380L)
                     soundPool.play(endBeepSoundId!!, 1f, 1f, 1, 0, 1f)
-                    //soundPool.play(beepSoundId!!, 1f, 1f, 1, 0, 1f)
                     playEndBeepEvent = false // Reset trigger
                 }
+            }
+
+            // Play sound effect - intermediate beep
+            LaunchedEffect(playIntermediateBeep) {
+                if (playIntermediateBeep && soundPoolLoaded && intermediateBeepSoundId != null) {
+                    soundPool.play(intermediateBeepSoundId!!, 1f, 1f, 1, 0, 1f)
+                    playIntermediateBeep = false // Reset trigger
+                }
+
             }
 
             // Play sound effect - rest beeps
@@ -393,17 +402,15 @@ fun SimpleScreen(
             ) {
                 // --- Dynamic Sizes & SPs ---
                 val mainTimerStrokeWidth = deviceScaling(14).dp
-                //val adaptiveInitialMainFontSize = bigTextHorizontalDeviceScaling(76).sp
-                //val adaptiveInitialRestFontSize = bigTextHorizontalDeviceScaling(17).sp
-                //val adaptiveInitialSeriesFontSize = bigTextHorizontalDeviceScaling(34).sp
                 val repetitionBoxSize = deviceScaling(48).dp
                 val majorSpacerHeight = deviceScaling(8).dp
-                val generalPadding = deviceScaling(12).dp  // 16
+                val generalPadding = deviceScaling(12).dp
 
                 var selectedDurationString by rememberSaveable { mutableStateOf<String?>(null) }
                 var numberOfRepetitions by remember { mutableStateOf<Int?>(null) }
                 var numberOfSeries by remember { mutableStateOf<Int?>(null) }
-                var saveSelectionChecked by remember { mutableStateOf(false) }
+                var intermediateBeepsChecked by remember { mutableStateOf<Boolean?>(null) }
+                //var saveSelectionChecked by remember { mutableStateOf(false) }
                 var isTimerRunning by remember { mutableStateOf(false) }
                 var isTimerStopped by remember { mutableStateOf(false) }
                 var isDimmedState by remember { mutableStateOf(false) }
@@ -429,6 +436,7 @@ fun SimpleScreen(
                 val maxRepetitions = 15
                 val repetitionRange = (minRepetitions..maxRepetitions).toList()
                 val seriesOptions = listOf(1, 10, 15, 20, 25, 30)
+                val intermediateBeepsDuration = 5 // seconds for intermediate beeps
 
                 val customInteractiveTextStyle = TextStyle(fontSize = deviceScaling(18).sp)
                 val smallerTextStyle = TextStyle(fontSize = deviceScaling(16).sp)
@@ -449,7 +457,8 @@ fun SimpleScreen(
                         selectedDurationString = loadedPrefs.selectedDuration
                         numberOfRepetitions = loadedPrefs.numberOfRepetitions
                         numberOfSeries = loadedPrefs.numberOfSeries
-                        saveSelectionChecked = loadedPrefs.saveSelection
+                        //saveSelectionChecked = loadedPrefs.saveSelection
+                        intermediateBeepsChecked = loadedPrefs.intermediateBeeps
 
                         if (!isTimerRunning && !isRestMode) {
                             val durationValue =
@@ -459,9 +468,8 @@ fun SimpleScreen(
                             if (currentRepetitionsLeft != 0) { // Only reset if not in a "completed and dimmed" state
                                 currentDurationSecondsLeft = durationValue
                             }
-                            currentRepetitionsLeft =
-                                numberOfRepetitions  //loadedPrefs.numberOfRepetitions
-                            currentSeriesLeft = numberOfSeries  //loadedPrefs.numberOfSeries
+                            currentRepetitionsLeft = numberOfRepetitions
+                            currentSeriesLeft = numberOfSeries
                         }
                     }
                 }
@@ -471,12 +479,13 @@ fun SimpleScreen(
                         numberOfRepetitions != null &&
                         numberOfSeries != null
 
-                // Update initial/current countdown values-rFR-en-rEN when selections change AND timer is NOT running
+                // Update initial/current countdown values when selections change AND timer is NOT running
                 LaunchedEffect(
                     selectedDurationString,
                     numberOfRepetitions,
                     numberOfSeries,
-                    isTimerRunning
+                    isTimerRunning,
+                    intermediateBeepsChecked
                 ) {
                     if (!isTimerRunning && !isTimerStopped) {
                         val durationValue =
@@ -495,7 +504,9 @@ fun SimpleScreen(
                         userPreferencesRepository.saveRepetitionsPreference(numberOfRepetitions)
                     if (numberOfSeries != null)
                         userPreferencesRepository.saveSeriesPreference(numberOfSeries)
-                    userPreferencesRepository.saveSaveSelectionPreference(true)
+                    if (intermediateBeepsChecked != null)
+                        userPreferencesRepository.saveIntermediateBeepsPreference(intermediateBeepsChecked ?: false)
+                    //userPreferencesRepository.saveSaveSelectionPreference(true)
                 }
 
                 LaunchedEffect(isTimerRunning) {
@@ -542,6 +553,15 @@ fun SimpleScreen(
                                     if (!isTimerRunning || isRestMode)
                                         break
                                     currentDurationSecondsLeft = currentDurationSecondsLeft!! - 1
+                                    // intermediate beep logic
+                                    if (intermediateBeepsChecked != null &&
+                                        intermediateBeepsChecked == true &&
+                                        currentDurationSecondsLeft != null &&
+                                        currentDurationSecondsLeft!! > 0 &&
+                                        (initialDurationSeconds!! - currentDurationSecondsLeft!!) % intermediateBeepsDuration == 0
+                                    ) {
+                                        playIntermediateBeep = true
+                                    }
                                 } else if (currentDurationSecondsLeft == 0) {
                                     // end of current repetition duration
                                     if (currentRepetitionsLeft != null && currentRepetitionsLeft!! > 0) {
@@ -636,25 +656,6 @@ fun SimpleScreen(
                     }
                 }
 
-                /*
-                val processCloseAppActions = {
-                    coroutineScope.launch {
-                        if (saveSelectionChecked) {
-                            userPreferencesRepository.saveAllPreferences(
-                                duration = selectedDurationString,
-                                repetitions = numberOfRepetitions,
-                                series = numberOfSeries,
-                                saveSelectionFlag = true
-                            )
-                        } else {
-                            userPreferencesRepository.clearAllPreferencesIfSaveIsUnchecked()
-                        }
-                        onCloseApp()
-                    }
-                }
-                */
-
-
                 // --- Main Column for the whole layout ---
                 // --- 1. Title of Series View ---
                 Text(
@@ -675,9 +676,7 @@ fun SimpleScreen(
                         .fillMaxWidth()
                         .padding(vertical = deviceScaling(8).dp)
                         .height(buttonHeight.dp),
-                        //.height(IntrinsicSize.Min) // Let the content determine heigt, or set fixed like 64.dp
                     horizontalArrangement = Arrangement.Center,
-                    //verticalAlignment = Alignment.CenterVertically
                 ) {
                     //-- START Button --
                     Button(
@@ -724,7 +723,6 @@ fun SimpleScreen(
                         modifier = Modifier
                             .fillMaxWidth(0.75f)
                             .fillMaxHeight(1f)
-                            //.scale(horizontalScaleFactor)
                     ) {
                         Text(
                             text = stringResource(id = if (isTimerRunning) R.string.stop_button else R.string.start_button),
@@ -732,7 +730,6 @@ fun SimpleScreen(
                                 color = if (allSelectionsMade && !isRestMode) AppButtonTextColor
                                         else AppButtonTextColor.copy(alpha = 0.5f)
                             ),
-                            //fontSize = (18 * horizontalScaleFactor).sp
                             fontSize = (18 * buttonHeight / 35f).sp
                         )
                     }
@@ -862,7 +859,8 @@ fun SimpleScreen(
                                     val restTextSizePx = targetTextHeightPx * 0.22f
                                     val restTextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
                                         color = WABlueColor.toArgb()
-                                        textSize = if (restTextSizePx < 16f) 16f else restTextSizePx  //adaptiveInitialRestFontSize.toPx()
+                                        //textSize = if (restTextSizePx < 16f) 16f else restTextSizePx  //adaptiveInitialRestFontSize.toPx()
+                                        textSize = max(16f, restTextSizePx)
                                         isAntiAlias = true
                                         textAlign = Paint.Align.CENTER
                                         typeface = Typeface.create(Typeface.DEFAULT_BOLD, Typeface.ITALIC)
@@ -1145,24 +1143,23 @@ fun SimpleScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(deviceScaling(34).dp))  //majorSpacerHeight))
+                    Spacer(modifier = Modifier.height(majorSpacerHeight))
 
-                    /*
                     Row( // Checkbox Row
                         modifier = Modifier
                             .wrapContentHeight()
                             .padding(top = deviceScaling(4).dp, bottom = 0.dp)
                             .toggleable(
-                                value = saveSelectionChecked,
+                                value = intermediateBeepsChecked ?: false,
                                 role = Role.Checkbox,
                                 enabled = allSelectionsMade,
-                                onValueChange = { saveSelectionChecked = !saveSelectionChecked }
+                                onValueChange = { intermediateBeepsChecked = !intermediateBeepsChecked!! }
                             )
                             .align(Alignment.CenterHorizontally),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Checkbox(
-                            checked = saveSelectionChecked,
+                            checked = intermediateBeepsChecked ?: false,
                             onCheckedChange = null,
                             enabled = allSelectionsMade,
                             colors = CheckboxDefaults.colors(
@@ -1176,12 +1173,11 @@ fun SimpleScreen(
                         )
                         Spacer(modifier = Modifier.width(deviceScaling(6).dp))
                         Text(
-                            text = stringResource(id = R.string.save_selection_label),
+                            text = stringResource(id = R.string.intermediate_beeps),
                             style = smallerTextStyle,
                             color = AppTextColor.copy(alpha = if (allSelectionsMade) 1f else 0.38f)
                         )
                     }
-                    */
 
                     /*
                     Button( // Quit Button

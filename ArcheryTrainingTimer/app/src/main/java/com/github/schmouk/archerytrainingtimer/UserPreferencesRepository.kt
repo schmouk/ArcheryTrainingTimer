@@ -26,7 +26,7 @@ data class UserPreferences(
     val selectedDuration: String?,
     val numberOfRepetitions: Int?,
     val numberOfSeries: Int?,
-    val saveSelection: Boolean
+    val intermediateBeeps: Boolean?
 )
 
 class UserPreferencesRepository(context: Context) {
@@ -39,6 +39,7 @@ class UserPreferencesRepository(context: Context) {
         val NUMBER_OF_REPETITIONS = intPreferencesKey("number_of_repetitions")
         val NUMBER_OF_SERIES = intPreferencesKey("number_of_series")
         val SAVE_SELECTION = booleanPreferencesKey("save_selection")
+        val INTERMEDIATE_BEEPS = booleanPreferencesKey("intermediate_beeps")
     }
 
     // Flow to read all user preferences
@@ -57,9 +58,11 @@ class UserPreferencesRepository(context: Context) {
             val numberOfRepetitions = preferences[PreferencesKeys.NUMBER_OF_REPETITIONS]
             val numberOfSeries = preferences[PreferencesKeys.NUMBER_OF_SERIES]
             val loadedSaveFlag = preferences[PreferencesKeys.SAVE_SELECTION]
+            val intermediateBeepsFlag = preferences[PreferencesKeys.INTERMEDIATE_BEEPS]
             val saveSelection = loadedSaveFlag ?: false
+            val intermediateBeeps = intermediateBeepsFlag ?: false
 
-            UserPreferences(selectedDuration, numberOfRepetitions, numberOfSeries, saveSelection)
+            UserPreferences(selectedDuration, numberOfRepetitions, numberOfSeries, intermediateBeeps)  //saveSelection)
         }
 
     // Combined function to save all preferences if needed,
@@ -68,7 +71,8 @@ class UserPreferencesRepository(context: Context) {
         duration: String?,
         repetitions: Int?,
         series: Int?,
-        saveSelectionFlag: Boolean
+        intermediateBeepsFlag: Boolean
+        //saveSelectionFlag: Boolean
     ) {
         dataStore.edit { preferences ->
             if (duration == null) preferences.remove(PreferencesKeys.SELECTED_DURATION)
@@ -80,7 +84,9 @@ class UserPreferencesRepository(context: Context) {
             if (series == null) preferences.remove(PreferencesKeys.NUMBER_OF_SERIES)
             else preferences[PreferencesKeys.NUMBER_OF_SERIES] = series
 
-            preferences[PreferencesKeys.SAVE_SELECTION] = saveSelectionFlag
+            //preferences[PreferencesKeys.SAVE_SELECTION] = saveSelectionFlag
+
+            preferences[PreferencesKeys.INTERMEDIATE_BEEPS] = intermediateBeepsFlag
         }
     }
 
@@ -93,7 +99,8 @@ class UserPreferencesRepository(context: Context) {
             // preferences.remove(PreferencesKeys.SELECTED_DURATION)
             // preferences.remove(PreferencesKeys.NUMBER_OF_REPETITIONS)
             // preferences.remove(PreferencesKeys.NUMBER_OF_SERIES)
-            // preferences[PreferencesKeys.SAVE_SELECTION] = false // Keep the save flag as false
+            // preferences[PreferencesKeys.SAVE_SELECTION] = false
+            // preferences[PreferencesKeys.INTERMEDIATE_BEEPS] = false
         }
     }
 
@@ -125,6 +132,13 @@ class UserPreferencesRepository(context: Context) {
     suspend fun saveSaveSelectionPreference(saveSelection: Boolean) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.SAVE_SELECTION] = saveSelection
+        }
+    }
+
+    // Function to save only the intermediateBeeps preference
+    suspend fun saveIntermediateBeepsPreference(intermediateBeeps: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.INTERMEDIATE_BEEPS] = intermediateBeeps
         }
     }
 
