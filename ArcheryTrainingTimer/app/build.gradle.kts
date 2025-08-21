@@ -143,6 +143,9 @@ dependencies {
 
     implementation("androidx.core:core-ktx:1.16.0") // Example minimal dependency
 
+    implementation("androidx.compose.material:material-icons-core:1.7.8") // Or the version from your BOM
+    implementation("androidx.compose.material:material-icons-extended:1.7.8") // Or the version from your BOM
+
     // Compose Bill of Materials (BOM) - Recommended
     // The BOM ensures that versions of different Compose libraries are compatible.
     implementation(platform("androidx.compose:compose-bom:2024.05.00")) // REPLACE with latest BOM version

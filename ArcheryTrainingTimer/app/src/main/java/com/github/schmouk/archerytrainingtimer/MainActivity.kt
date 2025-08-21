@@ -1,10 +1,12 @@
 package com.github.schmouk.archerytrainingtimer
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.Typeface
 import android.media.AudioAttributes
+import android.media.AudioManager
 import android.media.SoundPool
 import android.os.Bundle
 import android.text.TextPaint
@@ -13,6 +15,10 @@ import android.view.WindowManager
 
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -21,10 +27,22 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
+//import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+//import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ArrowRight
+//import androidx.compose.material.icons.filled.KeyboardArrowLeft
+//import androidx.compose.material.icons.filled.KeyboardArrowRight
+//import androidx.compose.material.icons.Icons.AutoMirrored.Filled.KeyboardArrowLeft
+//import androidx.compose.material.icons.Icons.AutoMirrored.Filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
@@ -35,6 +53,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 //import androidx.compose.runtime.Composable
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -42,7 +61,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
-//import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 //import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.Modifier
@@ -58,6 +77,7 @@ import androidx.compose.ui.text.font.FontWeight
 //import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 //import androidx.compose.ui.text.drawText
@@ -72,10 +92,11 @@ import com.github.schmouk.archerytrainingtimer.ui.theme.*
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
-//import kotlinx.coroutines.launch
+import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
+import kotlin.times
 
 
 /*
@@ -247,6 +268,10 @@ fun AdaptiveText(
 }
 */
 
+val minRepetitions = 3
+val maxRepetitions = 15
+val repetitionRange = (minRepetitions..maxRepetitions).toList()
+
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
@@ -290,87 +315,6 @@ fun SimpleScreen(
                 ).coerceIn(0.40f, 1.5f)
             val scaleFactor = min(horizontalScaleFactor, verticalScaleFactor)
 
-            val heightScalingFactor = this.maxHeight.value / currentScreenHeightDp.value
-            val widthScalingFactor  = this.maxWidth.value  / currentScreenWidthDp.value
-
-            // Playing sound
-            val context = LocalContext.current
-            var playBeepEvent by remember { mutableStateOf(false) }
-            var playEndBeepEvent by remember { mutableStateOf(false) }
-            var playRestBeepEvent by remember { mutableStateOf(false) }
-            var playIntermediateBeep by remember { mutableStateOf(false) }
-
-            // SoundPool setup
-            val soundPool = remember {
-                val audioAttributes = AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_MEDIA)  //USAGE_ASSISTANCE_SONIFICATION) // Or USAGE_GAME, USAGE_MEDIA
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .build()
-
-                SoundPool.Builder()
-                    .setMaxStreams(1) // Only need to play one beep at a time
-                    .setAudioAttributes(audioAttributes)
-                    .build()
-            }
-
-            var beepSoundId by remember { mutableStateOf<Int?>(null) }
-            var endBeepSoundId by remember { mutableStateOf<Int?>(null) }
-            var intermediateBeepSoundId by remember { mutableStateOf<Int?>(null) }
-            var soundPoolLoaded by remember { mutableStateOf(false) }
-
-            // Load sound and release SoundPool
-            DisposableEffect(Unit) {
-                beepSoundId = soundPool.load(context, R.raw.beep, 1)
-                endBeepSoundId = soundPool.load(context, R.raw.beep_end, 1)
-                intermediateBeepSoundId = soundPool.load(context, R.raw.beep_intermediate, 1)
-                soundPool.setOnLoadCompleteListener { _, _, status ->
-                    if (status == 0) {
-                        soundPoolLoaded = true
-                    }
-                }
-                onDispose {
-                    soundPool.release()
-                }
-            }
-
-            // Play sound effect - single beep
-            LaunchedEffect(playBeepEvent) {
-                if (playBeepEvent && soundPoolLoaded && beepSoundId != null) {
-                    soundPool.play(beepSoundId!!, 1f, 1f, 1, 0, 1f)
-                    playBeepEvent = false // Reset trigger
-                }
-            }
-
-            // Play sound effect - end beep
-            LaunchedEffect(playEndBeepEvent) {
-                if (playEndBeepEvent && soundPoolLoaded && endBeepSoundId != null) {
-                    soundPool.play(endBeepSoundId!!, 1f, 1f, 1, 0, 1f)
-                    delay(380L)
-                    soundPool.play(endBeepSoundId!!, 1f, 1f, 1, 0, 1f)
-                    delay(380L)
-                    soundPool.play(endBeepSoundId!!, 1f, 1f, 1, 0, 1f)
-                    playEndBeepEvent = false // Reset trigger
-                }
-            }
-
-            // Play sound effect - intermediate beep
-            LaunchedEffect(playIntermediateBeep) {
-                if (playIntermediateBeep && soundPoolLoaded && intermediateBeepSoundId != null) {
-                    soundPool.play(intermediateBeepSoundId!!, 1f, 1f, 1, 0, 1f)
-                    playIntermediateBeep = false // Reset trigger
-                }
-
-            }
-
-            // Play sound effect - rest beeps
-            LaunchedEffect(playRestBeepEvent) {
-                if (playRestBeepEvent && soundPoolLoaded && beepSoundId != null) {
-                    soundPool.play(beepSoundId!!, 1f, 1f, 1, 0, 1f)
-                    delay(240L)
-                    soundPool.play(beepSoundId!!, 1f, 1f, 1, 0, 1f)
-                    playRestBeepEvent = false // Reset trigger
-                }
-            }
 
             // scales a dimension (width or height) according to the running device deviceScaling factor
             fun deviceScaling(dim: Int): Float {
@@ -392,6 +336,328 @@ fun SimpleScreen(
                 return textHorizontalScaleFactor * dim
             }
 
+            val heightScalingFactor = this.maxHeight.value / currentScreenHeightDp.value
+            val widthScalingFactor  = this.maxWidth.value  / currentScreenWidthDp.value
+
+            val customInteractiveTextStyle = TextStyle(fontSize = deviceScaling(18).sp)
+            val smallerTextStyle = TextStyle(fontSize = deviceScaling(16).sp)
+            val repetitionsLazyListState = rememberLazyListState()
+
+            // Playing sound
+            val context = LocalContext.current
+
+            var playBeepEvent by remember { mutableStateOf(false) }
+            var playEndBeepEvent by remember { mutableStateOf(false) }
+            var playRestBeepEvent by remember { mutableStateOf(false) }
+            var playIntermediateBeep by remember { mutableStateOf(false) }
+
+            val audioManager = remember { // Remember to avoid re-creating it on every recomposition
+                context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            }
+
+            // SoundPool setup
+            val soundPool = remember {
+                val audioAttributes = AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)  //USAGE_ASSISTANCE_SONIFICATION) // Or USAGE_GAME, USAGE_MEDIA
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build()
+
+                SoundPool.Builder()
+                    .setMaxStreams(1) // Only need to play one beep at a time
+                    .setAudioAttributes(audioAttributes)
+                    .build()
+            }
+
+            fun audioIsNotMuted(): Boolean {
+                // Check if the device is not in silent mode
+                return audioManager.ringerMode != AudioManager.RINGER_MODE_SILENT &&
+                        audioManager.ringerMode != AudioManager.RINGER_MODE_VIBRATE
+            }
+
+            // --- Dynamic Sizes & SPs ---
+            val mainTimerStrokeWidth = deviceScaling(14).dp
+            val repetitionBoxSize = deviceScaling(48).dp
+            val majorSpacerHeight = deviceScaling(8).dp
+            val generalPadding = deviceScaling(12).dp
+
+            var selectedDurationString by rememberSaveable { mutableStateOf<String?>(null) }
+            var numberOfRepetitions by remember { mutableStateOf<Int?>(null) }
+            var numberOfSeries by remember { mutableStateOf<Int?>(null) }
+            var intermediateBeepsChecked by remember { mutableStateOf<Boolean?>(null) }
+            //var saveSelectionChecked by remember { mutableStateOf(false) }
+
+            var lastDurationSeconds by rememberSaveable { mutableStateOf<Int>(0) }
+            var lastNumberOfRepetitions by rememberSaveable { mutableStateOf<Int>(0) }
+            var lastNumberOfSeries by rememberSaveable { mutableStateOf<Int>(0) }
+
+            var isTimerRunning by remember { mutableStateOf(false) }
+            var isTimerStopped by remember { mutableStateOf(false) }
+            var isDimmedState by remember { mutableStateOf(false) }
+
+            var initialDurationSeconds by rememberSaveable { mutableStateOf<Int?>(null) }
+            var currentDurationSecondsLeft by rememberSaveable { mutableStateOf<Int?>(null) }
+            var currentRepetitionsLeft by rememberSaveable { mutableStateOf<Int?>(null) }
+            var currentSeriesLeft by rememberSaveable { mutableStateOf<Int?>(null) }
+
+            // Rest Mode & Series Tracking
+            var isRestMode by rememberSaveable { mutableStateOf(false) }
+            var currentRestTimeLeft by rememberSaveable { mutableStateOf<Int?>(null) }
+            var initialRestTime by rememberSaveable { mutableStateOf<Int?>(null) } // To store calculated rest time
+            val restingRatio = 0.5f
+            val endOfRestBeepTime = 7 // seconds before end of rest to play beep
+
+            val durationOptions = listOf("10 s", "15 s", "20 s", "30 s")
+            val durationsScaling = 4f / durationOptions.size
+            val durationButtonWidth = (
+                    currentScreenWidthDp.value / durationOptions.size - horizontalDeviceScaling(8)
+                    ).dp
+            val seriesOptions = listOf(1, 3, 5, 10, 15, 20, 25, 30)
+            val intermediateBeepsDuration = 5 // seconds for intermediate beeps
+            //val coroutineScope = rememberCoroutineScope()
+
+            val restModeText = stringResource(R.string.rest_indicator).toString()
+
+            // This flag will determine if the timers should be dimmed
+            // It's true when a full cycle of repetitions is complete and timer is stopped
+            val showDimmedTimers = rememberSaveable(currentRepetitionsLeft, isTimerRunning) {
+                currentRepetitionsLeft == 0 && !isTimerRunning && !isRestMode
+            }
+
+            var beepSoundId by remember { mutableStateOf<Int?>(null) }
+            var endBeepSoundId by remember { mutableStateOf<Int?>(null) }
+            var intermediateBeepSoundId by remember { mutableStateOf<Int?>(null) }
+            var soundPoolLoaded by remember { mutableStateOf(false) }
+
+
+            // Load sound and release SoundPool
+            DisposableEffect(Unit) {
+                beepSoundId = soundPool.load(context, R.raw.beep, 1)
+                endBeepSoundId = soundPool.load(context, R.raw.beep_end, 1)
+                intermediateBeepSoundId = soundPool.load(context, R.raw.beep_intermediate, 1)
+                soundPool.setOnLoadCompleteListener { _, _, status ->
+                    if (status == 0) {
+                        soundPoolLoaded = true
+                    }
+                }
+                onDispose {
+                    soundPool.release()
+                }
+            }
+
+            // Play sound effect - single beep
+            LaunchedEffect(playBeepEvent) {
+                if (playBeepEvent && soundPoolLoaded && beepSoundId != null && audioIsNotMuted()) {
+                    soundPool.play(beepSoundId!!, 1f, 1f, 1, 0, 1f)
+                }
+                playBeepEvent = false // Reset trigger
+            }
+
+            // Play sound effect - end beep
+            LaunchedEffect(playEndBeepEvent) {
+                if (playEndBeepEvent && soundPoolLoaded && endBeepSoundId != null && audioIsNotMuted()) {
+                    soundPool.play(endBeepSoundId!!, 1f, 1f, 1, 0, 1f)
+                    delay(380L)
+                    soundPool.play(endBeepSoundId!!, 1f, 1f, 1, 0, 1f)
+                    delay(380L)
+                    soundPool.play(endBeepSoundId!!, 1f, 1f, 1, 0, 1f)
+                }
+                playEndBeepEvent = false // Reset trigger
+            }
+
+            // Play sound effect - intermediate beep
+            LaunchedEffect(playIntermediateBeep) {
+                if (playIntermediateBeep && soundPoolLoaded && intermediateBeepSoundId != null && audioIsNotMuted()) {
+                    soundPool.play(intermediateBeepSoundId!!, 1f, 1f, 1, 0, 1f)
+                }
+                playIntermediateBeep = false // Reset trigger
+            }
+
+            // Play sound effect - rest beeps
+            LaunchedEffect(playRestBeepEvent) {
+                if (playRestBeepEvent && soundPoolLoaded && beepSoundId != null) {
+                    soundPool.play(beepSoundId!!, 1f, 1f, 1, 0, 1f)
+                    delay(240L)
+                    soundPool.play(beepSoundId!!, 1f, 1f, 1, 0, 1f)
+                    playRestBeepEvent = false // Reset trigger
+                }
+            }
+
+
+
+            @Composable
+            fun RepetitionsSelectorWithScrollIndicators(
+                selectedRepetition: Int?,
+                onRepetitionSelected: (Int) -> Unit,
+                repetitionsListState: LazyListState = rememberLazyListState(), // Pass or remember
+                // Add scaleFactor or other styling params if needed
+            ) {
+                val coroutineScope = rememberCoroutineScope()
+
+                // Derived states to determine if arrows should be shown
+                // canScrollBackward is true if the first item is not fully visible at the start
+                val canScrollBackward by remember {
+                    derivedStateOf {
+                        repetitionsListState.firstVisibleItemIndex > 0 || repetitionsListState.firstVisibleItemScrollOffset > 0
+                    }
+                }
+
+                // canScrollForward is true if the last item is not fully visible at the end
+                // This requires knowing the total item count and the layout info of visible items.
+                val canScrollForward by remember {
+                    derivedStateOf {
+                        // Check if there are items and the LazyListState has layout info
+                        if (repetitionsListState.layoutInfo.visibleItemsInfo.isNotEmpty() && repetitionRange.isNotEmpty()) {
+                            val lastVisibleItem = repetitionsListState.layoutInfo.visibleItemsInfo.last()
+                            // If the last visible item's index is less than the total number of items - 1
+                            // OR if the last visible item is not fully occupying the viewport width at its end
+                            val viewportWidth = repetitionsListState.layoutInfo.viewportSize.width
+                            lastVisibleItem.index < repetitionRange.size - 1 || lastVisibleItem.offset + lastVisibleItem.size < repetitionsListState.layoutInfo.viewportSize.width
+                        } else {
+                            repetitionRange.isNotEmpty() // True if there are items but no layout info yet (initial state before first scroll/layout)
+                        }
+                    }
+                }
+
+                // Standard IconButton size (Material guidelines suggest 48.dp touch target)
+                val arrowButtonSize = 48.dp
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    // --- Left Arrow ---
+                    Box(
+                        modifier = Modifier
+                            .size(arrowButtonSize), // Occupy space whether visible or not to help layout
+                        contentAlignment = Alignment.Center // Center the AnimatedVisibility content within the Box
+                    ) {
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = canScrollBackward,
+                            enter = fadeIn(animationSpec = tween(durationMillis = 400)),
+                            exit = fadeOut(animationSpec = tween(durationMillis = 400))
+                        ) {
+                            IconButton(
+                                onClick = {
+                                    coroutineScope.launch {
+                                        // Scroll to the beginning or by a certain amount
+                                        val targetIndex =
+                                            (repetitionsListState.firstVisibleItemIndex - 5).coerceAtLeast(
+                                                0
+                                            ) // Scroll back 5 items
+                                        repetitionsListState.animateScrollToItem(targetIndex)
+                                    }
+                                },
+                                modifier = Modifier.fillMaxSize() // Fill the Box
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,  //.KeyboardArrowLeft,
+                                    contentDescription = "Scroll Left", // For accessibility
+                                    tint = AppTextColor  //MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+
+                    // --- LazyRow ---
+                    // LazyRow takes the available space between arrows
+                    LazyRow(
+                        state = repetitionsListState,
+                        modifier = Modifier
+                            .weight(1f) // LazyRow takes available space between arrows
+                            .padding(horizontal = 0.dp), // No extra padding here if arrows handle spacing
+                        horizontalArrangement = Arrangement.spacedBy(deviceScaling(8).dp) // Spacing between number buttons
+                    ) {
+                        /*items(repetitionRange) { repetition ->
+                            Button(
+                                onClick = { onRepetitionSelected(repetition) },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (repetition == selectedRepetition) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                                    contentColor = if (repetition == selectedRepetition) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                                ),
+                                modifier = Modifier.height(40.dp) // Example fixed height
+                                // Add other styling from your original button
+                            ) {
+                                Text(text = repetition.toString() /*, style = customInteractiveTextStyle */)
+                            }
+                        }*/
+                        items(repetitionRange, key = { it }) { number -> // Add a key for better performance
+                            val isNumberSelected = number == numberOfRepetitions
+                            val isClickable = true  //!(isTimerRunning || isTimerStopped)
+
+                            Box(
+                                modifier = Modifier
+                                    .size(repetitionBoxSize)
+                                    .then(
+                                        if (isNumberSelected) Modifier.border(
+                                            BorderStroke(
+                                                deviceScaling(4).dp,
+                                                SelectedButtonBorderColor
+                                            ), shape = CircleShape
+                                        ) else Modifier
+                                    )
+                                    .padding(if (isNumberSelected) deviceScaling(4).dp else 0.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        color = if (isNumberSelected) AppTitleColor
+                                        else if (isClickable) AppButtonDarkerColor
+                                        else AppDimmedButtonColor
+                                    )
+                                    .clickable {
+                                        if (isClickable)
+                                            numberOfRepetitions =
+                                                if (isNumberSelected) null else number
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "$number",
+                                    style = customInteractiveTextStyle.copy(
+                                        color = if (isNumberSelected) AppButtonTextColor
+                                        //else if (isTimerRunning || isTimerStopped) AppDimmedTextColor
+                                        else AppTextColor
+                                    ),
+                                    fontWeight = if (isNumberSelected) FontWeight.Bold else FontWeight.Normal
+                                )
+                            }
+                        }
+                    }
+
+                    // --- Right Arrow ---
+                    Box(
+                        modifier = Modifier
+                            .size(arrowButtonSize), // Occupy space whether visible or not
+                        contentAlignment = Alignment.Center // Center the AnimatedVisibility content
+                    ) {
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = canScrollForward,
+                            enter = fadeIn(animationSpec = tween(durationMillis = 400)),
+                            exit = fadeOut(animationSpec = tween(durationMillis = 400))
+                        ) {
+                            IconButton(
+                                onClick = {
+                                    coroutineScope.launch {
+                                        // Scroll to the end or by a certain amount
+                                        val targetIndex =
+                                            (repetitionsListState.firstVisibleItemIndex + 5).coerceAtMost(
+                                                repetitionRange.size - 1
+                                            ) // Scroll forward 5 items example
+                                        repetitionsListState.animateScrollToItem(targetIndex)
+                                    }
+                                },
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,  //.KeyboardArrowRight,
+                                    contentDescription = "Scroll Right",
+                                    tint = AppTextColor  //MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+
+                }
+            }
+
 
             // --- The Main Column for the entire screen content ---
             Column(
@@ -402,63 +668,6 @@ fun SimpleScreen(
 
                 // Add verticalArrangement as needed, e.g., Arrangement.SpaceAround
             ) {
-                // --- Dynamic Sizes & SPs ---
-                val mainTimerStrokeWidth = deviceScaling(14).dp
-                val repetitionBoxSize = deviceScaling(48).dp
-                val majorSpacerHeight = deviceScaling(8).dp
-                val generalPadding = deviceScaling(12).dp
-
-                var selectedDurationString by rememberSaveable { mutableStateOf<String?>(null) }
-                var numberOfRepetitions by remember { mutableStateOf<Int?>(null) }
-                var numberOfSeries by remember { mutableStateOf<Int?>(null) }
-                var intermediateBeepsChecked by remember { mutableStateOf<Boolean?>(null) }
-                //var saveSelectionChecked by remember { mutableStateOf(false) }
-
-                var lastDurationSeconds by rememberSaveable { mutableStateOf<Int>(0) }
-                var lastNumberOfRepetitions by rememberSaveable { mutableStateOf<Int>(0) }
-                var lastNumberOfSeries by rememberSaveable { mutableStateOf<Int>(0) }
-
-                var isTimerRunning by remember { mutableStateOf(false) }
-                var isTimerStopped by remember { mutableStateOf(false) }
-                var isDimmedState by remember { mutableStateOf(false) }
-
-                var initialDurationSeconds by rememberSaveable { mutableStateOf<Int?>(null) }
-                var currentDurationSecondsLeft by rememberSaveable { mutableStateOf<Int?>(null) }
-                var currentRepetitionsLeft by rememberSaveable { mutableStateOf<Int?>(null) }
-                var currentSeriesLeft by rememberSaveable { mutableStateOf<Int?>(null) }
-
-                // Rest Mode & Series Tracking
-                var isRestMode by rememberSaveable { mutableStateOf(false) }
-                var currentRestTimeLeft by rememberSaveable { mutableStateOf<Int?>(null) }
-                var initialRestTime by rememberSaveable { mutableStateOf<Int?>(null) } // To store calculated rest time
-                val restingRatio = 0.5f
-                val endOfRestBeepTime = 7 // seconds before end of rest to play beep
-
-                val durationOptions = listOf("10 s", "15 s", "20 s", "30 s")
-                val durationsScaling = 4f / durationOptions.size
-                val durationButtonWidth = (
-                        currentScreenWidthDp.value / durationOptions.size - horizontalDeviceScaling(8)
-                    ).dp
-                val minRepetitions = 3
-                val maxRepetitions = 15
-                val repetitionRange = (minRepetitions..maxRepetitions).toList()
-                val seriesOptions = listOf(1, 3, 5, 10, 15, 20, 25, 30)
-                val intermediateBeepsDuration = 5 // seconds for intermediate beeps
-
-                val customInteractiveTextStyle = TextStyle(fontSize = deviceScaling(18).sp)
-                val smallerTextStyle = TextStyle(fontSize = deviceScaling(16).sp)
-                val repetitionsLazyListState = rememberLazyListState()
-                //val coroutineScope = rememberCoroutineScope()
-
-                val restModeText = stringResource(R.string.rest_indicator).toString()
-
-
-                // This flag will determine if the timers should be dimmed
-                // It's true when a full cycle of repetitions is complete and timer is stopped
-                val showDimmedTimers = rememberSaveable(currentRepetitionsLeft, isTimerRunning) {
-                    currentRepetitionsLeft == 0 && !isTimerRunning && !isRestMode
-                }
-
                 LaunchedEffect(key1 = Unit) {
                     userPreferencesRepository.userPreferencesFlow.collect { loadedPrefs ->
                         selectedDurationString = loadedPrefs.selectedDuration
@@ -1088,6 +1297,17 @@ fun SimpleScreen(
                             .wrapContentHeight()
                             .align(Alignment.CenterHorizontally)
                     )
+
+                    RepetitionsSelectorWithScrollIndicators(
+                        selectedRepetition = numberOfRepetitions, // Your state variable for the current selection
+                        onRepetitionSelected = { selected ->
+                            numberOfRepetitions = selected
+                            // Call your userPreferencesRepository.saveRepetitionsPreference(selected) here
+                        },
+                        repetitionsListState = repetitionsLazyListState // Pass the state
+                    )
+
+                    /*
                     LazyRow( // Repetitions LazyRow
                         state = repetitionsLazyListState,
                         modifier = Modifier
@@ -1137,6 +1357,7 @@ fun SimpleScreen(
                             }
                         }
                     }
+                    */
 
                     Spacer(modifier = Modifier.height(majorSpacerHeight))
 
@@ -1209,7 +1430,9 @@ fun SimpleScreen(
                                 value = intermediateBeepsChecked ?: false,
                                 role = Role.Checkbox,
                                 enabled = allSelectionsMade,
-                                onValueChange = { intermediateBeepsChecked = !intermediateBeepsChecked!! }
+                                onValueChange = {
+                                    intermediateBeepsChecked = !intermediateBeepsChecked!!
+                                }
                             )
                             .align(Alignment.CenterHorizontally),
                         verticalAlignment = Alignment.CenterVertically
