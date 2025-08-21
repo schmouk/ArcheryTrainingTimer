@@ -434,7 +434,7 @@ fun SimpleScreen(
                 val restingRatio = 0.5f
                 val endOfRestBeepTime = 7 // seconds before end of rest to play beep
 
-                val durationOptions = listOf("5 s", "10 s", "15 s", "20 s", "30 s")
+                val durationOptions = listOf("10 s", "15 s", "20 s", "30 s")
                 val durationsScaling = 4f / durationOptions.size
                 val durationButtonWidth = (
                         currentScreenWidthDp.value / durationOptions.size - horizontalDeviceScaling(8)
@@ -442,7 +442,7 @@ fun SimpleScreen(
                 val minRepetitions = 3
                 val maxRepetitions = 15
                 val repetitionRange = (minRepetitions..maxRepetitions).toList()
-                val seriesOptions = listOf(1, 10, 15, 20, 25, 30)
+                val seriesOptions = listOf(1, 3, 5, 10, 15, 20, 25, 30)
                 val intermediateBeepsDuration = 5 // seconds for intermediate beeps
 
                 val customInteractiveTextStyle = TextStyle(fontSize = deviceScaling(18).sp)
@@ -532,7 +532,7 @@ fun SimpleScreen(
                             max(if (isRestMode) 0 else 1, currentRepetitionsLeft!! + numberOfRepetitions!! - lastNumberOfRepetitions),
                             numberOfRepetitions!!
                         )
-                        lastNumberOfRepetitions = /*if (isRestMode) numberOfRepetitions!! - 1 else*/ numberOfRepetitions!!
+                        lastNumberOfRepetitions = numberOfRepetitions!!
                         userPreferencesRepository.saveRepetitionsPreference(numberOfRepetitions)
                     }
 
