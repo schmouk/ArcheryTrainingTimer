@@ -369,7 +369,6 @@ fun SimpleScreen(
             }
 
             fun audioIsNotMuted(): Boolean {
-                // Check if the device is not in silent mode
                 return audioManager.ringerMode != AudioManager.RINGER_MODE_SILENT &&
                         audioManager.ringerMode != AudioManager.RINGER_MODE_VIBRATE
             }
