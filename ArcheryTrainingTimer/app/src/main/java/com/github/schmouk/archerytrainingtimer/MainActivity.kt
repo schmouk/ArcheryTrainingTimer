@@ -42,9 +42,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
+//import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.graphicsLayer
+//import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -54,18 +54,18 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+//import androidx.compose.ui.text.style.TextAlign
 //import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.text.drawText
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
+//import androidx.compose.ui.text.drawText
+//import androidx.compose.ui.tooling.preview.Preview
+//import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.unit.TextUnit
+//import androidx.compose.ui.unit.TextUnit
 import androidx.core.view.WindowCompat
 
 import com.github.schmouk.archerytrainingtimer.ui.theme.*
@@ -77,6 +77,28 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
+
+/*
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MyCustomTopAppBar() {
+    // Apply padding ONLY to the top of the TopAppBar to account for the status bar
+    TopAppBar(
+        title = {
+            Text(
+                text = stringResource(id = R.string.app_name),
+                style = MaterialTheme.typography.titleLarge // Or some other preferred style
+            )
+        },
+        modifier = Modifier.fillMaxWidth(),
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            titleContentColor = MaterialTheme.colorScheme.onPrimary
+        ),
+        windowInsets = WindowInsets.statusBars // Keep this, it's good practice
+    )
+}
+*/
 
 /*
 @OptIn(ExperimentalMaterial3Api::class)
@@ -103,25 +125,15 @@ fun MainScreen() {
 }
 */
 
-@OptIn(ExperimentalMaterial3Api::class)
+/*
+@Preview(showBackground = true)
 @Composable
-fun MyCustomTopAppBar() {
-    // Apply padding ONLY to the top of the TopAppBar to account for the status bar
-    TopAppBar(
-        title = {
-            Text(
-                text = stringResource(id = R.string.app_name),
-                style = MaterialTheme.typography.titleLarge // Or some other preferred style
-            )
-        },
-        modifier = Modifier.fillMaxWidth(),
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.primary,
-            titleContentColor = MaterialTheme.colorScheme.onPrimary
-        ),
-        windowInsets = WindowInsets.statusBars // Keep this, it's good practice
-    )
+fun DefaultPreview() {
+    AppTheme {
+        MainScreen()
+    }
 }
+*/
 
 // The AppTheme Composable
 @Composable
@@ -132,16 +144,6 @@ fun AppTheme(content: @Composable () -> Unit) {
         content()
     }
 }
-
-/*
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    AppTheme {
-        MainScreen()
-    }
-}
-*/
 
 
 // MainActivity class definition
@@ -411,6 +413,11 @@ fun SimpleScreen(
                 var numberOfSeries by remember { mutableStateOf<Int?>(null) }
                 var intermediateBeepsChecked by remember { mutableStateOf<Boolean?>(null) }
                 //var saveSelectionChecked by remember { mutableStateOf(false) }
+
+                var lastDurationSeconds by rememberSaveable { mutableStateOf<Int>(0) }
+                var lastNumberOfRepetitions by rememberSaveable { mutableStateOf<Int>(0) }
+                var lastNumberOfSeries by rememberSaveable { mutableStateOf<Int>(0) }
+
                 var isTimerRunning by remember { mutableStateOf(false) }
                 var isTimerStopped by remember { mutableStateOf(false) }
                 var isDimmedState by remember { mutableStateOf(false) }
@@ -427,7 +434,7 @@ fun SimpleScreen(
                 val restingRatio = 0.5f
                 val endOfRestBeepTime = 7 // seconds before end of rest to play beep
 
-                val durationOptions = listOf("10 s", "15 s", "20 s", "30 s")
+                val durationOptions = listOf("5 s", "10 s", "15 s", "20 s", "30 s")
                 val durationsScaling = 4f / durationOptions.size
                 val durationButtonWidth = (
                         currentScreenWidthDp.value / durationOptions.size - horizontalDeviceScaling(8)
@@ -441,7 +448,7 @@ fun SimpleScreen(
                 val customInteractiveTextStyle = TextStyle(fontSize = deviceScaling(18).sp)
                 val smallerTextStyle = TextStyle(fontSize = deviceScaling(16).sp)
                 val repetitionsLazyListState = rememberLazyListState()
-                val coroutineScope = rememberCoroutineScope()
+                //val coroutineScope = rememberCoroutineScope()
 
                 val restModeText = stringResource(R.string.rest_indicator).toString()
 
@@ -470,6 +477,10 @@ fun SimpleScreen(
                             }
                             currentRepetitionsLeft = numberOfRepetitions
                             currentSeriesLeft = numberOfSeries
+
+                            lastDurationSeconds = durationValue ?: 0
+                            lastNumberOfRepetitions = numberOfRepetitions ?: 0
+                            lastNumberOfSeries = numberOfSeries ?: 0
                         }
                     }
                 }
@@ -487,6 +498,7 @@ fun SimpleScreen(
                     isTimerRunning,
                     intermediateBeepsChecked
                 ) {
+                    /*
                     if (!isTimerRunning && !isTimerStopped) {
                         val durationValue =
                             selectedDurationString?.split(" ")?.firstOrNull()?.toIntOrNull()
@@ -498,14 +510,41 @@ fun SimpleScreen(
                             currentSeriesLeft = numberOfSeries
                         }
                     }
-                    if (selectedDurationString != null)
-                        userPreferencesRepository.saveDurationPreference(selectedDurationString)
-                    if (numberOfRepetitions != null)
+                    */
+
+
+                    if (selectedDurationString != null) {
+                        val durationValue =
+                            selectedDurationString?.split(" ")?.firstOrNull()?.toIntOrNull()
+                        if (durationValue != null && durationValue != lastDurationSeconds) {
+                            initialDurationSeconds = durationValue
+                            currentDurationSecondsLeft = min(
+                                max( 1, currentDurationSecondsLeft!! + durationValue - lastDurationSeconds),
+                                durationValue!!
+                            )
+                            lastDurationSeconds = durationValue
+                            userPreferencesRepository.saveDurationPreference(selectedDurationString)
+                        }
+                    }
+
+                    if (numberOfRepetitions != null && numberOfRepetitions != lastNumberOfRepetitions) {
+                        currentRepetitionsLeft = min(
+                            max(if (isRestMode) 0 else 1, currentRepetitionsLeft!! + numberOfRepetitions!! - lastNumberOfRepetitions),
+                            numberOfRepetitions!!
+                        )
+                        lastNumberOfRepetitions = /*if (isRestMode) numberOfRepetitions!! - 1 else*/ numberOfRepetitions!!
                         userPreferencesRepository.saveRepetitionsPreference(numberOfRepetitions)
-                    if (numberOfSeries != null)
+                    }
+
+                    if (numberOfSeries != null && numberOfSeries != lastNumberOfSeries) {
+                        currentSeriesLeft = max(1, currentSeriesLeft!! + numberOfSeries!! - lastNumberOfSeries)
+                        lastNumberOfSeries = numberOfSeries!!
                         userPreferencesRepository.saveSeriesPreference(numberOfSeries)
+                    }
+
                     if (intermediateBeepsChecked != null)
                         userPreferencesRepository.saveIntermediateBeepsPreference(intermediateBeepsChecked ?: false)
+
                     //userPreferencesRepository.saveSaveSelectionPreference(true)
                 }
 
@@ -522,7 +561,7 @@ fun SimpleScreen(
                     while (isTimerRunning) {
                         // --- Normal Repetition Countdown ---
                         if (!isRestMode) {
-                            // Ensure values-rFR-en-rEN are sane before starting countdown loop
+                            // Ensure values are sane before starting countdown loop
                             // If starting from a dimmed state (reps=0, duration=0), reset them.
                             if (currentRepetitionsLeft == 0) { // Indicates a previous cycle was completed
                                 currentRepetitionsLeft = numberOfRepetitions  // Reset for new cycle
@@ -543,7 +582,11 @@ fun SimpleScreen(
                                 }
                             }
 
-                            while (isTimerRunning && !isRestMode && isActive) {
+                            while (isTimerRunning &&
+                                    !isRestMode &&
+                                    isActive &&
+                                    currentSeriesLeft!! > 0
+                            ) {
                                 if (currentDurationSecondsLeft != null && currentDurationSecondsLeft == initialDurationSeconds) {
                                     playBeepEvent = true
                                 }
@@ -598,7 +641,7 @@ fun SimpleScreen(
                                                     currentRestTimeLeft = initialRestTime
                                                 }
                                             } else {
-                                                // (currentSeriesLeft != null && currentSeriesLeft!! > 0)
+                                                // !(currentSeriesLeft != null && currentSeriesLeft!! > 0)
                                                 // --> this is the end of the training session
                                                 // notice: dead code? Let's check...
 
@@ -629,6 +672,20 @@ fun SimpleScreen(
                             }
                         }
 
+                        // Have to check this since it may have been set in the block above
+                        if (currentSeriesLeft!! == 0) {
+                            // If no more series left, stop the timer and show dimmed state
+                            isTimerRunning = false
+                            isTimerStopped = false
+                            isDimmedState = true
+                            isRestMode = false
+                            playRestBeepEvent = false
+                            playEndBeepEvent = true
+                            currentDurationSecondsLeft = 0
+                            currentRepetitionsLeft = 0
+                            currentSeriesLeft = 0
+                        }
+                        else
                         // --- Rest Mode Countdown ---
                         if (isRestMode) { // Check isRestMode again, as it could have been set in the block above
                             while (isTimerRunning && isActive) {
@@ -859,7 +916,6 @@ fun SimpleScreen(
                                     val restTextSizePx = targetTextHeightPx * 0.22f
                                     val restTextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
                                         color = WABlueColor.toArgb()
-                                        //textSize = if (restTextSizePx < 16f) 16f else restTextSizePx  //adaptiveInitialRestFontSize.toPx()
                                         textSize = max(16f, restTextSizePx)
                                         isAntiAlias = true
                                         textAlign = Paint.Align.CENTER
@@ -983,37 +1039,37 @@ fun SimpleScreen(
                     ) {
                         val borderStrokeWidth = deviceScaling(5).dp
                         Row(horizontalArrangement = Arrangement.spacedBy(deviceScaling(0).dp)) {
-                            durationOptions.forEach { duration ->
-                                val isSelected = selectedDurationString == duration
+                            durationOptions.forEach { durationString ->
+                                val isSelected = selectedDurationString == durationString
                                 Button(
                                     onClick = {
-                                        selectedDurationString =
-                                            if (isSelected) null else duration
+                                        if (!isSelected)
+                                            selectedDurationString = durationString
+                                        //selectedDurationString =
+                                        //    if (isSelected) null else durationString
                                     },
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = if (isSelected) SelectedButtonBackgroundColor
-                                        else if (isTimerRunning || isTimerStopped) AppButtonColor.copy(
-                                            alpha = 0.8f
-                                        )
-                                        else AppButtonDarkerColor,
+                                                         else AppButtonDarkerColor,
                                         contentColor = AppButtonTextColor
                                     ),
                                     border = if (isSelected) BorderStroke(
                                         borderStrokeWidth,
                                         SelectedButtonBorderColor
-                                    ) else BorderStroke(  //null
+                                    ) else BorderStroke(
                                         borderStrokeWidth,
                                         AppBackgroundColor
                                     ),
-                                    enabled = isSelected || !(isTimerRunning || isTimerStopped),
+                                    enabled = true,  //isSelected || !(isTimerRunning || isTimerStopped),
                                     modifier = Modifier
                                         .width(durationButtonWidth)
                                 ) {
                                     Text(
-                                        text = duration,
+                                        text = durationString,
                                         style = TextStyle(
                                             fontSize = (13f * durationsScaling).toInt().sp,
-                                            color = if (isSelected) AppButtonTextColor else if (isTimerRunning || isTimerStopped) AppDimmedTextColor else AppTextColor
+                                            //color = if (isSelected) AppButtonTextColor else if (isTimerRunning || isTimerStopped) AppDimmedTextColor else AppTextColor
+                                            color = if (isSelected) AppButtonTextColor else AppTextColor
                                         )
                                     )
                                 }
@@ -1043,7 +1099,7 @@ fun SimpleScreen(
                     ) {
                         items(repetitionRange) { number ->
                             val isNumberSelected = number == numberOfRepetitions
-                            val isClickable = !(isTimerRunning || isTimerStopped)
+                            val isClickable = true  //!(isTimerRunning || isTimerStopped)
                             Box(
                                 modifier = Modifier
                                     .size(repetitionBoxSize)
@@ -1073,7 +1129,7 @@ fun SimpleScreen(
                                     text = "$number",
                                     style = customInteractiveTextStyle.copy(
                                         color = if (isNumberSelected) AppButtonTextColor
-                                        else if (isTimerRunning || isTimerStopped) AppDimmedTextColor
+                                        //else if (isTimerRunning || isTimerStopped) AppDimmedTextColor
                                         else AppTextColor
                                     ),
                                     fontWeight = if (isNumberSelected) FontWeight.Bold else FontWeight.Normal
@@ -1103,7 +1159,7 @@ fun SimpleScreen(
                         Row(horizontalArrangement = Arrangement.spacedBy(deviceScaling(10).dp)) {
                             seriesOptions.forEach { seriesCount ->
                                 val isSeriesSelected = seriesCount == numberOfSeries
-                                val isClickable = !(isTimerRunning || isTimerStopped)
+                                val isClickable = true  //!(isTimerRunning || isTimerStopped)
                                 Box(
                                     modifier = Modifier
                                         .size(repetitionBoxSize)  //48.dp)
@@ -1133,7 +1189,7 @@ fun SimpleScreen(
                                         text = "$seriesCount",
                                         style = customInteractiveTextStyle.copy(
                                             color = if (isSeriesSelected) AppButtonTextColor
-                                            else if (isTimerRunning || isTimerStopped) AppDimmedTextColor
+                                            //else if (isTimerRunning || isTimerStopped) AppDimmedTextColor
                                             else AppTextColor
                                         ),
                                         fontWeight = if (isSeriesSelected) FontWeight.Bold else FontWeight.Normal
