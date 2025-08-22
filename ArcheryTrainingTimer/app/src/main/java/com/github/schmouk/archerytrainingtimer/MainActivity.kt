@@ -523,6 +523,16 @@ fun SimpleScreen(
             ) {
                 val coroutineScope = rememberCoroutineScope()
 
+                // Standard IconButton size (Material guidelines suggest 48.dp touch target)
+                val arrowButtonSizeDp = deviceScaling(24).dp
+
+                /*
+                // Use the density to convert Dp to Px
+                val arrowButtonSizeInPx = with(LocalDensity.current) {
+                    arrowButtonSizeDp.toPx()
+                }
+                */
+
                 // Derived states to determine if arrows should be shown
                 // canScrollBackward is true if the first item is not fully visible at the start
                 val canScrollBackward by remember {
@@ -541,15 +551,12 @@ fun SimpleScreen(
                             // If the last visible item's index is less than the total number of items - 1
                             // OR if the last visible item is not fully occupying the viewport width at its end
                             val viewportWidth = repetitionsListState.layoutInfo.viewportSize.width
-                            lastVisibleItem.index < repetitionRange.size - 1 || lastVisibleItem.offset + lastVisibleItem.size < repetitionsListState.layoutInfo.viewportSize.width
+                            lastVisibleItem.index < repetitionRange.size - 1 || lastVisibleItem.offset + lastVisibleItem.size > viewportWidth
                         } else {
                             repetitionRange.isNotEmpty() // True if there are items but no layout info yet (initial state before first scroll/layout)
                         }
                     }
                 }
-
-                // Standard IconButton size (Material guidelines suggest 48.dp touch target)
-                val arrowButtonSize = 48.dp
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -558,7 +565,7 @@ fun SimpleScreen(
                     // --- Left Arrow ---
                     Box(
                         modifier = Modifier
-                            .size(arrowButtonSize), // Occupy space whether visible or not to help layout
+                            .size(arrowButtonSizeDp), // Occupy space whether visible or not to help layout
                         contentAlignment = Alignment.Center // Center the AnimatedVisibility content within the Box
                     ) {
                         androidx.compose.animation.AnimatedVisibility(
@@ -655,7 +662,7 @@ fun SimpleScreen(
                     // --- Right Arrow ---
                     Box(
                         modifier = Modifier
-                            .size(arrowButtonSize), // Occupy space whether visible or not
+                            .size(arrowButtonSizeDp), // Occupy space whether visible or not
                         contentAlignment = Alignment.Center // Center the AnimatedVisibility content
                     ) {
                         androidx.compose.animation.AnimatedVisibility(
@@ -1094,7 +1101,7 @@ fun SimpleScreen(
                                 val arcTopLeftY = canvasCenterY - arcDiameter / 2f
 
                                 val progressStrokeWidth =
-                                    (0.72 * mainTimerStrokeWidth.value).dp.toPx()
+                                    (0.72f * mainTimerStrokeWidth.value).dp.toPx()
 
                                 drawArc(
                                     color = if (isDimmedState) DimmedProgressBorderColor else ProgressBorderColor,
