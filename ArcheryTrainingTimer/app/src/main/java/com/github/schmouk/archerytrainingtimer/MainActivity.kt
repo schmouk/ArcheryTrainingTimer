@@ -7,7 +7,7 @@ import android.graphics.Rect
 import android.graphics.Typeface
 import android.media.AudioAttributes
 import android.media.AudioManager
-import android.media.RingtoneManager
+//import android.media.RingtoneManager
 import android.media.SoundPool
 import android.os.Bundle
 import android.text.TextPaint
@@ -16,7 +16,7 @@ import android.view.WindowManager
 
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.animation.AnimatedVisibility
+//import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -43,12 +43,11 @@ import androidx.compose.material.icons.automirrored.filled.ArrowRight
 //import androidx.compose.material.icons.filled.KeyboardArrowRight
 //import androidx.compose.material.icons.Icons.AutoMirrored.Filled.KeyboardArrowLeft
 //import androidx.compose.material.icons.Icons.AutoMirrored.Filled.KeyboardArrowRight
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
+//import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -765,7 +764,7 @@ fun SimpleScreen(
                         if (durationValue != null && durationValue != lastDurationSeconds) {
                             initialDurationSeconds = durationValue
                             currentDurationSecondsLeft = min(
-                                max( 1, currentDurationSecondsLeft!! + durationValue - lastDurationSeconds),
+                                max( 1, (currentDurationSecondsLeft?: 0) + durationValue - lastDurationSeconds),
                                 durationValue!!
                             )
                             lastDurationSeconds = durationValue
@@ -775,7 +774,7 @@ fun SimpleScreen(
 
                     if (numberOfRepetitions != null && numberOfRepetitions != lastNumberOfRepetitions) {
                         currentRepetitionsLeft = min(
-                            max(if (isRestMode) 0 else 1, currentRepetitionsLeft!! + numberOfRepetitions!! - lastNumberOfRepetitions),
+                            max(if (isRestMode) 0 else 1, (currentRepetitionsLeft?: 0) + numberOfRepetitions!! - lastNumberOfRepetitions),
                             numberOfRepetitions!!
                         )
                         lastNumberOfRepetitions = numberOfRepetitions!!
@@ -783,7 +782,7 @@ fun SimpleScreen(
                     }
 
                     if (numberOfSeries != null && numberOfSeries != lastNumberOfSeries) {
-                        currentSeriesLeft = max(1, currentSeriesLeft!! + numberOfSeries!! - lastNumberOfSeries)
+                        currentSeriesLeft = max(1, (currentSeriesLeft?: 0) + numberOfSeries!! - lastNumberOfSeries)
                         lastNumberOfSeries = numberOfSeries!!
                         userPreferencesRepository.saveSeriesPreference(numberOfSeries)
                     }
