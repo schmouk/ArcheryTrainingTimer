@@ -1184,14 +1184,21 @@ fun SimpleScreen(
                                 constraints.maxWidth,
                                 constraints.maxHeight
                             ) / 2f * 0.85f
-                        val seriesStrokeWidthPx = with(LocalDensity.current) {
-                            deviceScaling(7).dp.toPx()
+
+                        val seriesStrokeWidthDp = with(LocalDensity.current) {
+                            deviceScaling(7).dp
                         }
+                        val seriesStrokeWidthPx = with(LocalDensity.current) {
+                            seriesStrokeWidthDp.toPx()
+                        }
+
                         val localPadding = deviceScaling(8).dp
 
                         Canvas(modifier = Modifier.fillMaxSize()) {
                             val circleCenterX = size.width / 2
                             val circleCenterY = size.height - seriesCircleRadius - localPadding.toPx()
+
+                            // Draw circle border
                             drawCircle(
                                 color = if (isDimmedState) DimmedTimerBorderColor else TimerBorderColor,
                                 radius = seriesCircleRadius - seriesStrokeWidthPx / 2,
@@ -1199,6 +1206,48 @@ fun SimpleScreen(
                                 center = Offset(circleCenterX, circleCenterY )
                                 //center = Offset(size.width / 2, size.height / 2)
                             )
+
+                            // Draw the progress arc
+                            val totalRepetitions = (numberOfRepetitions?: 0) * (numberOfSeries?: 0)
+                            val sweepAngle =
+                                if (numberOfSeries != null && numberOfSeries!! > 0 && currentSeriesLeft != null) {
+                                    if (currentSeriesLeft!! > 1)
+                                        ((numberOfSeries!! - currentSeriesLeft!!) / numberOfSeries!!.toFloat()) * 360f
+                                    else if (currentRepetitionsLeft!! > 1)
+                                        (totalRepetitions - currentRepetitionsLeft!!) / totalRepetitions.toFloat() * 360f
+                                    else
+                                        ((totalRepetitions * initialDurationSeconds!! - currentDurationSecondsLeft!! + 1) / (totalRepetitions * initialDurationSeconds!!).toFloat()) * 360f
+                                } else {
+                                    0f
+                                }
+
+                            if (//isRestMode &&
+                                (isTimerRunning || isTimerStopped) &&
+                                sweepAngle > 0f
+                            ) {
+                                // Notice, reminder:
+                                //  (isTimerRunning || isTimerStopped) avoids red-ghost display
+                                //  in big timer border when selecting number of repetitions
+                                val arcDiameter =
+                                    (seriesCircleRadius - seriesStrokeWidthPx / 2f) * 2f
+                                val arcTopLeftX = circleCenterX - arcDiameter / 2f
+                                val arcTopLeftY = circleCenterY - arcDiameter / 2f
+
+                                val progressStrokeWidthPx = 0.5f * seriesStrokeWidthPx
+
+                                drawArc(
+                                    color = if (isDimmedState) DimmedProgressBorderColor else ProgressBorderColor,
+                                    startAngle = -90f,
+                                    sweepAngle = sweepAngle,
+                                    useCenter = false,
+                                    style = Stroke(width = progressStrokeWidthPx),
+                                    topLeft = Offset(arcTopLeftX, arcTopLeftY),
+                                    size = androidx.compose.ui.geometry.Size(
+                                        arcDiameter,
+                                        arcDiameter
+                                    )
+                                )
+                            }
 
                             // Series display will show 0 when dimmed
                             val seriesToDisplayValue = currentSeriesLeft
