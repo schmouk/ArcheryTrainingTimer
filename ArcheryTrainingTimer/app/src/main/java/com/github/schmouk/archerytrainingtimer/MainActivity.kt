@@ -7,6 +7,7 @@ import android.graphics.Rect
 import android.graphics.Typeface
 import android.media.AudioAttributes
 import android.media.AudioManager
+import android.media.RingtoneManager
 import android.media.SoundPool
 import android.os.Bundle
 import android.text.TextPaint
@@ -96,7 +97,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
-import kotlin.times
+//import kotlin.times
 
 
 /*
@@ -170,6 +171,7 @@ fun AppTheme(content: @Composable () -> Unit) {
 // MainActivity class definition
 class MainActivity : ComponentActivity() {
     private lateinit var userPreferencesRepository: UserPreferencesRepository
+    private var initialRingtoneVolume: Int = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -178,7 +180,13 @@ class MainActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         userPreferencesRepository = UserPreferencesRepository(applicationContext)
+
+        val context = this
+        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        initialRingtoneVolume = audioManager.getStreamVolume(AudioManager.STREAM_RING)
+
         keepScreenOn()
+
         setContent {
             ArcheryTrainingTimerTheme {
                 SimpleScreen(
@@ -217,10 +225,16 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+
         // It's good practice to clear the flag when the activity is destroyed
         // to ensure it doesn't leak or affect other parts of the system if not
         // cleared explicitly elsewhere.
         allowScreenTimeout()
+
+        // Restore initial ringtone volume
+        val context = this
+        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        audioManager.setStreamVolume(AudioManager.STREAM_RING, initialRingtoneVolume, 0)
     }
 
 }
@@ -268,10 +282,6 @@ fun AdaptiveText(
 }
 */
 
-val minRepetitions = 3
-val maxRepetitions = 15
-val repetitionRange = (minRepetitions..maxRepetitions).toList()
-
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
@@ -314,7 +324,6 @@ fun SimpleScreen(
                     availableHeightForContentDp.value / refScreenHeightDp.value
                 ).coerceIn(0.40f, 1.5f)
             val scaleFactor = min(horizontalScaleFactor, verticalScaleFactor)
-
 
             // scales a dimension (width or height) according to the running device deviceScaling factor
             fun deviceScaling(dim: Int): Float {
@@ -373,6 +382,12 @@ fun SimpleScreen(
                         audioManager.ringerMode != AudioManager.RINGER_MODE_VIBRATE
             }
 
+            fun audioVolumeLevel(): Float {
+                val currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_RING)
+                val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_RING)
+                return 1f * currentVolume / maxVolume
+            }
+
             // --- Dynamic Sizes & SPs ---
             val mainTimerStrokeWidth = deviceScaling(14).dp
             val repetitionBoxSize = deviceScaling(48).dp
@@ -383,7 +398,6 @@ fun SimpleScreen(
             var numberOfRepetitions by remember { mutableStateOf<Int?>(null) }
             var numberOfSeries by remember { mutableStateOf<Int?>(null) }
             var intermediateBeepsChecked by remember { mutableStateOf<Boolean?>(null) }
-            //var saveSelectionChecked by remember { mutableStateOf(false) }
 
             var lastDurationSeconds by rememberSaveable { mutableStateOf<Int>(0) }
             var lastNumberOfRepetitions by rememberSaveable { mutableStateOf<Int>(0) }
@@ -397,6 +411,10 @@ fun SimpleScreen(
             var currentDurationSecondsLeft by rememberSaveable { mutableStateOf<Int?>(null) }
             var currentRepetitionsLeft by rememberSaveable { mutableStateOf<Int?>(null) }
             var currentSeriesLeft by rememberSaveable { mutableStateOf<Int?>(null) }
+
+            val minRepetitions = 3
+            val maxRepetitions = 15
+            val repetitionRange = (minRepetitions..maxRepetitions).toList()
 
             // Rest Mode & Series Tracking
             var isRestMode by rememberSaveable { mutableStateOf(false) }
@@ -412,7 +430,6 @@ fun SimpleScreen(
                     ).dp
             val seriesOptions = listOf(1, 3, 5, 10, 15, 20, 25, 30)
             val intermediateBeepsDuration = 5 // seconds for intermediate beeps
-            //val coroutineScope = rememberCoroutineScope()
 
             val restModeText = stringResource(R.string.rest_indicator).toString()
 
@@ -433,11 +450,13 @@ fun SimpleScreen(
                 beepSoundId = soundPool.load(context, R.raw.beep, 1)
                 endBeepSoundId = soundPool.load(context, R.raw.beep_end, 1)
                 intermediateBeepSoundId = soundPool.load(context, R.raw.beep_intermediate, 1)
+
                 soundPool.setOnLoadCompleteListener { _, _, status ->
                     if (status == 0) {
                         soundPoolLoaded = true
                     }
                 }
+
                 onDispose {
                     soundPool.release()
                 }
@@ -445,8 +464,9 @@ fun SimpleScreen(
 
             // Play sound effect - single beep
             LaunchedEffect(playBeepEvent) {
-                if (playBeepEvent && soundPoolLoaded && beepSoundId != null && audioIsNotMuted()) {
-                    soundPool.play(beepSoundId!!, 1f, 1f, 1, 0, 1f)
+                if (playBeepEvent && soundPoolLoaded && beepSoundId != null) {  // && audioIsNotMuted()) {
+                    val actualVolume = audioVolumeLevel()
+                    soundPool.play(beepSoundId!!, actualVolume, actualVolume, 1, 0, 1f)
                 }
                 playBeepEvent = false // Reset trigger
             }
@@ -454,11 +474,12 @@ fun SimpleScreen(
             // Play sound effect - end beep
             LaunchedEffect(playEndBeepEvent) {
                 if (playEndBeepEvent && soundPoolLoaded && endBeepSoundId != null && audioIsNotMuted()) {
-                    soundPool.play(endBeepSoundId!!, 1f, 1f, 1, 0, 1f)
+                    val actualVolume = audioVolumeLevel()
+                    soundPool.play(endBeepSoundId!!, actualVolume, actualVolume, 1, 0, 1f)
                     delay(380L)
-                    soundPool.play(endBeepSoundId!!, 1f, 1f, 1, 0, 1f)
+                    soundPool.play(endBeepSoundId!!, actualVolume, actualVolume, 1, 0, 1f)
                     delay(380L)
-                    soundPool.play(endBeepSoundId!!, 1f, 1f, 1, 0, 1f)
+                    soundPool.play(endBeepSoundId!!, actualVolume, actualVolume, 1, 0, 1f)
                 }
                 playEndBeepEvent = false // Reset trigger
             }
@@ -466,7 +487,8 @@ fun SimpleScreen(
             // Play sound effect - intermediate beep
             LaunchedEffect(playIntermediateBeep) {
                 if (playIntermediateBeep && soundPoolLoaded && intermediateBeepSoundId != null && audioIsNotMuted()) {
-                    soundPool.play(intermediateBeepSoundId!!, 1f, 1f, 1, 0, 1f)
+                    val actualVolume = audioVolumeLevel()
+                    soundPool.play(intermediateBeepSoundId!!, actualVolume, actualVolume, 1, 0, 1f)
                 }
                 playIntermediateBeep = false // Reset trigger
             }
@@ -474,13 +496,13 @@ fun SimpleScreen(
             // Play sound effect - rest beeps
             LaunchedEffect(playRestBeepEvent) {
                 if (playRestBeepEvent && soundPoolLoaded && beepSoundId != null) {
-                    soundPool.play(beepSoundId!!, 1f, 1f, 1, 0, 1f)
+                    val actualVolume = audioVolumeLevel()
+                    soundPool.play(beepSoundId!!, actualVolume, actualVolume, 1, 0, 1f)
                     delay(240L)
-                    soundPool.play(beepSoundId!!, 1f, 1f, 1, 0, 1f)
+                    soundPool.play(beepSoundId!!, actualVolume, actualVolume, 1, 0, 1f)
                     playRestBeepEvent = false // Reset trigger
                 }
             }
-
 
 
             @Composable
@@ -1058,7 +1080,7 @@ fun SimpleScreen(
                                 //  (isTimerRunning || isTimerStopped) avoids red-ghost display
                                 //  in big timer border when selecting number of repetitions
                                 val arcDiameter =
-                                    (circleRadius - strokeWidthPx / 2f) * 2f  //) * 2f  //
+                                    (circleRadius - strokeWidthPx / 2f) * 2f
                                 val arcTopLeftX = canvasCenterX - arcDiameter / 2f
                                 val arcTopLeftY = canvasCenterY - arcDiameter / 2f
 
