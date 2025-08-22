@@ -237,6 +237,15 @@ class MainActivity : ComponentActivity() {
         audioManager.setStreamVolume(AudioManager.STREAM_RING, initialRingtoneVolume, 0)
     }
 
+    override fun onStop() {
+        super.onStop()
+
+        // Restore initial ringtone volume
+        val context = this
+        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        audioManager.setStreamVolume(AudioManager.STREAM_RING, initialRingtoneVolume, 0)
+    }
+
 }
 
 // AdaptiveText composable
