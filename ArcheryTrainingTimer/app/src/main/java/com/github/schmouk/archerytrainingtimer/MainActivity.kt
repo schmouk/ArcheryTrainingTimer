@@ -90,6 +90,8 @@ import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 
 import com.github.schmouk.archerytrainingtimer.ui.theme.*
+import com.github.schmouk.archerytrainingtimer.noarrowsession.ESignal
+import com.github.schmouk.archerytrainingtimer.noarrowsession.TimerStateAutomaton
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
