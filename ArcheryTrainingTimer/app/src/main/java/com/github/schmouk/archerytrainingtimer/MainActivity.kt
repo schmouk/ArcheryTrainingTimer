@@ -399,6 +399,7 @@ fun SimpleScreen(
             // --- Dynamic Sizes & SPs ---
             val mainTimerStrokeWidth = deviceScaling(14).dp
             val repetitionBoxSize = deviceScaling(48).dp
+            val seriesBoxSize = deviceScaling(48).dp
             val majorSpacerHeight = deviceScaling(8).dp
             val generalPadding = deviceScaling(12).dp
 
@@ -436,7 +437,7 @@ fun SimpleScreen(
             val durationButtonWidth = (
                     currentScreenWidthDp.value / durationOptions.size - horizontalDeviceScaling(8)
                     ).dp
-            val seriesOptions = listOf(1, 3, 5, 10, 15, 20, 25, 30)
+            val seriesOptions = mutableListOf<Int>(1, 3, 5, 10, 15, 20, 25, 30)  // MutableList
             val intermediateBeepsDuration = 5 // seconds for intermediate beeps
 
             val restModeText = stringResource(R.string.rest_indicator).toString()
@@ -596,12 +597,14 @@ fun SimpleScreen(
 
                     // --- LazyRow ---
                     // LazyRow takes the available space between arrows
+                    val horizontalSpaceArrangement = deviceScaling(8).dp
+
                     LazyRow(
                         state = repetitionsListState,
                         modifier = Modifier
                             .weight(1f) // LazyRow takes available space between arrows
                             .padding(horizontal = 0.dp), // No extra padding here if arrows handle spacing
-                        horizontalArrangement = Arrangement.spacedBy(deviceScaling(8).dp) // Spacing between number buttons
+                        horizontalArrangement = Arrangement.spacedBy(horizontalSpaceArrangement) // Spacing between number buttons
                     ) {
                         /*items(repetitionRange) { repetition ->
                             Button(
@@ -696,9 +699,14 @@ fun SimpleScreen(
 
 
             // --- The Main Column for the entire screen content ---
+            val mainHorizontalSpacingDp = deviceScaling(10).dp
+            val mainHorizontalSpacingPx = with(LocalDensity.current) {
+                mainHorizontalSpacingDp.toPx()
+            }
+
             Column(
                 modifier = Modifier
-                    .padding(horizontal = deviceScaling(10).dp)
+                    .padding(horizontal = mainHorizontalSpacingDp)
                     .fillMaxSize(), // Fill the BoxWithConstraints
                 horizontalAlignment = Alignment.CenterHorizontally,
 
@@ -1462,13 +1470,29 @@ fun SimpleScreen(
                             .padding(top = deviceScaling(12).dp, bottom = deviceScaling(8).dp),
                         horizontalArrangement = Arrangement.Center
                     ) {
+                        // Check the available display width against the series-options list width
+                        with(LocalDensity.current) {
+                            val horizontalSpaceArrangementPx = deviceScaling(8).dp.toPx()
+                            val seriesBoxSizePx = seriesBoxSize.toPx()
+                            val visibleWidth = availableWidthForContentDp.toPx() - 2 * mainHorizontalSpacingDp.toPx()
+
+                            while(seriesOptions.size > 1 &&
+                                seriesOptions.size * (seriesBoxSizePx + horizontalSpaceArrangementPx) -
+                                    horizontalSpaceArrangementPx > visibleWidth
+                            ) {
+                                // Remove one of the Series number, let's says the one in second position (index 1)
+                                seriesOptions.removeAt(1)
+                            }
+
+                        }
+
                         Row(horizontalArrangement = Arrangement.spacedBy(deviceScaling(10).dp)) {
                             seriesOptions.forEach { seriesCount ->
                                 val isSeriesSelected = seriesCount == numberOfSeries
                                 val isClickable = true  //!(isTimerRunning || isTimerStopped)
                                 Box(
                                     modifier = Modifier
-                                        .size(repetitionBoxSize)  //48.dp)
+                                        .size(seriesBoxSize)
                                         .then(
                                             if (isSeriesSelected) Modifier.border(
                                                 BorderStroke(
