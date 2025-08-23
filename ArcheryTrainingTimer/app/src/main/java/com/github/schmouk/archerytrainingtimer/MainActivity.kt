@@ -397,8 +397,8 @@ fun SimpleScreen(
             }
 
             // --- Debug / Testing ---
-            val countDownDelay = 600L  // Debug version
-            //val countDownDelay = 1000L  // release version
+            //val countDownDelay = 600L  // Debug version
+            val countDownDelay = 1000L  // release version
 
             // --- Dynamic Sizes & SPs ---
             val mainTimerStrokeWidth = deviceScaling(14).dp
