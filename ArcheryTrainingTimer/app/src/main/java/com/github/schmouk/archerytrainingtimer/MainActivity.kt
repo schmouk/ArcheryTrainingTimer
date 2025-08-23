@@ -1378,7 +1378,7 @@ fun SimpleScreen(
                         style = customInteractiveTextStyle,
                         color = AppTextColor,
                         modifier = Modifier
-                            .padding(top = generalPadding)
+                            .padding(bottom = generalPadding)
                             .wrapContentHeight()
                             .align(Alignment.CenterHorizontally)
                     )
