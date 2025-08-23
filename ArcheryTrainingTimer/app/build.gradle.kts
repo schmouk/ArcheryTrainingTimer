@@ -153,7 +153,7 @@ dependencies {
     // Essential Compose UI libraries (versions managed by BOM if used)
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
-    implementation("androidx.compose.material3:material3") // If use of Material 3 components
+    implementation("androidx.compose.material3:material3:1.3.2") // If use of Material 3 components
     // implementation("androidx.compose.material:material") // If use of Material 2 components
 
     // Tooling for Previews (optional but very helpful)

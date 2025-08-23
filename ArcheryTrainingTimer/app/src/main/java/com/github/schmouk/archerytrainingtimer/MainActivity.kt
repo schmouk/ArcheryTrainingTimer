@@ -38,7 +38,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.automirrored.filled.ArrowRight
+//import androidx.compose.material.icons.automirrored.filled.ArrowRight
 //import androidx.compose.material.icons.filled.KeyboardArrowLeft
 //import androidx.compose.material.icons.filled.KeyboardArrowRight
 //import androidx.compose.material.icons.Icons.AutoMirrored.Filled.KeyboardArrowLeft
@@ -51,8 +51,8 @@ import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
+//import androidx.compose.material3.TopAppBar
+//import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 //import androidx.compose.runtime.Composable
@@ -61,7 +61,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
+//import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 //import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.Modifier
@@ -78,6 +78,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 //import androidx.compose.ui.text.drawText
@@ -97,6 +98,8 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 //import kotlin.times
+
+val DEBUG_MODE = true
 
 
 /*
@@ -397,8 +400,7 @@ fun SimpleScreen(
             }
 
             // --- Debug / Testing ---
-            //val countDownDelay = 600L  // Debug version
-            val countDownDelay = 1000L  // release version
+            val countDownDelay = if (DEBUG_MODE) 600L else 1000L
 
             // --- Dynamic Sizes & SPs ---
             val mainTimerStrokeWidth = deviceScaling(14).dp
@@ -802,6 +804,10 @@ fun SimpleScreen(
                         currentSeriesLeft = max(0, (currentSeriesLeft?: 0) + numberOfSeries!! - lastNumberOfSeries)
                         lastNumberOfSeries = numberOfSeries!!
                         userPreferencesRepository.saveSeriesPreference(numberOfSeries)
+                        if (currentSeriesLeft == 0 || (isRestMode && currentSeriesLeft == 1)) {
+                            currentRestTimeLeft = 0
+                            isRestMode = false
+                        }
                     }
 
                     if (intermediateBeepsChecked != null)
@@ -1218,6 +1224,24 @@ fun SimpleScreen(
                         val localPadding = deviceScaling(8).dp
 
                         Canvas(modifier = Modifier.fillMaxSize()) {
+                            if (DEBUG_MODE) {
+                                val debugTextSizePx = 36f
+                                val restTextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+                                    color = WAWhiteColor.toArgb()
+                                    textSize = debugTextSizePx
+                                    isAntiAlias = true
+                                    textAlign = Paint.Align.CENTER
+                                    typeface = Typeface.create(Typeface.DEFAULT_BOLD, Typeface.ITALIC)
+                                }
+
+                                drawContext.canvas.nativeCanvas.drawText(
+                                    ">>> DEBUG mode",
+                                    30f,
+                                    38f,
+                                    restTextPaint
+                                )
+                            }
+
                             val circleCenterX = size.width / 2
                             val circleCenterY = size.height - seriesCircleRadius - localPadding.toPx()
 
