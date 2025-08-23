@@ -40,13 +40,13 @@ android {
         applicationId = namespace  //"com.github.schmouk.archerytrainingtimer"
         minSdk = 24 // Or your current minSdk
         targetSdk = 36 // Or your current targetSdk
-        versionCode = 2 // To be incremented with each release
+        versionCode = 5 // To be incremented with each release
         // Using a property for versionName is common, but you can also hardcode it
         // If you want to use a property, you can define it in gradle.properties or
         // pass it as a command line argument, e.g., -PversionName=0.1.0
         // Here, we use a hardcoded value for simplicity, but you can replace it with a property if needed.
         // versionName = project.findProperty("versionName")?.toString() ?: "0.1.0"
-        versionName = "0.1.2"
+        versionName = "0.1.5"
     }
 
     signingConfigs {
@@ -142,6 +142,9 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.10.1") // Or the latest stable version
 
     implementation("androidx.core:core-ktx:1.16.0") // Example minimal dependency
+
+    implementation("androidx.compose.material:material-icons-core:1.7.8") // Or the version from your BOM
+    implementation("androidx.compose.material:material-icons-extended:1.7.8") // Or the version from your BOM
 
     // Compose Bill of Materials (BOM) - Recommended
     // The BOM ensures that versions of different Compose libraries are compatible.
