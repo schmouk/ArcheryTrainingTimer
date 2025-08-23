@@ -396,6 +396,10 @@ fun SimpleScreen(
                 return 1f * currentVolume / maxVolume
             }
 
+            // --- Debug / Testing ---
+            val countDownDelay = 600L  // Debug version
+            //val countDownDelay = 1000L  // release version
+
             // --- Dynamic Sizes & SPs ---
             val mainTimerStrokeWidth = deviceScaling(14).dp
             val repetitionBoxSize = deviceScaling(48).dp
@@ -437,7 +441,7 @@ fun SimpleScreen(
             val durationButtonWidth = (
                     currentScreenWidthDp.value / durationOptions.size - horizontalDeviceScaling(8)
                     ).dp
-            val seriesOptions = mutableListOf<Int>(1, 3, 5, 10, 15, 20, 25, 30)  // MutableList
+            val seriesOptions = mutableListOf<Int>(1, 2, 3, 5, 10, 15, 20, 25, 30)  // MutableList
             val intermediateBeepsDuration = 5 // seconds for intermediate beeps
 
             val restModeText = stringResource(R.string.rest_indicator).toString()
@@ -700,9 +704,6 @@ fun SimpleScreen(
 
             // --- The Main Column for the entire screen content ---
             val mainHorizontalSpacingDp = deviceScaling(10).dp
-            val mainHorizontalSpacingPx = with(LocalDensity.current) {
-                mainHorizontalSpacingDp.toPx()
-            }
 
             Column(
                 modifier = Modifier
@@ -782,15 +783,23 @@ fun SimpleScreen(
 
                     if (numberOfRepetitions != null && numberOfRepetitions != lastNumberOfRepetitions) {
                         currentRepetitionsLeft = min(
-                            max(if (isRestMode) 0 else 1, (currentRepetitionsLeft?: 0) + numberOfRepetitions!! - lastNumberOfRepetitions),
+                            max(if (isRestMode) 1 else 0, (currentRepetitionsLeft?: 0) + numberOfRepetitions!! - lastNumberOfRepetitions),
                             numberOfRepetitions!!
                         )
                         lastNumberOfRepetitions = numberOfRepetitions!!
+                        if (currentRepetitionsLeft == 0) {
+                            currentDurationSecondsLeft = 1
+                            initialRestTime =
+                                (lastNumberOfRepetitions * lastDurationSeconds * restingRatio).roundToInt()
+                                    .coerceAtLeast(endOfRestBeepTime + 2) // Ensure rest is at least 5s for the beep logic
+                            currentRestTimeLeft = initialRestTime
+                            currentSeriesLeft = currentSeriesLeft!! - 1
+                        }
                         userPreferencesRepository.saveRepetitionsPreference(numberOfRepetitions)
                     }
 
                     if (numberOfSeries != null && numberOfSeries != lastNumberOfSeries) {
-                        currentSeriesLeft = max(1, (currentSeriesLeft?: 0) + numberOfSeries!! - lastNumberOfSeries)
+                        currentSeriesLeft = max(0, (currentSeriesLeft?: 0) + numberOfSeries!! - lastNumberOfSeries)
                         lastNumberOfSeries = numberOfSeries!!
                         userPreferencesRepository.saveSeriesPreference(numberOfSeries)
                     }
@@ -845,7 +854,7 @@ fun SimpleScreen(
                                 }
                                 if (currentDurationSecondsLeft != null && currentDurationSecondsLeft!! > 0) {
                                     // current repetition timer tick
-                                    delay(1000L)
+                                    delay(countDownDelay)  //1000L)
                                     if (!isTimerRunning || isRestMode)
                                         break
                                     currentDurationSecondsLeft = currentDurationSecondsLeft!! - 1
@@ -947,7 +956,7 @@ fun SimpleScreen(
                                     if (currentRestTimeLeft == endOfRestBeepTime) {
                                         playRestBeepEvent = true
                                     }
-                                    delay(1000L)
+                                    delay(countDownDelay)
                                     if (!isTimerRunning || !isRestMode)
                                         break
                                     currentRestTimeLeft = currentRestTimeLeft!! - 1
