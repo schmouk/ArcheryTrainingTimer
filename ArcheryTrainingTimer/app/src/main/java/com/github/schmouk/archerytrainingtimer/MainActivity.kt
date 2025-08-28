@@ -425,6 +425,7 @@ fun SimpleScreen(
             var lastDurationSeconds by rememberSaveable { mutableStateOf<Int>(0) }
             var lastNumberOfRepetitions by rememberSaveable { mutableStateOf<Int>(0) }
             var lastNumberOfSeries by rememberSaveable { mutableStateOf<Int>(0) }
+            var lastIntermediateBeepsChecked by rememberSaveable  { mutableStateOf<Boolean>(false) }
 
             var isDimmedState by remember { mutableStateOf<Boolean>(false) }
             var isTimerRunning by remember { mutableStateOf<Boolean>(false) }
@@ -558,11 +559,13 @@ fun SimpleScreen(
                             loadedPrefs.selectedDuration?.split(" ")?.firstOrNull()
                                 ?.toIntOrNull()
                         initialDurationSeconds = durationValue
-                        if (currentRepetitionsLeft != 0) { // Only reset if not in a "completed and dimmed" state
+                        if (currentRepetitionsLeft != 0 && !isTimerStopped) { // Only reset if not in a "completed or dimmed" state
                             currentDurationSecondsLeft = durationValue
                         }
-                        currentRepetitionsLeft = numberOfRepetitions
-                        currentSeriesLeft = numberOfSeries
+                        if (!isTimerStopped) {
+                            currentRepetitionsLeft = numberOfRepetitions
+                            currentSeriesLeft = numberOfSeries
+                        }
 
                         lastDurationSeconds = durationValue ?: 0
                         lastNumberOfRepetitions = numberOfRepetitions ?: 0
@@ -583,10 +586,18 @@ fun SimpleScreen(
                         selectedDurationString?.split(" ")?.firstOrNull()?.toIntOrNull()
                     if (durationValue != null && durationValue != lastDurationSeconds) {
                         initialDurationSeconds = durationValue
-                        currentDurationSecondsLeft = min(
-                            max( 1, (currentDurationSecondsLeft?: 0) + durationValue - lastDurationSeconds),
-                            durationValue!!
-                        )
+                        if (isRestMode) {
+                            currentDurationSecondsLeft = initialDurationSeconds
+                        }
+                        else {
+                            currentDurationSecondsLeft = min(
+                                max(1,
+                                    (currentDurationSecondsLeft
+                                        ?: 0) + durationValue - lastDurationSeconds
+                                ),
+                                durationValue!!
+                            )
+                        }
                         lastDurationSeconds = durationValue
                         userPreferencesRepository.saveDurationPreference(selectedDurationString)
                     }
@@ -623,10 +634,12 @@ fun SimpleScreen(
                     }
                 }
 
-                if (intermediateBeepsChecked != null)
-                    userPreferencesRepository.saveIntermediateBeepsPreference(intermediateBeepsChecked ?: false)
-
-                //userPreferencesRepository.saveSaveSelectionPreference(true)
+                if (intermediateBeepsChecked != null && intermediateBeepsChecked != lastIntermediateBeepsChecked) {
+                    userPreferencesRepository.saveIntermediateBeepsPreference(
+                        intermediateBeepsChecked ?: false
+                    )
+                    lastIntermediateBeepsChecked = intermediateBeepsChecked!!
+                }
             }
 
 
@@ -653,7 +666,7 @@ fun SimpleScreen(
                 //sessionAutomaton.stateChanged = false
 
                 //while (isActive && (sessionAutomaton.isTimerRunning() || sessionAutomaton.isRestMode())) {
-                while (isActive && (isTimerRunning || isRestMode)) {
+                while (isActive && (isTimerRunning || isRestMode || isTimerStopped)) {
                     // --- Normal Repetition Countdown ---
                     isDimmedState = false
 
@@ -662,17 +675,14 @@ fun SimpleScreen(
                         // If starting from a dimmed state (reps=0, duration=0), reset them.
                         if (currentRepetitionsLeft == 0) { // Indicates a previous cycle was completed
                             currentRepetitionsLeft = numberOfRepetitions  // Reset for new cycle
-                            currentDurationSecondsLeft =
-                                initialDurationSeconds  // Reset for new cycle
+                            currentDurationSecondsLeft = initialDurationSeconds  // Reset for new cycle
                             currentSeriesLeft = currentSeriesLeft!! - 1
                         } else { // Normal start or resume
                             if (currentDurationSecondsLeft == null || currentDurationSecondsLeft == 0) {
-                                currentDurationSecondsLeft =
-                                    initialDurationSeconds  //initialDurationSeconds
+                                currentDurationSecondsLeft = initialDurationSeconds  //initialDurationSeconds
                             }
                             if (currentRepetitionsLeft == null) {
-                                currentRepetitionsLeft =
-                                    numberOfRepetitions  //numberOfRepetitions
+                                currentRepetitionsLeft = numberOfRepetitions  //numberOfRepetitions
                             }
                             if (currentSeriesLeft == null) {
                                 currentSeriesLeft = numberOfSeries  //numberOfSeries
@@ -681,15 +691,19 @@ fun SimpleScreen(
 
                         while (isActive &&
                             currentSeriesLeft!! > 0 &&
-                            isTimerRunning &&  //sessionAutomaton.isTimerRunning() &&  //
+                            (isTimerRunning || isTimerStopped) &&  //sessionAutomaton.isTimerRunning() &&  //
                             !isRestMode  //!sessionAutomaton.isRestMode()  //
                         ) {
-                            if (currentDurationSecondsLeft != null && currentDurationSecondsLeft == initialDurationSeconds) {
+                            //if (currentDurationSecondsLeft != null && currentDurationSecondsLeft == initialDurationSeconds) {
+                            if (currentDurationSecondsLeft!! == initialDurationSeconds!!) {
                                 playBeepEvent = true
                             }
-                            if (currentDurationSecondsLeft != null && currentDurationSecondsLeft!! > 0) {
+
+                            //if (currentDurationSecondsLeft != null && currentDurationSecondsLeft!! > 0) {
+                            if (currentDurationSecondsLeft!! > 0) {
                                 // current repetition timer tick
-                                delay(countDownDelay)  //1000L)
+                                if (isTimerRunning)
+                                    delay(countDownDelay)  //1000L)
                                 if (!isTimerRunning || isRestMode)
                                 //if (!sessionAutomaton.isTimerRunning() || sessionAutomaton.isRestMode())
                                     break
@@ -757,6 +771,9 @@ fun SimpleScreen(
                                 isTimerRunning = false
                                 break
                             }
+
+                            if (isTimerStopped)
+                                break
                         }
                     }
 
@@ -785,13 +802,15 @@ fun SimpleScreen(
                                 isRestMode = false
                                 isTimerStopped = false
                                 sessionAutomaton.action(ESignal.SIG_REST_OFF)
-                                currentRepetitionsLeft =
-                                    numberOfRepetitions // Reset for new cycle
+                                currentRepetitionsLeft = numberOfRepetitions // Reset for new cycle
                                 currentSeriesLeft = currentSeriesLeft!! - 1
                                 break // Exit rest loop
                             }
                         }
                     }
+
+                if (isTimerStopped)
+                    break
                 }
 
                 isDimmedState = sessionAutomaton.isSessionCompleted() || isTimerStopped  //sessionAutomaton.isTimerStopped()
