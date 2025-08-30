@@ -704,7 +704,7 @@ fun SimpleScreen(
                                 // current repetition timer tick
                                 if (isTimerRunning)
                                     delay(countDownDelay)  //1000L)
-                                if (!isTimerRunning || isRestMode)
+                                if (!(isTimerRunning || isTimerStopped) || isRestMode)
                                 //if (!sessionAutomaton.isTimerRunning() || sessionAutomaton.isRestMode())
                                     break
                                 currentDurationSecondsLeft = currentDurationSecondsLeft!! - 1
