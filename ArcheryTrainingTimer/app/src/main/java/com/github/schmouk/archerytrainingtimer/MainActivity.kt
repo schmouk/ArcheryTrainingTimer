@@ -813,7 +813,8 @@ fun SimpleScreen(
                     break
                 }
 
-                isDimmedState = sessionAutomaton.isSessionCompleted() || isTimerStopped  //sessionAutomaton.isTimerStopped()
+                //isDimmedState = sessionAutomaton.isSessionCompleted() || sessionAutomaton.isTimerStopped()
+                isDimmedState = currentSeriesLeft == 0 || isTimerStopped  //sessionAutomaton.isTimerStopped()
             }
 
 
