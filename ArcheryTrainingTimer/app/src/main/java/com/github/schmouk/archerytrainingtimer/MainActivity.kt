@@ -16,7 +16,8 @@ import android.view.WindowManager
 
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-//import androidx.compose.animation.AnimatedVisibility
+import androidx.activity.viewModels // For the 'by viewModels()' delegate
+// import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -91,7 +92,8 @@ import androidx.core.view.WindowCompat
 
 import com.github.schmouk.archerytrainingtimer.ui.theme.*
 import com.github.schmouk.archerytrainingtimer.noarrowsession.ESignal
-import com.github.schmouk.archerytrainingtimer.noarrowsession.SessionStateAutomaton as NASessionStateAutomaton
+//import com.github.schmouk.archerytrainingtimer.noarrowsession.SessionStateAutomaton as NASessionStateAutomaton
+import com.github.schmouk.archerytrainingtimer.noarrowsession.NoArrowsTimerViewModel
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -102,6 +104,7 @@ import kotlin.math.roundToInt
 //import kotlin.times
 
 val DEBUG_MODE = true
+//val DEBUG_MODE = false
 
 
 /*
@@ -177,8 +180,14 @@ class MainActivity : ComponentActivity() {
     private lateinit var userPreferencesRepository: UserPreferencesRepository
     private var initialRingtoneVolume: Int = 0
 
-    private val sessionAutomaton = NASessionStateAutomaton()
+    //private val sessionAutomaton = NASessionStateAutomaton()
 
+    // Get the ViewModel instance, scoped to this Activity.
+    // The Android system will create it if it doesn't exist, or re-provide
+    // the existing one if, for example, the Activity is recreated due to rotation.
+    // This requires NoArrowsTimerViewModel to have a default constructor OR
+    // for us to provide a ViewModelProvider.Factory if it has constructor parameters.
+    private val timerViewModel: NoArrowsTimerViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -198,7 +207,8 @@ class MainActivity : ComponentActivity() {
             ArcheryTrainingTimerTheme {
                 SimpleScreen(
                     userPreferencesRepository = userPreferencesRepository,
-                    sessionAutomaton = sessionAutomaton,
+                    //sessionAutomaton = sessionAutomaton,
+                    timerViewModel = timerViewModel,
                     onCloseApp = {
                         finish()
                     }
@@ -304,9 +314,15 @@ fun AdaptiveText(
 @Composable
 fun SimpleScreen(
     userPreferencesRepository: UserPreferencesRepository,
-    sessionAutomaton: NASessionStateAutomaton,
+    //sessionAutomaton: NASessionStateAutomaton,
+    timerViewModel: NoArrowsTimerViewModel,
     onCloseApp: () -> Unit
 ) {
+    val isSessionCompleted_ by timerViewModel.isSessionCompleted
+    val isTimerStopped_ by timerViewModel.isTimerStopped
+    val isTimerRunning_ by timerViewModel.isTimerRunning
+    val isRestMode_ by timerViewModel.isRestMode
+
     Scaffold(
         topBar = {
             Spacer(
@@ -427,11 +443,10 @@ fun SimpleScreen(
             var lastNumberOfSeries by rememberSaveable { mutableStateOf<Int>(0) }
             var lastIntermediateBeepsChecked by rememberSaveable  { mutableStateOf<Boolean>(false) }
 
-            var isDimmedState by remember { mutableStateOf<Boolean>(false) }
-            var isTimerRunning by remember { mutableStateOf<Boolean>(false) }
-            var isRestMode by rememberSaveable { mutableStateOf(false) }
-            var isTimerStopped by remember { mutableStateOf(false) }
-            //var stateHasChanged by remember { mutableStateOf(sessionAutomaton.stateChanged) }
+            //var isDimmedState by remember { mutableStateOf<Boolean>(false) }
+            //var isTimerRunning by remember { mutableStateOf<Boolean>(false) }
+            //var isRestMode by rememberSaveable { mutableStateOf(false) }
+            //var isTimerStopped by remember { mutableStateOf(false) }
 
             var initialDurationSeconds by rememberSaveable { mutableStateOf<Int?>(null) }
             var currentDurationSecondsLeft by rememberSaveable { mutableStateOf<Int?>(null) }
@@ -484,7 +499,9 @@ fun SimpleScreen(
              * Evaluates the dimmed status of displays.
              */
             fun isDimmedDisplay() : Boolean {
-                return isDimmedState
+                return isTimerStopped_ || isSessionCompleted_
+                //return timerViewModel.isTimerStopped.value || timerViewModel.isSessionCompleted.value
+                //return isDimmedState
                 //return sessionAutomaton.isTimerStopped() || sessionAutomaton.isSessionCompleted()
             }
 
@@ -492,11 +509,12 @@ fun SimpleScreen(
              * Actions associated to the completion of a session
              */
             fun sessionHasCompleted() {
-                isTimerRunning = false
+                /*isTimerRunning = false
                 isDimmedState = true
                 isTimerStopped = false
-                isRestMode = false
-                sessionAutomaton.action(ESignal.SIG_COMPLETED)
+                isRestMode = false*/
+                //sessionAutomaton.action(ESignal.SIG_COMPLETED)
+                timerViewModel.action(ESignal.SIG_COMPLETED)
                 playRestBeepEvent = false
                 playEndBeepEvent = true
                 currentDurationSecondsLeft = 0
@@ -553,16 +571,15 @@ fun SimpleScreen(
                     numberOfSeries = loadedPrefs.numberOfSeries
                     intermediateBeepsChecked = loadedPrefs.intermediateBeeps
 
-                    if (!isTimerRunning && !isRestMode) {
-                    //if (!sessionAutomaton.isTimerRunning() && !sessionAutomaton.isRestMode()) {
+                    if (!isTimerRunning_ && !isRestMode_) {
                         val durationValue =
                             loadedPrefs.selectedDuration?.split(" ")?.firstOrNull()
                                 ?.toIntOrNull()
                         initialDurationSeconds = durationValue
-                        if (currentRepetitionsLeft != 0 && !isTimerStopped) { // Only reset if not in a "completed or dimmed" state
+                        if (currentRepetitionsLeft != 0 && !isTimerStopped_) { // Only reset if not in a "completed or dimmed" state
                             currentDurationSecondsLeft = durationValue
                         }
-                        if (!isTimerStopped) {
+                        if (!isTimerStopped_) {
                             currentRepetitionsLeft = numberOfRepetitions
                             currentSeriesLeft = numberOfSeries
                         }
@@ -586,7 +603,7 @@ fun SimpleScreen(
                         selectedDurationString?.split(" ")?.firstOrNull()?.toIntOrNull()
                     if (durationValue != null && durationValue != lastDurationSeconds) {
                         initialDurationSeconds = durationValue
-                        if (isRestMode) {
+                        if (isRestMode_) {
                             currentDurationSecondsLeft = initialDurationSeconds
                         }
                         else {
@@ -606,7 +623,7 @@ fun SimpleScreen(
                 if (numberOfRepetitions != null && numberOfRepetitions != lastNumberOfRepetitions) {
                     currentRepetitionsLeft = min(
                         max(
-                            if (isRestMode) 1 else 0,  //if (sessionAutomaton.isRestMode()) 1 else 0,
+                            if (isRestMode_) 1 else 0,  //if (sessionAutomaton.isRestMode()) 1 else 0,
                             (currentRepetitionsLeft?: 0) + numberOfRepetitions!! - lastNumberOfRepetitions
                         ),
                         numberOfRepetitions!!
@@ -628,9 +645,9 @@ fun SimpleScreen(
                     lastNumberOfSeries = numberOfSeries!!
                     userPreferencesRepository.saveSeriesPreference(numberOfSeries)
                     //if (currentSeriesLeft == 0 || (sessionAutomaton.isRestMode() && currentSeriesLeft == 1)) {
-                    if (currentSeriesLeft == 0 || (isRestMode && currentSeriesLeft == 1)) {
+                    if (currentSeriesLeft == 0 || (isRestMode_ && currentSeriesLeft == 1)) {
                             currentRestTimeLeft = 0
-                            isRestMode = false
+                            //isRestMode = false
                     }
                 }
 
@@ -651,9 +668,8 @@ fun SimpleScreen(
              * It reacts to changes in isTimerRunning and isRestMode states.
              */
             //LaunchedEffect(stateHasChanged) {            // <-----<<<
-            LaunchedEffect(isTimerRunning) {            // <-----<<<
-                //if (sessionAutomaton.isTimerRunning() || sessionAutomaton.isRestMode()) {
-                if (isTimerRunning || isRestMode) {
+            LaunchedEffect(isTimerRunning_) {            // <-----<<<
+                if (isTimerRunning_ || isRestMode_) {
                     (this as? ComponentActivity)?.window?.addFlags(
                         WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
                     )
@@ -666,11 +682,11 @@ fun SimpleScreen(
                 //sessionAutomaton.stateChanged = false
 
                 //while (isActive && (sessionAutomaton.isTimerRunning() || sessionAutomaton.isRestMode())) {
-                while (isActive && (isTimerRunning || isRestMode || isTimerStopped)) {
+                while (isActive && (isTimerRunning_ || isRestMode_ || isTimerStopped_)) {
                     // --- Normal Repetition Countdown ---
-                    isDimmedState = false
+                    //isDimmedState = false
 
-                    if (!isRestMode) {  //!sessionAutomaton.isRestMode()) {  //
+                    if (!isRestMode_) {  //!sessionAutomaton.isRestMode()) {  //
                         // Ensure values are sane before starting countdown loop
                         // If starting from a dimmed state (reps=0, duration=0), reset them.
                         if (currentRepetitionsLeft == 0) { // Indicates a previous cycle was completed
@@ -691,8 +707,8 @@ fun SimpleScreen(
 
                         while (isActive &&
                             currentSeriesLeft!! > 0 &&
-                            (isTimerRunning || isTimerStopped) &&  //sessionAutomaton.isTimerRunning() &&  //
-                            !isRestMode  //!sessionAutomaton.isRestMode()  //
+                            (isTimerRunning_ || isTimerStopped_) &&  //sessionAutomaton.isTimerRunning() &&  //
+                            !isRestMode_  //!sessionAutomaton.isRestMode()  //
                         ) {
                             //if (currentDurationSecondsLeft != null && currentDurationSecondsLeft == initialDurationSeconds) {
                             if (currentDurationSecondsLeft!! == initialDurationSeconds!!) {
@@ -702,10 +718,9 @@ fun SimpleScreen(
                             //if (currentDurationSecondsLeft != null && currentDurationSecondsLeft!! > 0) {
                             if (currentDurationSecondsLeft!! > 0) {
                                 // current repetition timer tick
-                                if (isTimerRunning)
+                                if (isTimerRunning_)
                                     delay(countDownDelay)  //1000L)
-                                if (!(isTimerRunning || isTimerStopped) || isRestMode)
-                                //if (!sessionAutomaton.isTimerRunning() || sessionAutomaton.isRestMode())
+                                if (!(isTimerRunning_ || isTimerStopped_) || isRestMode_)
                                     break
                                 currentDurationSecondsLeft = currentDurationSecondsLeft!! - 1
                                 // intermediate beep logic
@@ -717,7 +732,7 @@ fun SimpleScreen(
                                 ) {
                                     playIntermediateBeep = true
                                 }
-                            } else if (currentDurationSecondsLeft == 0) {
+                            } else if (currentDurationSecondsLeft!! == 0) {
                                 // end of current repetition duration
                                 if (currentRepetitionsLeft != null && currentRepetitionsLeft!! > 0) {
                                     // go to next repetition in current series
@@ -729,21 +744,14 @@ fun SimpleScreen(
                                             // then, count down series number
                                             if (currentSeriesLeft == 1) {
                                                 // If no more series left, stop the timer and show dimmed state
-                                                isTimerRunning = false
-                                                isTimerStopped = false
-                                                isRestMode = false
-                                                sessionAutomaton.action(ESignal.SIG_COMPLETED)
-                                                playRestBeepEvent = false
-                                                playEndBeepEvent = true
-                                                currentDurationSecondsLeft = 0
-                                                currentRepetitionsLeft = 0
-                                                currentSeriesLeft = 0
+                                                sessionHasCompleted()
                                                 break
                                             } else {
                                                 // enters the rest mode
                                                 playRestBeepEvent = true
-                                                isRestMode = true
-                                                sessionAutomaton.action(ESignal.SIG_REST_ON)
+                                                //isRestMode = true
+                                                //sessionAutomaton.action(ESignal.SIG_REST_ON)
+                                                timerViewModel.action(ESignal.SIG_REST_ON)
 
                                                 val seriesDuration = (initialDurationSeconds
                                                     ?: 1) * (numberOfRepetitions
@@ -763,17 +771,23 @@ fun SimpleScreen(
                                         // let's start a new repetition into current series
                                         currentDurationSecondsLeft = initialDurationSeconds
                                     }
-                                } else { // currentRepetitionsLeft is null -> should never happen
-                                    isTimerRunning = false
+                                } else {
+                                    // end of current series
+                                    // Notice: if end of session also, will be checked in the outer loop
+                                    if (isRestMode_)
+                                        currentSeriesLeft = currentSeriesLeft!! + 1  // Must be restored to previous value
+                                    timerViewModel.action(ESignal.SIG_REST_ON)  // Enter the resting mode
                                     break
                                 }
                             } else {  // currentDurationSecondsLeft is null -> should never happen
-                                isTimerRunning = false
                                 break
                             }
 
-                            if (isTimerStopped)
+                            if (isTimerStopped_) {
+                                if (isRestMode_)
+                                    currentSeriesLeft = currentSeriesLeft!! + 1  // Must be restored to previous value
                                 break
+                            }
                         }
                     }
 
@@ -782,26 +796,26 @@ fun SimpleScreen(
                         // If no more series left, stop the timer and show dimmed state
                         sessionHasCompleted()
                     }
-                    else if (isRestMode) {  //sessionAutomaton.isRestMode()) {  //
+                    else if (isRestMode_) {  //sessionAutomaton.isRestMode()) {  //
                         // --- Rest Mode Countdown ---
                         // Check isRestMode again, as it could have been set in the block above
-                        while (isActive && isTimerRunning) {  //sessionAutomaton.isTimerRunning()) {  //
+                        while (isActive && isRestMode_) {  //isTimerRunning_) {  //sessionAutomaton.isTimerRunning()) {  //
                             if (currentRestTimeLeft != null && currentRestTimeLeft!! > 0) {
                                 // Check for some seconds left --> to play rest-beeps
                                 if (currentRestTimeLeft == endOfRestBeepTime) {
                                     playRestBeepEvent = true
                                 }
                                 delay(countDownDelay)
-                                if (!isTimerRunning || !isRestMode)
-                                //if (!sessionAutomaton.isTimerRunning() || !sessionAutomaton.isRestMode())
-                                    break
+                                //if (!isTimerRunning_ || !isRestMode_)
+                                //    break
                                 currentRestTimeLeft = currentRestTimeLeft!! - 1
                             } else {
                                 // Rest time ended (currentRestTimeLeft is 0 or null)
-                                isTimerRunning = true
+                                /*isTimerRunning = true
                                 isRestMode = false
-                                isTimerStopped = false
-                                sessionAutomaton.action(ESignal.SIG_REST_OFF)
+                                isTimerStopped = false*/
+                                //sessionAutomaton.action(ESignal.SIG_REST_OFF)
+                                timerViewModel.action(ESignal.SIG_REST_OFF)
                                 currentRepetitionsLeft = numberOfRepetitions // Reset for new cycle
                                 currentSeriesLeft = currentSeriesLeft!! - 1
                                 break // Exit rest loop
@@ -809,12 +823,12 @@ fun SimpleScreen(
                         }
                     }
 
-                if (isTimerStopped)
+                if (isTimerStopped_)
                     break
                 }
 
                 //isDimmedState = sessionAutomaton.isSessionCompleted() || sessionAutomaton.isTimerStopped()
-                isDimmedState = currentSeriesLeft == 0 || isTimerStopped  //sessionAutomaton.isTimerStopped()
+                //isDimmedState = currentSeriesLeft == 0 || isTimerStopped  //sessionAutomaton.isTimerStopped()
             }
 
 
@@ -1031,14 +1045,16 @@ fun SimpleScreen(
                     //-- START Button --
                     Button(
                         onClick = {
-                            if (isTimerRunning) {  // sessionAutomaton.isTimerRunning()) {  // // Ask for stop state
-                                isTimerRunning = false
-                                isTimerStopped = true
-                                sessionAutomaton.action(ESignal.SIG_STOP)
-                            } else if (isTimerStopped) {  //sessionAutomaton.isTimerStopped()) {  //  // Resume from stop state
-                                isTimerRunning = true
-                                isTimerStopped = false
-                                sessionAutomaton.action(ESignal.SIG_START)
+                            if (isTimerRunning_) {  // sessionAutomaton.isTimerRunning()) {  // // Ask for stop state
+                                /*isTimerRunning = false
+                                isTimerStopped = true*/
+                                //sessionAutomaton.action(ESignal.SIG_STOP)
+                                timerViewModel.action(ESignal.SIG_STOP)
+                            } else if (isTimerStopped_) {  //sessionAutomaton.isTimerStopped()) {  //  // Resume from stop state
+                                /*isTimerRunning = true
+                                isTimerStopped = false*/
+                                //sessionAutomaton.action(ESignal.SIG_START)
+                                timerViewModel.action(ESignal.SIG_START)
                             } else {  // Trying to Start (or Restart after session completion)
                                 if (allSelectionsMade) {
                                     // If currentRepetitionsLeft is 0, it means a cycle just finished (dimmed state).
@@ -1056,12 +1072,13 @@ fun SimpleScreen(
                                             currentRepetitionsLeft = numberOfRepetitions
                                         }
                                     }
-                                    isTimerRunning = true  // Start - running state
-                                    sessionAutomaton.action(ESignal.SIG_START)
+                                    //isTimerRunning = true  // Start - running state
+                                    //sessionAutomaton.action(ESignal.SIG_START)
+                                    timerViewModel.action(ESignal.SIG_START)
                                 }
                             }
                         },
-                        enabled = (isTimerRunning || allSelectionsMade) && !isRestMode,
+                        enabled = (isTimerRunning_ || allSelectionsMade) && !isRestMode_,
                         //enabled = allSelectionsMade && !sessionAutomaton.isRestMode(),              // <------<<<
                         colors = ButtonDefaults.buttonColors(
                             containerColor = AppButtonColor,
@@ -1076,12 +1093,12 @@ fun SimpleScreen(
                         Text(
                             text = stringResource(
                                 //id = if (sessionAutomaton.isTimerRunning()) R.string.stop_button
-                                id = if (isTimerRunning) R.string.stop_button
+                                id = if (isTimerRunning_) R.string.stop_button
                                      else R.string.start_button
                             ),
                             style = customInteractiveTextStyle.copy(
                                 //color = if (allSelectionsMade && !sessionAutomaton.isRestMode()) AppButtonTextColor
-                                color = if (allSelectionsMade && !isRestMode) AppButtonTextColor
+                                color = if (allSelectionsMade && !isRestMode_) AppButtonTextColor
                                         else AppButtonTextColor.copy(alpha = 0.5f)
                             ),
                             fontSize = (18 * buttonHeight / 35f).sp
@@ -1125,7 +1142,7 @@ fun SimpleScreen(
 
                             // 1. Draw the main circle border
                             drawCircle(
-                                color = if (isRestMode) WABlueColor  //sessionAutomaton.isRestMode()) WABlueColor
+                                color = if (isRestMode_) WABlueColor  //sessionAutomaton.isRestMode()) WABlueColor
                                         else if (isDimmedDisplay()) DimmedTimerBorderColor
                                         else TimerBorderColor,
                                 radius = circleRadius - strokeWidthPx / 2f, // Radius to the center of the stroke
@@ -1145,7 +1162,7 @@ fun SimpleScreen(
                                 }
 
                             //if (!isRestMode && sessionAutomaton.isTimerActivated() && sweepAngle > 0f) {  // <-----<<<
-                            if (!isRestMode && (isTimerRunning || isTimerStopped) && sweepAngle > 0f) {
+                            if (!isRestMode_ && (isTimerRunning_ || isTimerStopped_) && sweepAngle > 0f) {
                                 // Notice, reminder:
                                 //  (isTimerRunning || isTimerStopped) avoids red-ghost display
                                 //  in big timer border when selecting number of repetitions
@@ -1175,14 +1192,15 @@ fun SimpleScreen(
                             // --- Column to hold Time Countdown numbers and "Rest..." text ---
                             // Text for the main duration
                             //val showDimmedTimers = currentRepetitionsLeft == 0 && !sessionAutomaton.isTimerActivated()
-                            val showDimmedTimers = currentRepetitionsLeft == 0 && !(isTimerRunning || isTimerStopped)
+                            val showDimmedTimers = currentRepetitionsLeft == 0 &&
+                                                    !(isTimerRunning_ || isTimerStopped_ || isRestMode_)
 
                             val durationToDisplayValue =
                                 /*if (sessionAutomaton.isSessionCompleted()) 0
                                 else if (sessionAutomaton.isRestMode()) currentRestTimeLeft
                                 else currentDurationSecondsLeft*/
                                 if (showDimmedTimers) 0
-                                else if (isRestMode) currentRestTimeLeft
+                                else if (isRestMode_) currentRestTimeLeft
                                 else currentDurationSecondsLeft
 
                             val durationToDisplayString = durationToDisplayValue?.toString()
@@ -1194,7 +1212,7 @@ fun SimpleScreen(
                                 val targetTextHeightPx = circleRadius * 0.9f
 
                                 val countdownTextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
-                                    color = (if (isRestMode) WABlueColor  //sessionAutomaton.isRestMode()) WABlueColor
+                                    color = (if (isRestMode_) WABlueColor  //sessionAutomaton.isRestMode()) WABlueColor
                                              else if (isDimmedDisplay()) DimmedTimerBorderColor
                                              else TimerBorderColor
                                             ).toArgb()
@@ -1223,7 +1241,7 @@ fun SimpleScreen(
 
                                 // "Rest..." Text, displayed only during rest mode
                                 //if (sessionAutomaton.isRestMode()) {
-                                if (isRestMode) {
+                                if (isRestMode_) {
                                     val restTextSizePx = targetTextHeightPx * 0.22f
                                     val restTextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
                                         color = WABlueColor.toArgb()
@@ -1312,7 +1330,7 @@ fun SimpleScreen(
                                 }
 
                             //if (sessionAutomaton.isTimerActivated() && sweepAngle > 0f) {
-                            if ((isTimerRunning || isTimerStopped) && sweepAngle > 0f) {
+                            if ((isTimerRunning_ || isTimerStopped_) && sweepAngle > 0f) {
                                 // Notice, reminder:
                                 //  (isTimerRunning || isTimerStopped) avoids red-ghost display
                                 //  in big timer border when selecting number of repetitions

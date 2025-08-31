@@ -43,6 +43,19 @@ class NoArrowsTimerViewModel : ViewModel() {
     // Internal state automaton to manage timer states
     private val stateAutomaton = SessionStateAutomaton()
 
+    // actuates the finite state machine according to the received signal
+    // and updates the mutable states accordingly
+    @Suppress("MemberVisibilityCanBePrivate")
+    fun action(signal: ESignal) {
+        stateAutomaton.action(signal)
+
+        _isIdleMode.value = stateAutomaton.isIdleMode()
+        _isRestMode.value = stateAutomaton.isRestMode()
+        _isSessionCompleted.value = stateAutomaton.isSessionCompleted()
+        _isTimerRunning.value = stateAutomaton.isTimerRunning()
+        _isTimerStopped.value = stateAutomaton.isTimerStopped()
+    }
+
     // Mutable checking of the internal state - idle mode
     private val _isIdleMode = mutableStateOf(stateAutomaton.isIdleMode())
     val isIdleMode: State<Boolean> = _isIdleMode
