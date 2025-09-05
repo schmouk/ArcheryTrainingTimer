@@ -104,7 +104,7 @@ import kotlin.math.roundToInt
 //import kotlin.times
 
 //val DEBUG_MODE = true
-val DEBUG_MODE = false
+val DEBUG_MODE = false  // i.e. RELEASE MODE
 
 
 /*
@@ -749,6 +749,9 @@ fun SimpleScreen(
                         ) {
                             if (currentDurationSecondsLeft!! == initialDurationSeconds!!) {
                                 playBeepEvent = true
+                            } else if (currentDurationSecondsLeft!! == initialDurationSeconds!! - 1) {
+                                // in some dark circumstances, the cancelling of the first beep may be missed
+                                playBeepEvent = false
                             }
 
                             //if (currentDurationSecondsLeft != null && currentDurationSecondsLeft!! > 0) {
@@ -809,8 +812,6 @@ fun SimpleScreen(
                                         timerViewModel.action(ESignal.SIG_REST_ON)  // Enter the resting mode
                                     break
                                 }
-                            } else {  // currentDurationSecondsLeft is null -> should never happen
-                                break
                             }
 
                             if (isTimerStopped_) {
@@ -828,12 +829,13 @@ fun SimpleScreen(
                     }
                     else if (isRestMode_) {
                         // --- Rest Mode Countdown ---
-                        // Check isRestMode again, as it could have been set in the block above
-                        while (isActive && isRestMode_) {  //isTimerRunning_) {  //sessionAutomaton.isTimerRunning()) {  //
+                        // Check isRestMode again, as it could have been modified in the block above
+                        while (isActive && isRestMode_) {
                             if (currentRestTimeLeft != null && currentRestTimeLeft!! > 0) {
                                 // Check for some seconds left --> to play rest-beeps
                                 if (currentRestTimeLeft == endOfRestBeepTime) {
                                     playRestBeepEvent = true
+                                    playBeepEvent = false
                                 }
                                 delay(countDownDelay)
                                 //if (!isTimerRunning_ || !isRestMode_)
