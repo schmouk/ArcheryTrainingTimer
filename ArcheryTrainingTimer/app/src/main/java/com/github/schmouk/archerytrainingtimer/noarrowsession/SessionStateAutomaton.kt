@@ -35,6 +35,7 @@ enum class ESignal {
     SIG_STOP,       // The Stop button has been tapped
     SIG_REST_ON,    // The session is entering a rest period
     SIG_REST_OFF,   // The session is exiting a rest period
+    SIG_WILL_REST,  // The session is about to enter a rest period - only evaluated when timer is stopped
     SIG_COMPLETED,  // The session has completed
 }
 
@@ -52,22 +53,12 @@ open class SessionStateAutomaton {
         STATE_TIMER_RUNNING,    // Main timer is actively counting down
         STATE_TIMER_STOPPED,    // Main timer was running but is now paused
         STATE_REST_MODE,        // Rest timer is actively counting down
+        STATE_WILL_REST,        // Main timer is stopped, and a rest period is pending
         STATE_COMPLETED         // The entire session has completed
     }
 
     // Initialize the internal state to IDLE
     protected var currentState: EState = EState.STATE_IDLE
-    var stateChanged: Boolean = false
-
-    /**
-     * Returns true if the internal state has changed since the last call to this method.
-     * Calling this method resets the stateChanged flag to false.
-     */
-    fun hasStateChanged(): Boolean {
-        val changed = stateChanged
-        stateChanged = false
-        return changed
-    }
 
 
     /**
@@ -85,7 +76,6 @@ open class SessionStateAutomaton {
                         // the training session timer:
                         // Start the main timer.
                         currentState = EState.STATE_TIMER_RUNNING
-                        stateChanged = true
                     }
                     else -> {
                         // In IDLE or COMPLETED state, STOP, REST_ON, REST_OFF or
@@ -99,17 +89,14 @@ open class SessionStateAutomaton {
                         // User has paused the main timer
                         // Transition to TIMER_STOPPED state
                         currentState = EState.STATE_TIMER_STOPPED
-                        stateChanged = true
                     }
                     ESignal.SIG_REST_ON -> {
                         // Typically, REST follows a completed timer run.
                         currentState = EState.STATE_REST_MODE
-                        stateChanged = true
                     }
                     ESignal.SIG_COMPLETED -> {
                         // The training session has completed all of its countdowns.
                         currentState = EState.STATE_COMPLETED
-                        stateChanged = true
                     }
                     else -> {
                         // START and REST_OFF signals in RUNNING state cannot happen.
@@ -123,7 +110,11 @@ open class SessionStateAutomaton {
                         // This is the only action that makes sense from STOPPED state:
                         // Resume the main timer from where it was paused.
                         currentState = EState.STATE_TIMER_RUNNING
-                        stateChanged = true
+                    }
+                    ESignal.SIG_WILL_REST -> {
+                        // App has indicated that a rest period is pending.
+                        // Transition to WILL_REST state.
+                        currentState = EState.STATE_WILL_REST
                     }
                     else -> {
                         // No other type of signal may happen in STOPPED state.
@@ -139,15 +130,25 @@ open class SessionStateAutomaton {
                         // It indicates that the rest period has ended,
                         // and the main timer should resume.
                         currentState = EState.STATE_TIMER_RUNNING
-                        stateChanged = true
                     }
                     ESignal.SIG_COMPLETED -> {
                         // The training session has completed all of its countdowns.
                         currentState = EState.STATE_COMPLETED
-                        stateChanged = true
                     }
                     else -> {
                         // No other type of signal may happen in REST mode state.
+                        // No state change occurs.
+                    }
+                }
+            }
+            EState.STATE_WILL_REST -> {
+                when (signal) {
+                    ESignal.SIG_START -> {
+                        // The application has indicated that the rest period should start now.
+                        currentState = EState.STATE_REST_MODE
+                    }
+                    else -> {
+                        // No other type of signal may happen in WILL_REST state.
                         // No state change occurs.
                     }
                 }
@@ -161,7 +162,8 @@ open class SessionStateAutomaton {
 
     fun isTimerRunning(): Boolean = currentState == EState.STATE_TIMER_RUNNING
 
-    fun isTimerStopped(): Boolean = currentState == EState.STATE_TIMER_STOPPED
+    fun isTimerStopped(): Boolean = currentState == EState.STATE_TIMER_STOPPED ||
+                                    currentState == EState.STATE_WILL_REST
 
     fun isTimerActivated(): Boolean = isTimerRunning() || isTimerStopped()
 
@@ -175,7 +177,6 @@ open class SessionStateAutomaton {
      */
     fun reset() {
         currentState = EState.STATE_IDLE
-        stateChanged = true
     }
 
     /**

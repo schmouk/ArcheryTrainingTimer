@@ -7,6 +7,9 @@ plugins {
     id("base")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose") // OR alias(libs.plugins.kotlin.compose) if using version catalog
+    //id("com.android.application") version "8.13.0" apply false
+    //id("com.android.library") version "8.13.0" apply false
+    //id("org.jetbrains.kotlin.android") version "2.1.20" apply false
 }
 
 // Set archivesBaseName
@@ -37,16 +40,16 @@ android {
     compileSdk = 36 // Or the current compileSdk
 
     defaultConfig {
-        applicationId = namespace  //"com.github.schmouk.archerytrainingtimer"
-        minSdk = 24 // Or your current minSdk
-        targetSdk = 36 // Or your current targetSdk
-        versionCode = 6 // To be incremented with each release
-        // Using a property for versionName is common, but you can also hardcode it
-        // If you want to use a property, you can define it in gradle.properties or
+        applicationId = namespace  // i.e. "com.github.schmouk.archerytrainingtimer"
+        minSdk = 24 // Or our current minSdk
+        targetSdk = 36 // Or our current targetSdk
+        versionCode = 7 // To be incremented with each release
+        // Using a property for versionName is common, but we can also hardcode it
+        // If we want to use a property, we can define it in gradle.properties or
         // pass it as a command line argument, e.g., -PversionName=0.1.0
-        // Here, we use a hardcoded value for simplicity, but you can replace it with a property if needed.
+        // Here, we use a hardcoded value for simplicity, but we can replace it with a property if needed.
         // versionName = project.findProperty("versionName")?.toString() ?: "0.1.0"
-        versionName = "0.2.0a"
+        versionName = "0.2.0"
     }
 
     signingConfigs {
