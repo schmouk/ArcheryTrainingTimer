@@ -514,6 +514,7 @@ fun SimpleScreen(
                 isRestMode = false*/
                 //sessionAutomaton.action(ESignal.SIG_COMPLETED)
                 timerViewModel.action(ESignal.SIG_COMPLETED)
+                playBeepEvent = false
                 playRestBeepEvent = false
                 playEndBeepEvent = true
                 currentDurationSecondsLeft = 0
@@ -721,7 +722,7 @@ fun SimpleScreen(
 
                 while (isActive && (isTimerRunning_ || isRestMode_ || isTimerStopped_)) {
                     // --- Normal Repetition Countdown ---
-                    if (!isRestMode_) {  //!sessionAutomaton.isRestMode()) {  //
+                    if (!isRestMode_) {
                         // Ensure values are sane before starting countdown loop
                         // If starting from a dimmed state (reps=0, duration=0), reset them.
                         if (currentRepetitionsLeft == 0) { // Indicates a previous cycle was completed
@@ -746,7 +747,6 @@ fun SimpleScreen(
                             (isTimerRunning_ || isTimerStopped_) &&
                             !isRestMode_
                         ) {
-                            //if (currentDurationSecondsLeft != null && currentDurationSecondsLeft == initialDurationSeconds) {
                             if (currentDurationSecondsLeft!! == initialDurationSeconds!!) {
                                 playBeepEvent = true
                             }
