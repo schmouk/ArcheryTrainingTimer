@@ -596,7 +596,7 @@ fun noArrowsTimerScreen(
                                                 break
                                             } else {
                                                 // enters the rest mode
-                                                playRestBeepEvent = true
+                                                //playRestBeepEvent = true
                                                 //isRestMode = true
                                                 noArrowsViewModel.action(ESignal.SIG_REST_ON)
                                                 currentRestTimeLeft = evaluateRestTime()
@@ -638,6 +638,9 @@ fun noArrowsTimerScreen(
                         sessionHasCompleted()
                     } else if (isRestMode) {
                         // --- Rest Mode Countdown ---
+                        if (currentRestTimeLeft?: 0 == evaluateRestTime())
+                            playRestBeepEvent = true
+
                         // Check isRestMode again, as it could have been modified in the block above
                         while (isActive && isRestMode) {
                             if (currentRestTimeLeft != null && currentRestTimeLeft!! > 0) {
