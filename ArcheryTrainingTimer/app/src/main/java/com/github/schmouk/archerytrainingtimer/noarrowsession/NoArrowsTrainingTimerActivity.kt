@@ -1,7 +1,7 @@
 /*
 MIT License
 
-Copyright (c) 2025 Philippe Schmouker, ph (dot) schmouker (at) gmail (dot) com
+Copyright (c) 2025 Philippe Schmouker
 
 This file is part of Android application ArcheryTrainingTimer.
 
@@ -26,7 +26,6 @@ SOFTWARE.
 
 package com.github.schmouk.archerytrainingtimer.noarrowsession
 
-
 import android.content.Context
 import android.media.AudioManager
 import android.os.Bundle
@@ -36,6 +35,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.core.view.WindowCompat
 
+import com.github.schmouk.archerytrainingtimer.ui.noarrowsession.noArrowsTimerScreen
 import com.github.schmouk.archerytrainingtimer.ui.theme.*
 
 
@@ -50,12 +50,13 @@ class NoArrowsTrainingTimerActivity : ComponentActivity() {
     // the existing one if, for example, the Activity is recreated due to rotation.
     // This requires NoArrowsTimerViewModel to have a default constructor OR
     // for us to provide a ViewModelProvider.Factory if it has constructor parameters.
-    private val timerViewModel: NoArrowsTimerViewModel by viewModels()
+    private val noArrowsTimerViewModel: NoArrowsTimerViewModel by viewModels()
 
     // --- Lifecycle Methods ---
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         WindowCompat.setDecorFitsSystemWindows(window, false) // Edge-to-edge
 
         userPreferencesRepository = UserPreferencesRepository(applicationContext) // Initialize or inject
@@ -67,7 +68,10 @@ class NoArrowsTrainingTimerActivity : ComponentActivity() {
 
         setContent {
             ArcheryTrainingTimerTheme {
-                timerViewModel.trainingTimerScreen(userPreferencesRepository)
+                noArrowsTimerScreen(
+                    noArrowsTimerViewModel,
+                    userPreferencesRepository
+                )
             }
         }
     }
@@ -86,16 +90,16 @@ class NoArrowsTrainingTimerActivity : ComponentActivity() {
         audioManager.setStreamVolume(AudioManager.STREAM_RING, initialRingtoneVolume, 0)
     }
 
-    override fun onResume() {
-        super.onResume()
-        // Keep screen on when the activity is active and in the foreground
-        keepScreenOn()
-    }
-
     override fun onPause() {
         super.onPause()
         // Allow screen to turn off when the activity is no longer in the foreground
         allowScreenTimeout()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Keep screen on when the activity is active and in the foreground
+        keepScreenOn()
     }
 
     override fun onStop() {

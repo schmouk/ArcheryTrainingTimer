@@ -5,9 +5,6 @@ import android.content.Intent
 
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
@@ -16,9 +13,10 @@ import androidx.core.view.WindowCompat
 import com.github.schmouk.archerytrainingtimer.noarrowsession.NoArrowsTrainingTimerActivity
 import com.github.schmouk.archerytrainingtimer.ui.theme.*
 
+
 // --- Global DEBUG MODE flag ---
-//val DEBUG_MODE = true
-val DEBUG_MODE = false  // i.e. RELEASE MODE
+const val DEBUG_MODE = true  // i.e. DEBUG MODE (tests)
+//const val DEBUG_MODE = false  // i.e. RELEASE MODE (production)
 
 
 // --- MainActivity class definition ---
@@ -93,16 +91,3 @@ fun DefaultPreviewMainActivity() {
         MainAppScreen()
     }
 }
-
-
-/*
-// The AppTheme Composable
-@Composable
-fun AppTheme(content: @Composable () -> Unit) {
-    MaterialTheme(
-        // our theme colors, typography, etc.
-    ) {
-        content()
-    }
-}
-*/
