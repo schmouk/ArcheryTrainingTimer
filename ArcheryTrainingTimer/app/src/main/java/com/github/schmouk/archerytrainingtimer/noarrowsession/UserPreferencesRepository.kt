@@ -1,0 +1,145 @@
+package com.github.schmouk.archerytrainingtimer.noarrowsession
+
+import android.content.Context
+import android.util.Log
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
+import java.io.IOException
+
+// Define the DataStore instance at the top level, associated with the application context
+// The name "user_preferences" will be the filename for the DataStore file.
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "user_preferences")
+
+// Define a TAG for logging
+private const val USER_PREFERENCES_TAG = "UserPreferencesRepo"
+
+data class UserPreferences(
+    val selectedDuration: String?,
+    val numberOfRepetitions: Int?,
+    val numberOfSeries: Int?,
+    val intermediateBeeps: Boolean?
+)
+
+class UserPreferencesRepository(context: Context) {
+
+    private val dataStore = context.dataStore
+
+    // Define keys for each preference
+    private object PreferencesKeys {
+        val SELECTED_DURATION = stringPreferencesKey("selected_duration")
+        val NUMBER_OF_REPETITIONS = intPreferencesKey("number_of_repetitions")
+        val NUMBER_OF_SERIES = intPreferencesKey("number_of_series")
+        val SAVE_SELECTION = booleanPreferencesKey("save_selection")
+        val INTERMEDIATE_BEEPS = booleanPreferencesKey("intermediate_beeps")
+    }
+
+    // Flow to read all user preferences
+    val userPreferencesFlow: Flow<UserPreferences> = dataStore.data
+        .catch { exception ->
+            // dataStore.data throws an IOException when an error is encountered when reading data
+            if (exception is IOException) {
+                Log.e(USER_PREFERENCES_TAG, "--Error reading preferences.", exception)
+                emit(emptyPreferences())
+            } else {
+                throw exception
+            }
+        }
+        .map { preferences ->
+            val selectedDuration = preferences[PreferencesKeys.SELECTED_DURATION]
+            val numberOfRepetitions = preferences[PreferencesKeys.NUMBER_OF_REPETITIONS]
+            val numberOfSeries = preferences[PreferencesKeys.NUMBER_OF_SERIES]
+            val loadedSaveFlag = preferences[PreferencesKeys.SAVE_SELECTION]
+            val intermediateBeepsFlag = preferences[PreferencesKeys.INTERMEDIATE_BEEPS]
+            val saveSelection = loadedSaveFlag ?: false
+            val intermediateBeeps = intermediateBeepsFlag ?: false
+
+            UserPreferences(selectedDuration, numberOfRepetitions, numberOfSeries, intermediateBeeps)  //saveSelection)
+        }
+
+    // Combined function to save all preferences if needed,
+    // especially useful if "saveSelection" is true
+    suspend fun saveAllPreferences(
+        duration: String?,
+        repetitions: Int?,
+        series: Int?,
+        intermediateBeepsFlag: Boolean
+        //saveSelectionFlag: Boolean
+    ) {
+        dataStore.edit { preferences ->
+            if (duration == null) preferences.remove(PreferencesKeys.SELECTED_DURATION)
+            else preferences[PreferencesKeys.SELECTED_DURATION] = duration
+
+            if (repetitions == null) preferences.remove(PreferencesKeys.NUMBER_OF_REPETITIONS)
+            else preferences[PreferencesKeys.NUMBER_OF_REPETITIONS] = repetitions
+
+            if (series == null) preferences.remove(PreferencesKeys.NUMBER_OF_SERIES)
+            else preferences[PreferencesKeys.NUMBER_OF_SERIES] = series
+
+            //preferences[PreferencesKeys.SAVE_SELECTION] = saveSelectionFlag
+
+            preferences[PreferencesKeys.INTERMEDIATE_BEEPS] = intermediateBeepsFlag
+        }
+    }
+
+    // Function to clear preferences if the user unchecks "saveSelection"
+    // and we decide not to keep the values-rFR-en-rEN.
+    suspend fun clearAllPreferencesIfSaveIsUnchecked() {
+        dataStore.edit { preferences ->
+            preferences.clear() // Clears all preferences
+            // Or could selectively remove them:
+            // preferences.remove(PreferencesKeys.SELECTED_DURATION)
+            // preferences.remove(PreferencesKeys.NUMBER_OF_REPETITIONS)
+            // preferences.remove(PreferencesKeys.NUMBER_OF_SERIES)
+            // preferences[PreferencesKeys.SAVE_SELECTION] = false
+            // preferences[PreferencesKeys.INTERMEDIATE_BEEPS] = false
+        }
+    }
+
+    // Function to save only the duration preference
+    suspend fun saveDurationPreference(duration: String?) {
+        dataStore.edit { preferences ->
+            if (duration == null) preferences.remove(PreferencesKeys.SELECTED_DURATION)
+            else preferences[PreferencesKeys.SELECTED_DURATION] = duration
+        }
+    }
+
+    // Function to save only the repetitions preference
+    suspend fun saveRepetitionsPreference(repetitions: Int?) {
+        dataStore.edit { preferences ->
+            if (repetitions == null) preferences.remove(PreferencesKeys.NUMBER_OF_REPETITIONS)
+            else preferences[PreferencesKeys.NUMBER_OF_REPETITIONS] = repetitions
+        }
+    }
+
+    // Function to save only the series preference
+    suspend fun saveSeriesPreference(series: Int?) {
+        dataStore.edit { preferences ->
+            if (series == null) preferences.remove(PreferencesKeys.NUMBER_OF_SERIES)
+            else preferences[PreferencesKeys.NUMBER_OF_SERIES] = series
+        }
+    }
+
+    // Function to save only the saveSelection preference
+    suspend fun saveSaveSelectionPreference(saveSelection: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.SAVE_SELECTION] = saveSelection
+        }
+    }
+
+    // Function to save only the intermediateBeeps preference
+    suspend fun saveIntermediateBeepsPreference(intermediateBeeps: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.INTERMEDIATE_BEEPS] = intermediateBeeps
+        }
+    }
+
+}

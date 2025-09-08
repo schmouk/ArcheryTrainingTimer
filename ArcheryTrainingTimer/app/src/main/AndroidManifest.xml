@@ -11,6 +11,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.ArcheryTrainingTimer">
+
+        <!-- Main Activity -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -22,6 +24,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- No Arrows Sessions Activity -->
+        <activity
+            android:name=".noarrowsession.NoArrowsTrainingTimerActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ArcheryTrainingTimer"
+            android:screenOrientation="portrait">
+        </activity>
+
     </application>
 
 </manifest>
