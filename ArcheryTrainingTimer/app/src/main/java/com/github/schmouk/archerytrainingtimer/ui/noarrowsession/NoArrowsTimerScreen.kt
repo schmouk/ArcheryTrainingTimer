@@ -20,6 +20,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -920,7 +921,7 @@ fun noArrowsTimerScreen(
                                 }
                             }
                         },
-                        enabled = (isTimerRunning || allSelectionsMade) && !isRestMode,
+                        enabled = allSelectionsMade && !isRestMode,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = AppButtonColor,
                             contentColor = AppButtonTextColor,
@@ -955,7 +956,29 @@ fun noArrowsTimerScreen(
                         .fillMaxWidth()
                         .weight(1f)
                         .background(AppTimerRowBackgroundColor)
-                        .padding(vertical = deviceScaling(4).dp),
+                        .padding(vertical = deviceScaling(4).dp)
+                        .let {
+                            // Conditionally apply the clickable modifier
+                            if (allSelectionsMade && !isRestMode) {
+                                it.clickable(
+                                    interactionSource = remember { MutableInteractionSource() }, // To disable ripple if desired
+                                    indication = null, // Set to 'LocalIndication.current' for default ripple or custom
+                                    onClick = {
+                                        // Send a signal to your ViewModel to toggle pause/resume
+                                        // This signal should be handled by your FSM
+                                        // e.g., ESignal.TOGGLE_PAUSE_RESUME or separate ESignal.PAUSE / ESignal.RESUME
+                                        if (isTimerRunning) {
+                                            noArrowsViewModel.action(ESignal.SIG_STOP)
+                                        } else {
+                                            // Ensure we only resume if there's time left and it's not completed
+                                            noArrowsViewModel.action(ESignal.SIG_START)
+                                        }
+                                    }
+                                )
+                            } else {
+                                it // Not clickable if conditions aren't met
+                            }
+                        },
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     //-- Left Cell (Big Timer Display) --
