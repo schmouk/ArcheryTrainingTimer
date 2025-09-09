@@ -326,6 +326,84 @@ fun noArrowsTimerScreen(
 
 
             /**
+             * Starts or Restarts a new session
+             */
+            fun startNewSession(allSelectionsMade: Boolean) {
+                // Trying to Start (or Restart after session completion)
+                if (allSelectionsMade) {
+                    // If currentRepetitionsLeft is 0, it means a cycle just finished (dimmed state).
+                    // Reset both countdowns for a new cycle.
+                    if (currentSeriesLeft == null || currentSeriesLeft == 0) {
+                        currentSeriesLeft = numberOfSeries
+                        currentRepetitionsLeft = numberOfRepetitions
+                        currentDurationSecondsLeft = initialDurationSeconds
+                    } else {
+                        // Handle cases where selections might have been cleared or timer never run
+                        if (currentDurationSecondsLeft == null || currentDurationSecondsLeft == 0) {
+                            currentDurationSecondsLeft = initialDurationSeconds
+                        }
+                        if (currentRepetitionsLeft == null) { // This should ideally not happen if allSelectionsMade is true
+                            currentRepetitionsLeft = numberOfRepetitions
+                        }
+                    }
+                    noArrowsViewModel.action(ESignal.SIG_START)
+                }
+            }
+
+            /**
+             * Pauses countdown
+             */
+            fun pauseCountdowns() {
+                noArrowsViewModel.action(ESignal.SIG_STOP)
+            }
+
+            /**
+             * Resumes countdown
+             */
+            fun resumeCountdowns() {
+                noArrowsViewModel.action(ESignal.SIG_START)
+            }
+
+            /**
+             * Sets resting mode
+             */
+            fun setRestMode() {
+                noArrowsViewModel.action(ESignal.SIG_REST_ON)
+            }
+
+            /**
+             * Quits resting mode
+             */
+            fun setEndOfRestMode() {
+                noArrowsViewModel.action(ESignal.SIG_REST_OFF)
+            }
+
+            /**
+             * Sets future resting mode
+             */
+            fun setFutureRestMode() {
+                noArrowsViewModel.action(ESignal.SIG_WILL_REST)
+            }
+
+            /**
+             * Evaluates the new or next resting mode
+             */
+            fun evaluateRestingMode() {
+                currentDurationSecondsLeft = 0
+                currentRestTimeLeft = evaluateRestTime()
+
+                if (currentSeriesLeft!! <= 1) {
+                    // To not have rest time launched if this was the last series
+                    currentSeriesLeft = 0
+                } else if (isTimerStopped) {
+                    setFutureRestMode()
+                } else {
+                    setRestMode()
+                }
+            }
+
+
+            /**
              * Play sound effect - single beep
              */
             LaunchedEffect(playBeepEvent) {
@@ -441,15 +519,7 @@ fun noArrowsTimerScreen(
                         lastDurationSeconds = durationValue
 
                         if (currentDurationSecondsLeft!! <= 1 && currentRepetitionsLeft!! <= 1) {
-                            currentDurationSecondsLeft = 0
-                            currentRestTimeLeft = evaluateRestTime()
-                            if (currentSeriesLeft!! <= 1)
-                                currentSeriesLeft =
-                                    0  // To not have rest time launched if this was the last series
-                            else if (isTimerStopped)
-                                noArrowsViewModel.action(ESignal.SIG_WILL_REST)
-                            else
-                                noArrowsViewModel.action(ESignal.SIG_REST_ON)
+                            evaluateRestingMode()
                         }
 
                         userPreferencesRepository.saveDurationPreference(selectedDurationString)
@@ -467,15 +537,7 @@ fun noArrowsTimerScreen(
                             numberOfRepetitions!!
                         )
                         if (currentRepetitionsLeft == 0) {
-                            currentDurationSecondsLeft = 0  //1
-                            currentRestTimeLeft = evaluateRestTime()
-                            if (currentSeriesLeft!! <= 1)
-                                currentSeriesLeft =
-                                    0  // To not have rest time launched if this was the last series
-                            else if (isTimerStopped)
-                                noArrowsViewModel.action(ESignal.SIG_WILL_REST)
-                            else
-                                noArrowsViewModel.action(ESignal.SIG_REST_ON)
+                            evaluateRestingMode()
                         }
                     } else {
                         currentDurationSecondsLeft = 0
@@ -497,10 +559,11 @@ fun noArrowsTimerScreen(
                         currentRepetitionsLeft = 0
                         currentSeriesLeft = 0
                         if (isRestMode) {
-                            noArrowsViewModel.action(ESignal.SIG_COMPLETED)
-                            playEndBeepEvent = true
+                            sessionHasCompleted()
+                            //noArrowsViewModel.action(ESignal.SIG_COMPLETED)
+                            //playEndBeepEvent = true
                         } else if (isTimerStopped) {
-                            noArrowsViewModel.action(ESignal.SIG_START)
+                            resumeCountdowns()
                         }
                     }
                 }
@@ -604,7 +667,7 @@ fun noArrowsTimerScreen(
                                                 // enters the rest mode
                                                 //playRestBeepEvent = true
                                                 //isRestMode = true
-                                                noArrowsViewModel.action(ESignal.SIG_REST_ON)
+                                                setRestMode()
                                                 currentRestTimeLeft = evaluateRestTime()
                                             }
                                         } else {
@@ -621,10 +684,9 @@ fun noArrowsTimerScreen(
                                     // end of current series
                                     // Notice: if end of session also, will be checked in the outer loop
                                     if (isRestMode)
-                                        currentSeriesLeft =
-                                            currentSeriesLeft!! + 1  // Must be restored to previous value
+                                        currentSeriesLeft = currentSeriesLeft!! + 1  // Must be restored to previous value
                                     else
-                                        noArrowsViewModel.action(ESignal.SIG_REST_ON)  // Enter the resting mode
+                                        setRestMode()
                                     break
                                 }
                             }
@@ -659,9 +721,8 @@ fun noArrowsTimerScreen(
                                 currentRestTimeLeft = currentRestTimeLeft!! - 1
                             } else {
                                 // Rest time ended (currentRestTimeLeft is 0 or null)
-                                noArrowsViewModel.action(ESignal.SIG_REST_OFF)
-                                currentRepetitionsLeft =
-                                    numberOfRepetitions // Reset for new cycle
+                                setEndOfRestMode()
+                                currentRepetitionsLeft = numberOfRepetitions // Reset for new cycle
                                 currentSeriesLeft = currentSeriesLeft!! - 1
                                 break // Exit rest loop
                             }
@@ -896,11 +957,13 @@ fun noArrowsTimerScreen(
                     Button(
                         onClick = {
                             if (isTimerRunning) {
-                                noArrowsViewModel.action(ESignal.SIG_STOP)
+                                pauseCountdowns()
                             } else if (isTimerStopped) {
-                                noArrowsViewModel.action(ESignal.SIG_START)
+                                resumeCountdowns()
                             } else {
                                 // Trying to Start (or Restart after session completion)
+                                startNewSession(allSelectionsMade)
+                                /*
                                 if (allSelectionsMade) {
                                     // If currentRepetitionsLeft is 0, it means a cycle just finished (dimmed state).
                                     // Reset both countdowns for a new cycle.
@@ -917,8 +980,9 @@ fun noArrowsTimerScreen(
                                             currentRepetitionsLeft = numberOfRepetitions
                                         }
                                     }
-                                    noArrowsViewModel.action(ESignal.SIG_START)
+                                    resumeCountdowns()
                                 }
+                                */
                             }
                         },
                         enabled = allSelectionsMade && !isRestMode,
@@ -968,10 +1032,10 @@ fun noArrowsTimerScreen(
                                         // This signal should be handled by your FSM
                                         // e.g., ESignal.TOGGLE_PAUSE_RESUME or separate ESignal.PAUSE / ESignal.RESUME
                                         if (isTimerRunning) {
-                                            noArrowsViewModel.action(ESignal.SIG_STOP)
+                                            pauseCountdowns()
                                         } else {
                                             // Ensure we only resume if there's time left and it's not completed
-                                            noArrowsViewModel.action(ESignal.SIG_START)
+                                            startNewSession(true)  // Notice: (allSelectionsMade) is always true here
                                         }
                                     }
                                 )
