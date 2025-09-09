@@ -13,7 +13,8 @@ plugins {
 }
 
 // Set archivesBaseName
-base.archivesBaseName = "ArcheryTrainingTimer"
+//base.archivesBaseName = "ArcheryTrainingTimer"  // <-----<<< deprecated!
+base.archivesName = "ArcheryTrainingTimer"
 
 // Load properties from keystore.properties
 val keystorePropertiesFile = rootProject.file("keystore.properties")
@@ -168,5 +169,4 @@ dependencies {
 
     // Lifecycle KTX (often useful with Compose)
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.2") // Or our version
-
 }

@@ -119,6 +119,10 @@ fun noArrowsTimerScreen(
 
     // The screen content
     Scaffold(
+        // no more useful since we call
+        // WindowCompat.setDecorFitsSystemWindows(window, true)
+        // in the related/embedding Activity --> we don't draw behind system bars
+        /*
         topBar = {
             Spacer(
                 Modifier
@@ -126,13 +130,14 @@ fun noArrowsTimerScreen(
                     .windowInsetsTopHeight(WindowInsets.statusBars)
             )
         }
-        // We don't use Scaffold's bottomBar for this,
+        */
+        // We don't use Scaffold's bottomBar for this either,
         // we will pad the content area directly.
     ) { innerPaddingFromScaffold -> // This innerPadding from Scaffold handles the TOP spacer
         BoxWithConstraints(
             modifier = Modifier
                 .padding(innerPaddingFromScaffold)
-                .padding(WindowInsets.navigationBars.asPaddingValues())  // <-----
+                //.padding(WindowInsets.navigationBars.asPaddingValues())  // <-----
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
         ) {

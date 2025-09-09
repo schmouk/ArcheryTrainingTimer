@@ -57,7 +57,9 @@ class NoArrowsTrainingTimerActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        WindowCompat.setDecorFitsSystemWindows(window, false) // Edge-to-edge
+        //WindowCompat.setDecorFitsSystemWindows(window, false) // Edge-to-edge
+        // Disable edge-to-edge display to NOT draw behind the system bars
+        WindowCompat.setDecorFitsSystemWindows(window, true)
 
         userPreferencesRepository = UserPreferencesRepository(applicationContext) // Initialize or inject
 
