@@ -157,8 +157,10 @@ dependencies {
     // Essential Compose UI libraries (versions managed by BOM if used)
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
-    implementation("androidx.compose.material3:material3:1.3.2") // If use of Material 3 components
-    // implementation("androidx.compose.material:material") // If use of Material 2 components
+    implementation("androidx.compose.material3:material3:1.3.2")  // 1.4.0-beta03 and 1.5.0-alpha03 are available also
+    implementation("androidx.compose.material3.adaptive:adaptive:1.1.0") // Or the latest version shown in the docs (e.g., 1.2.0-beta01 if that's current)
+    //implementation("androidx.compose.material3.adaptive:adaptive-layout:1.1.0")  // 1.2.0-beta01 is available also
+    //implementation("androidx.compose.material3.adaptive:adaptive-navigation:1.1.0")  // 1.2.0-beta01 is available also
 
     // Tooling for Previews (optional but very helpful)
     implementation("androidx.compose.ui:ui-tooling-preview")
