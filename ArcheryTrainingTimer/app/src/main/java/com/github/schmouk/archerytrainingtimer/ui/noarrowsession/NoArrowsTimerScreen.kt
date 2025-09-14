@@ -39,7 +39,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+//import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
@@ -94,6 +94,8 @@ import com.github.schmouk.archerytrainingtimer.R
 import com.github.schmouk.archerytrainingtimer.noarrowsession.ESignal
 import com.github.schmouk.archerytrainingtimer.noarrowsession.NoArrowsTimerViewModel
 import com.github.schmouk.archerytrainingtimer.noarrowsession.UserPreferencesRepository
+import com.github.schmouk.archerytrainingtimer.ui.utils.detectFoldedPosture
+import com.github.schmouk.archerytrainingtimer.ui.utils.isPortraitPositioned
 import com.github.schmouk.archerytrainingtimer.ui.theme.*
 
 import kotlinx.coroutines.delay
@@ -145,6 +147,11 @@ fun noArrowsTimerScreen(
         ) {
 
             // Debug Mode - Adaptive Screen Tests  <-----<<<
+            //val deviceOrientation : Boolean = isPortraitPositioned(currentWindowAdaptiveInfo())
+            val devicePortraitOrientation : Boolean = isPortraitPositioned()
+            val deviceFoldedPosture = detectFoldedPosture()
+            val DBG = devicePortraitOrientation
+            /*
             @OptIn(ExperimentalMaterial3AdaptiveApi::class)
             @Composable
             fun MyAdaptiveScreen() {
@@ -185,6 +192,7 @@ fun noArrowsTimerScreen(
             }
 
             MyAdaptiveScreen()
+            */
             // End of Debug Mode - Adaptive Screen Tests  <-----<<<
 
 

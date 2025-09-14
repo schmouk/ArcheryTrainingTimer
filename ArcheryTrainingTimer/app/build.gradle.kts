@@ -152,17 +152,56 @@ dependencies {
 
     // Compose Bill of Materials (BOM) - Recommended
     // The BOM ensures that versions of different Compose libraries are compatible.
-    implementation(platform("androidx.compose:compose-bom:2024.05.00")) // REPLACE with latest BOM version
+    //implementation(platform("androidx.compose:compose-bom:2024.05.00")) // REPLACE with latest BOM version
+    //implementation("androidx.compose.material3:material3:1.2.1")
+    //implementation("androidx.compose.material3.adaptive:adaptive:1.0.0-beta01")
 
     // Essential Compose UI libraries (versions managed by BOM if used)
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.material3:material3:1.3.2")  // 1.4.0-beta03 and 1.5.0-alpha03 are available also
     implementation("androidx.compose.material3.adaptive:adaptive:1.1.0") // Or the latest version shown in the docs (e.g., 1.2.0-beta01 if that's current)
     //implementation("androidx.compose.material3.adaptive:adaptive-layout:1.1.0")  // 1.2.0-beta01 is available also
     //implementation("androidx.compose.material3.adaptive:adaptive-navigation:1.1.0")  // 1.2.0-beta01 is available also
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.ui:ui-graphics")
 
-    // Tooling for Previews (optional but very helpful)
+    //-- lifecycle versions
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.3")
+    /*
+    val lifecycleVersion = "2.9.3"
+    val archVersion = "2.2.0"
+
+    // ViewModel
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycleVersion")
+    // ViewModel utilities for Compose
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycleVersion")
+    // LiveData
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:$lifecycleVersion")
+    // Lifecycles only (without ViewModel or LiveData)
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleVersion")
+    // Lifecycle utilities for Compose
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:$lifecycleVersion")
+
+    // Saved state module for ViewModel
+    implementation("androidx.lifecycle:lifecycle-viewmodel-savedstate:$lifecycleVersion")
+
+    // ViewModel integration with Navigation3
+    //implementation("androidx.lifecycle:lifecycle-viewmodel-navigation3:2.10.0-alpha04")
+
+    // Annotation processor
+    implementation("androidx.lifecycle:lifecycle-common-java8:$lifecycleVersion")
+    // optional - helpers for implementing LifecycleOwner in a Service
+    implementation("androidx.lifecycle:lifecycle-service:$lifecycleVersion")
+    // optional - ProcessLifecycleOwner provides a lifecycle for the whole application process
+    implementation("androidx.lifecycle:lifecycle-process:$lifecycleVersion")
+    // optional - ReactiveStreams support for LiveData
+    implementation("androidx.lifecycle:lifecycle-reactivestreams-ktx:$lifecycleVersion")
+    // optional - Test helpers for LiveData
+    testImplementation("androidx.arch.core:core-testing:$archVersion")
+    // optional - Test helpers for Lifecycle runtime
+    testImplementation ("androidx.lifecycle:lifecycle-runtime-testing:$lifecycleVersion")
+    */
+
+    //-- Tooling for Previews (optional but very helpful)
     implementation("androidx.compose.ui:ui-tooling-preview")
     debugImplementation("androidx.compose.ui:ui-tooling") // For tools like Layout Inspector
 
