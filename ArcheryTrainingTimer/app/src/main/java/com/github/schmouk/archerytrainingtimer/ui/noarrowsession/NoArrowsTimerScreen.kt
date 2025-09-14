@@ -39,15 +39,12 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
-//import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
-import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
@@ -86,8 +83,6 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.window.core.layout.WindowHeightSizeClass
-import androidx.window.core.layout.WindowWidthSizeClass
 
 import com.github.schmouk.archerytrainingtimer.DEBUG_MODE
 import com.github.schmouk.archerytrainingtimer.R
@@ -106,12 +101,12 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 
 
-// Props for noArrowsTimerScreen
+// Props for NoArrowsTimerScreen
 // - userPreferencesRepository: UserPreferencesRepository
 // - any other callbacks or data needed
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
-fun noArrowsTimerScreen(
+fun NoArrowsTimerScreen(
     noArrowsViewModel: NoArrowsTimerViewModel,
     userPreferencesRepository: UserPreferencesRepository
 ) {

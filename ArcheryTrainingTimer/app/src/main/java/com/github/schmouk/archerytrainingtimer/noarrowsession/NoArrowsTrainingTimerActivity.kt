@@ -26,7 +26,6 @@ SOFTWARE.
 
 package com.github.schmouk.archerytrainingtimer.noarrowsession
 
-import android.content.Context
 import android.media.AudioManager
 import android.os.Bundle
 import android.view.WindowManager
@@ -35,7 +34,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.core.view.WindowCompat
 
-import com.github.schmouk.archerytrainingtimer.ui.noarrowsession.noArrowsTimerScreen
+import com.github.schmouk.archerytrainingtimer.ui.noarrowsession.NoArrowsTimerScreen
 import com.github.schmouk.archerytrainingtimer.ui.theme.*
 
 
@@ -63,14 +62,14 @@ class NoArrowsTrainingTimerActivity : ComponentActivity() {
 
         userPreferencesRepository = UserPreferencesRepository(applicationContext) // Initialize or inject
 
-        audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        audioManager = getSystemService(AUDIO_SERVICE) as AudioManager  // aka. Context.AUDIO_SERVICE
         initialRingtoneVolume = audioManager.getStreamVolume(AudioManager.STREAM_RING)
 
         keepScreenOn()
 
         setContent {
             ArcheryTrainingTimerTheme {
-                noArrowsTimerScreen(
+                NoArrowsTimerScreen(
                     noArrowsTimerViewModel,
                     userPreferencesRepository
                 )
@@ -88,7 +87,7 @@ class NoArrowsTrainingTimerActivity : ComponentActivity() {
 
         // Restore initial ringtone volume
         val context = this
-        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        val audioManager = context.getSystemService(AUDIO_SERVICE) as AudioManager  // aka. Context.AUDIO_SERVICE
         audioManager.setStreamVolume(AudioManager.STREAM_RING, initialRingtoneVolume, 0)
     }
 
@@ -109,7 +108,7 @@ class NoArrowsTrainingTimerActivity : ComponentActivity() {
 
         // Restore initial ringtone volume
         val context = this
-        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        val audioManager = context.getSystemService(AUDIO_SERVICE) as AudioManager  // aka. Context.AUDIO_SERVICE
         audioManager.setStreamVolume(AudioManager.STREAM_RING, initialRingtoneVolume, 0)
     }
 
