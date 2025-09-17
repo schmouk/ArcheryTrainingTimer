@@ -2,20 +2,38 @@ package com.github.schmouk.archerytrainingtimer.ui.utils
 
 import android.annotation.SuppressLint
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.WindowAdaptiveInfo
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.window.core.layout.WindowHeightSizeClass
-import androidx.window.core.layout.WindowWidthSizeClass
 import androidx.window.layout.FoldingFeature
 import androidx.window.layout.WindowInfoTracker
 import androidx.window.layout.WindowLayoutInfo
+
+
+/**
+ * Returns true when the current orientation of the device should
+ * lead to a PORTRAIT display UI organization, or false when this
+ * orientation should lead to a LANDSCAPE display UI organization.
+ * Notice: this is based on the current Window Sizes Classes, i.e.
+ * COMPACT, MEDIUM or EXPANDED for width and for height sizes.
+ */
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+@Composable
+fun considerDevicePortraitPositioned() : Boolean {
+    val windowAdaptiveInfo: WindowAdaptiveInfo = currentWindowAdaptiveInfo()
+    val windowSizeClass = windowAdaptiveInfo.windowSizeClass
+    val widthSizeClass = windowSizeClass.windowWidthSizeClass
+    val heightSizeClass = windowSizeClass.windowHeightSizeClass
+
+    // portrait if we have a height class greater or equal to width class
+    // Notice: EXPANDED > MEDIUM > COMPACT (values associated with classes
+    // are directly accessed via method .hashCode())
+    return heightSizeClass.hashCode() >= widthSizeClass.hashCode()
+}
 
 
 /**
@@ -38,7 +56,7 @@ enum class EFoldedPosture {
 @SuppressLint("RestrictedApi")
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
-fun detectFoldedPosture(/*windowLayoutInfo: WindowLayoutInfo*/): EFoldedPosture {
+fun detectDeviceFoldedPosture(/*windowLayoutInfo: WindowLayoutInfo*/): EFoldedPosture {
     val context = LocalContext.current
     val activity = context as ComponentActivity
 
@@ -67,26 +85,4 @@ fun detectFoldedPosture(/*windowLayoutInfo: WindowLayoutInfo*/): EFoldedPosture 
 
         else -> EFoldedPosture.POSTURE_UNKNOWN
     }
-}
-
-
-/**
- * Returns true when the current orientation of the device should
- * lead to a PORTRAIT display UI organization, or false when this
- * orientation should lead to a LANDSCAPE display UI organization.
- * Notice: this is based on the current Window Sizes Classes, i.e.
- * COMPACT, MEDIUM or EXPANDED for width and for height sizes.
- */
-@OptIn(ExperimentalMaterial3AdaptiveApi::class)
-@Composable
-fun isPortraitPositioned(/*windowAdaptiveInfo: WindowAdaptiveInfo*/) : Boolean {
-    val windowAdaptiveInfo: WindowAdaptiveInfo = currentWindowAdaptiveInfo()
-    val windowSizeClass = windowAdaptiveInfo.windowSizeClass
-    val widthSizeClass = windowSizeClass.windowWidthSizeClass
-    val heightSizeClass = windowSizeClass.windowHeightSizeClass
-
-    // portrait if we have a height class greater or equal to width class
-    // Notice: EXPANDED > MEDIUM > COMPACT (values associated with classes
-    // are directly accessed via method .hashCode())
-    return heightSizeClass.hashCode() >= widthSizeClass.hashCode()
 }

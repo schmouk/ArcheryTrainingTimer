@@ -90,6 +90,9 @@ import com.github.schmouk.archerytrainingtimer.R
 import com.github.schmouk.archerytrainingtimer.noarrowsession.ESignal
 import com.github.schmouk.archerytrainingtimer.noarrowsession.NoArrowsTimerViewModel
 import com.github.schmouk.archerytrainingtimer.noarrowsession.UserPreferencesRepository
+import com.github.schmouk.archerytrainingtimer.ui.commons.PleaseSelectText
+import com.github.schmouk.archerytrainingtimer.ui.commons.RepetitionsDurationButtons
+import com.github.schmouk.archerytrainingtimer.ui.commons.RepetitionsDurationTitle
 import com.github.schmouk.archerytrainingtimer.ui.theme.*
 import com.github.schmouk.archerytrainingtimer.ui.utils.considerDevicePortraitPositioned
 import com.github.schmouk.archerytrainingtimer.ui.utils.detectDeviceFoldedPosture
@@ -265,14 +268,13 @@ fun NoArrowsTimerScreen(
             val endOfRestBeepTime = 7 // seconds before end of rest to play beep
 
             val durationOptions = listOf("10 s", "15 s", "20 s", "30 s")
-            val durationsScaling = 4f / durationOptions.size
+            val durationsTextScaling = 4f / durationOptions.size
             val durationButtonWidth = (
                     currentScreenWidthDp.value / durationOptions.size - horizontalDeviceScaling(
                         8
                     )
                     ).dp
-            val seriesOptions =
-                mutableListOf(1, 2, 3, 5, 10, 15, 20, 25, 30)  // MutableList
+            val seriesOptions = mutableListOf(1, 2, 3, 5, 10, 15, 20, 25, 30)
             val intermediateBeepsDuration = 5 // seconds for intermediate beeps
 
             val restModeText = stringResource(R.string.rest_indicator)
@@ -1349,25 +1351,39 @@ fun NoArrowsTimerScreen(
                         .wrapContentHeight() // Take only necessary vertical space for its content
                         .padding(top = deviceScaling(16).dp, bottom = deviceScaling(4).dp),
                 ) {
-                    Text( // Select Session parameters Row
-                        text = stringResource(id = R.string.please_select),
-                        style = smallerTextStyle,
-                        fontStyle = FontStyle.Italic,
-                        color = AppTitleColor.copy(alpha = if (allSelectionsMade) 0f else 1f),
-                        modifier = Modifier
-                            .align(Alignment.CenterHorizontally)
+                    //-- Shows the "Please select ..." text only if not all selections have been made
+                    PleaseSelectText(
+                        allSelectionsMade,
+                        smallerTextStyle,
+                        Modifier.align(Alignment.CenterHorizontally),
                     )
 
-                    Text( // Repetitions duration title
-                        text = stringResource(id = R.string.repetitions_duration_label),
-                        style = customInteractiveTextStyle,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier
+                    //-- Shows the block for the selection of repetitions durations
+                    // Title first
+                    RepetitionsDurationTitle(
+                        customInteractiveTextStyle,
+                        Modifier
                             .padding(top = deviceScaling(8).dp)
                             .wrapContentHeight()
-                            .align(Alignment.CenterHorizontally)
+                            .align(Alignment.CenterHorizontally),
                     )
 
+                    // Then row of duration buttons
+                    RepetitionsDurationButtons(
+                        selectedDurationString,
+                        onDurationSelected = { newDuration -> selectedDurationString = newDuration },
+                        durationOptions,
+                        borderStrokeWidth = deviceScaling(5).dp,
+                        durationButtonWidth,
+                        durationsTextScaling,
+                        horizontalArrangement = Arrangement.Center,
+                        rowModifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                            .padding(top = 0.dp)
+                    )
+
+                    /*
                     Row( // Duration Buttons Row
                         modifier = Modifier
                             .fillMaxWidth()
@@ -1376,7 +1392,7 @@ fun NoArrowsTimerScreen(
                         horizontalArrangement = Arrangement.Center
                     ) {
                         val borderStrokeWidth = deviceScaling(5).dp
-                        Row(horizontalArrangement = Arrangement.spacedBy(deviceScaling(0).dp)) {
+                        Row(/*horizontalArrangement = Arrangement.spacedBy(deviceScaling(0).dp)*/) {
                             durationOptions.forEach { durationString ->
                                 val isSelected = selectedDurationString == durationString
                                 Button(
@@ -1403,7 +1419,7 @@ fun NoArrowsTimerScreen(
                                     Text(
                                         text = durationString,
                                         style = TextStyle(
-                                            fontSize = (13f * durationsScaling).toInt().sp,
+                                            fontSize = (13f * durationsTextScaling).toInt().sp,
                                             color = if (isSelected) AppButtonTextColor else AppTextColor
                                         )
                                     )
@@ -1411,6 +1427,7 @@ fun NoArrowsTimerScreen(
                             }
                         }
                     }
+                    */
 
                     Spacer(modifier = Modifier.height(majorSpacerHeight))
 
