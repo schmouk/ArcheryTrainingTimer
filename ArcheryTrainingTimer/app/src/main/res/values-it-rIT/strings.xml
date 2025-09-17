@@ -6,6 +6,7 @@
     <string name="close_app_dialog_message">Vuoi davvero uscire dal timer di allenamento con l\'arco?</string>
     <string name="close_app_dialog_confirm">Esci</string>
     <string name="close_app_dialog_cancel">Annulla</string>
+    <string name="editor_logo">Logo dell\'editore</string>
     <string name="empty_string"></string>
     <string name="intermediate_beeps">Pitidos intermedios cada 5 segundos</string>
     <string name="please_select">Seleziona i controlli della sessione :</string>

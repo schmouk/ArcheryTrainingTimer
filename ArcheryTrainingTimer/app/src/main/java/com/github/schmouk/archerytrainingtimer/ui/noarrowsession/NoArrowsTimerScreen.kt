@@ -90,6 +90,7 @@ import com.github.schmouk.archerytrainingtimer.R
 import com.github.schmouk.archerytrainingtimer.noarrowsession.ESignal
 import com.github.schmouk.archerytrainingtimer.noarrowsession.NoArrowsTimerViewModel
 import com.github.schmouk.archerytrainingtimer.noarrowsession.UserPreferencesRepository
+import com.github.schmouk.archerytrainingtimer.ui.commons.LogoImage
 import com.github.schmouk.archerytrainingtimer.ui.commons.PleaseSelectText
 import com.github.schmouk.archerytrainingtimer.ui.commons.RepetitionsDurationButtons
 import com.github.schmouk.archerytrainingtimer.ui.commons.RepetitionsDurationTitle
@@ -1167,7 +1168,7 @@ fun NoArrowsTimerScreen(
                         Modifier.align(Alignment.CenterHorizontally),
                     )
 
-                    //-- Shows the block for the selection of durations of repetitions
+                    //-- Shows the block for the selection of durations of repetitions --//
                     // Notice: no vertical spacer here
 
                     // Title first
@@ -1194,12 +1195,11 @@ fun NoArrowsTimerScreen(
                             .padding(top = 0.dp)
                     )
 
-                    //-- Shows the block for the selection of number of repetitions
 
-                    // A vertical spacer first
+                    //-- Shows the block for the selection of number of repetitions --//
                     Spacer(modifier = Modifier.height(majorSpacerHeight))
 
-                    // The block title then
+                    // The block title
                     RepetitionsNumberTitle(
                         customInteractiveTextStyle,
                         Modifier
@@ -1222,7 +1222,7 @@ fun NoArrowsTimerScreen(
                     )
 
 
-                    //-- Shows the block for the selection of number of series
+                    //-- Shows the block for the selection of number of series --//
                     Spacer(modifier = Modifier.height(majorSpacerHeight))
 
                     Text( // Number of series title
@@ -1234,6 +1234,7 @@ fun NoArrowsTimerScreen(
                             .wrapContentHeight()
                             .align(Alignment.CenterHorizontally)
                     )
+
                     Row( // Series Selector Row
                         modifier = Modifier
                             .fillMaxWidth()
@@ -1341,61 +1342,12 @@ fun NoArrowsTimerScreen(
             }
 
             // --- Add Logo Here, Aligned to Bottom-Right ---
-            Image(
-                painter = painterResource(id = R.drawable.ps_logo),
-                contentDescription = null, // Important for accessibility - provide a meaningful description (e.g. "Editor Logo")or null if purely decorative
-                modifier = Modifier
+            LogoImage(
+                Modifier
                     .align(Alignment.BottomEnd) // Aligns this Image to the bottom end (right) of the parent Box
-                    .padding(
-                        end = deviceScaling(16).dp//,
-                        //bottom = deviceScaling(8).dp
-                    ) // Add some padding from the screen edges
-                    .size(34.dp) // Set the size of the image on screen
+                    .padding(end = deviceScaling(16).dp)
+                    .size(deviceScaling(34).dp)
             )
         }
     }
 }
-
-
-// AdaptiveText composable - remains here will actually not used
-/*
-@Composable
-fun AdaptiveText(
-    text: String,
-    modifier: Modifier = Modifier,
-    color: Color = Color.Unspecified,
-    fontWeight: FontWeight? = null,
-    fontStyle: FontStyle? = null,
-    targetWidth: Dp,
-    maxLines: Int = 1,
-    initialFontSize: TextUnit = 80.sp // Slightly reduced initial size for faster convergence
-) {
-    var textSize by remember(text, targetWidth) { mutableStateOf(initialFontSize) }
-    var readyToDraw by remember { mutableStateOf(false) }
-
-    Text(
-        text = text,
-        modifier = modifier.then(
-            Modifier.graphicsLayer(alpha = if (readyToDraw) 1f else 0f)
-        ),
-        color = color,
-        fontWeight = fontWeight,
-        fontStyle = fontStyle,
-        fontSize = textSize,
-        textAlign = TextAlign.Center,
-        maxLines = maxLines,
-        softWrap = false,
-        onTextLayout = { textLayoutResult ->
-            if (textLayoutResult.didOverflowWidth) {
-                if (textSize > 8.sp) { // Keep a reasonable minimum
-                    textSize *= 0.85f // Shrink a bit more aggressively if needed
-                } else {
-                    readyToDraw = true
-                }
-            } else {
-                readyToDraw = true
-            }
-        }
-    )
-}
-*/

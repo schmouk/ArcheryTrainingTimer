@@ -6,6 +6,7 @@
     <string name="close_app_dialog_message">¿Seguro que quieres salir del Archery Training Timer?</string>
     <string name="close_app_dialog_confirm">Salir</string>
     <string name="close_app_dialog_cancel">Cancelar</string>
+    <string name="editor_logo">Logotipo del editor</string>
     <string name="empty_string"></string>
     <string name="intermediate_beeps">Pitidos intermedios cada 5 segundos</string>
     <string name="please_select">Seleccione los controles de su sesión :</string>
