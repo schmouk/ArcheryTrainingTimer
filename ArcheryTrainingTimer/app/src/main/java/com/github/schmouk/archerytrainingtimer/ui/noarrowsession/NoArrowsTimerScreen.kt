@@ -93,6 +93,8 @@ import com.github.schmouk.archerytrainingtimer.noarrowsession.UserPreferencesRep
 import com.github.schmouk.archerytrainingtimer.ui.commons.PleaseSelectText
 import com.github.schmouk.archerytrainingtimer.ui.commons.RepetitionsDurationButtons
 import com.github.schmouk.archerytrainingtimer.ui.commons.RepetitionsDurationTitle
+import com.github.schmouk.archerytrainingtimer.ui.commons.RepetitionsNumberTitle
+import com.github.schmouk.archerytrainingtimer.ui.commons.RepetitionsSelectorWithScrollIndicators
 import com.github.schmouk.archerytrainingtimer.ui.theme.*
 import com.github.schmouk.archerytrainingtimer.ui.utils.considerDevicePortraitPositioned
 import com.github.schmouk.archerytrainingtimer.ui.utils.detectDeviceFoldedPosture
@@ -745,199 +747,6 @@ fun NoArrowsTimerScreen(
             }
 
 
-            /**
-             * Repetitions selector with scroll indicators
-             */
-            @Composable
-            fun RepetitionsSelectorWithScrollIndicators(
-                selectedRepetition: Int?,
-                onRepetitionSelected: (Int) -> Unit,
-                repetitionsListState: LazyListState = rememberLazyListState(), // Pass or remember
-                // Add scaleFactor or other styling params if needed
-                items: List<Int>
-            ) {
-                val coroutineScope = rememberCoroutineScope()
-
-                // Standard IconButton size (Material guidelines suggest 48.dp touch target)
-                val arrowButtonSizeDp = deviceScaling(24).dp
-
-                // Derived states to determine if arrows should be shown
-                // canScrollBackward is true if the first item is not fully visible at the start
-                val canScrollBackward by remember {
-                    derivedStateOf {
-                        repetitionsListState.firstVisibleItemIndex > 0 || repetitionsListState.firstVisibleItemScrollOffset > 0
-                    }
-                }
-
-                // canScrollForward is true if the last item is not fully visible at the end
-                // This requires knowing the total item count and the layout info of visible items.
-                val canScrollForward by remember {
-                    derivedStateOf {
-                        // Check if there are items and the LazyListState has layout info
-                        if (repetitionsListState.layoutInfo.visibleItemsInfo.isNotEmpty() && repetitionRange.isNotEmpty()) {
-                            val lastVisibleItem = repetitionsListState.layoutInfo.visibleItemsInfo.last()
-                            // If the last visible item's index is less than the total number of items - 1
-                            // OR if the last visible item is not fully occupying the viewport width at its end
-                            val viewportWidth = repetitionsListState.layoutInfo.viewportSize.width
-                            lastVisibleItem.index < repetitionRange.size - 1 || lastVisibleItem.offset + lastVisibleItem.size > viewportWidth
-                        } else {
-                            items.isNotEmpty() // True if there are items but no layout info yet (initial state before first scroll/layout)
-                        }
-                    }
-                }
-
-                Box(
-                    modifier = Modifier.fillMaxWidth(), // This Box takes the full width
-                    contentAlignment = Alignment.Center // Centers its child (the Row) if the child is smaller
-                ) {
-                    Row(
-                        //horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically,
-                        // The Row itself will only take the width of its content.
-                        // If showArrows is false and LazyRow content is small, this Row will be small.
-                        // If showArrows is true, it will be wider.
-                        modifier = Modifier.wrapContentWidth(unbounded = false, align = Alignment.CenterHorizontally)
-                        //modifier = Modifier.fillMaxWidth()
-                    ) {
-                        // --- Left Arrow ---
-                        Box(
-                            modifier = Modifier
-                                .size(arrowButtonSizeDp), // Occupy space whether visible or not to help layout
-                            contentAlignment = Alignment.Center // Center the AnimatedVisibility content within the Box
-                        ) {
-                            androidx.compose.animation.AnimatedVisibility(
-                                visible = canScrollBackward,
-                                enter = fadeIn(animationSpec = tween(durationMillis = 400)),
-                                exit = fadeOut(animationSpec = tween(durationMillis = 400))
-                            ) {
-                                IconButton(
-                                    onClick = {
-                                        coroutineScope.launch {
-                                            // Scroll to the beginning or by a certain amount
-                                            val targetIndex =
-                                                (repetitionsListState.firstVisibleItemIndex - 5).coerceAtLeast(
-                                                    0
-                                                ) // Scroll back 5 items
-                                            repetitionsListState.animateScrollToItem(targetIndex)
-                                        }
-                                    },
-                                    modifier = Modifier.fillMaxSize() // Fill the Box
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,  //.KeyboardArrowLeft,
-                                        contentDescription = "Scroll Left", // For accessibility
-                                        tint = AppTextColor  //MaterialTheme.colorScheme.primary
-                                    )
-                                }
-                            }
-                        }
-
-                        // --- LazyRow ---
-                        // LazyRow takes the available space between arrows
-                        val horizontalSpaceArrangement = deviceScaling(8).dp
-
-                        LazyRow(
-                            state = repetitionsListState,
-                            horizontalArrangement = Arrangement.spacedBy(horizontalSpaceArrangement), // Spacing between number buttons
-                            modifier = Modifier
-                                .weight(1f) // LazyRow takes available space between arrows
-                                //.padding(horizontal = 0.dp), // No extra padding here if arrows handle spacing
-                                .wrapContentWidth() // Let LazyRow determine its own width
-                        ) {
-                            /*items(repetitionRange) { repetition ->
-                                Button(
-                                    onClick = { onRepetitionSelected(repetition) },
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = if (repetition == selectedRepetition) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                                        contentColor = if (repetition == selectedRepetition) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-                                    ),
-                                    modifier = Modifier.height(40.dp) // Example fixed height
-                                    // Add other styling from your original button
-                                ) {
-                                    Text(text = repetition.toString() /*, style = customInteractiveTextStyle */)
-                                }
-                            }*/
-                            items(
-                                count = items.size,
-                                key = { index -> items[index] }
-                            ) { index ->
-                                val repetitionNum = items[index]
-                                val isNumberSelected = repetitionNum == numberOfRepetitions
-                                val isClickable = !isNumberSelected  // true
-
-                                Box(
-                                    modifier = Modifier
-                                        .size(repetitionBoxSize)
-                                        .then(
-                                            if (isNumberSelected) Modifier.border(
-                                                BorderStroke(
-                                                    deviceScaling(4).dp,
-                                                    SelectedButtonBorderColor
-                                                ), shape = CircleShape
-                                            ) else Modifier
-                                        )
-                                        .padding(if (isNumberSelected) deviceScaling(4).dp else 0.dp)
-                                        .clip(CircleShape)
-                                        .background(
-                                            color = if (isNumberSelected) AppTitleColor
-                                            else if (isClickable) AppButtonDarkerColor
-                                            else AppDimmedButtonColor
-                                        )
-                                        .clickable {
-                                            if (isClickable)
-                                                numberOfRepetitions =
-                                                    if (isNumberSelected) null else repetitionNum
-                                        },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = "$repetitionNum",
-                                        style = customInteractiveTextStyle.copy(
-                                            color = if (isNumberSelected) AppButtonTextColor else AppTextColor
-                                        ),
-                                        fontWeight = if (isNumberSelected) FontWeight.Bold else FontWeight.Normal
-                                    )
-                                }
-                            }
-                        }
-
-                        // --- Right Arrow ---
-                        Box(
-                            modifier = Modifier
-                                .size(arrowButtonSizeDp), // Occupy space whether visible or not
-                            contentAlignment = Alignment.Center // Center the AnimatedVisibility content
-                        ) {
-                            androidx.compose.animation.AnimatedVisibility(
-                                visible = canScrollForward,
-                                enter = fadeIn(animationSpec = tween(durationMillis = 400)),
-                                exit = fadeOut(animationSpec = tween(durationMillis = 400))
-                            ) {
-                                IconButton(
-                                    onClick = {
-                                        coroutineScope.launch {
-                                            // Scroll to the end or by a certain amount
-                                            val targetIndex =
-                                                (repetitionsListState.firstVisibleItemIndex + 5).coerceAtMost(
-                                                    repetitionRange.size - 1
-                                                ) // Scroll forward 5 items example
-                                            repetitionsListState.animateScrollToItem(targetIndex)
-                                        }
-                                    },
-                                    modifier = Modifier.fillMaxSize()
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,  //.KeyboardArrowRight,
-                                        contentDescription = "Scroll Right",
-                                        tint = AppTextColor  //MaterialTheme.colorScheme.primary
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-
             // --- UI Layout ---
 
             // --- The Main Column for the entire screen content ---
@@ -1358,7 +1167,9 @@ fun NoArrowsTimerScreen(
                         Modifier.align(Alignment.CenterHorizontally),
                     )
 
-                    //-- Shows the block for the selection of repetitions durations
+                    //-- Shows the block for the selection of durations of repetitions
+                    // Notice: no vertical spacer here
+
                     // Title first
                     RepetitionsDurationTitle(
                         customInteractiveTextStyle,
@@ -1383,73 +1194,35 @@ fun NoArrowsTimerScreen(
                             .padding(top = 0.dp)
                     )
 
-                    /*
-                    Row( // Duration Buttons Row
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .wrapContentHeight()
-                            .padding(top = 0.dp),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        val borderStrokeWidth = deviceScaling(5).dp
-                        Row(/*horizontalArrangement = Arrangement.spacedBy(deviceScaling(0).dp)*/) {
-                            durationOptions.forEach { durationString ->
-                                val isSelected = selectedDurationString == durationString
-                                Button(
-                                    onClick = {
-                                        if (!isSelected)
-                                            selectedDurationString = durationString
-                                    },
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = if (isSelected) SelectedButtonBackgroundColor
-                                        else AppButtonDarkerColor,
-                                        contentColor = AppButtonTextColor
-                                    ),
-                                    border = if (isSelected) BorderStroke(
-                                        borderStrokeWidth,
-                                        SelectedButtonBorderColor
-                                    ) else BorderStroke(
-                                        borderStrokeWidth,
-                                        AppBackgroundColor
-                                    ),
-                                    enabled = true,
-                                    modifier = Modifier
-                                        .width(durationButtonWidth)
-                                ) {
-                                    Text(
-                                        text = durationString,
-                                        style = TextStyle(
-                                            fontSize = (13f * durationsTextScaling).toInt().sp,
-                                            color = if (isSelected) AppButtonTextColor else AppTextColor
-                                        )
-                                    )
-                                }
-                            }
-                        }
-                    }
-                    */
+                    //-- Shows the block for the selection of number of repetitions
 
+                    // A vertical spacer first
                     Spacer(modifier = Modifier.height(majorSpacerHeight))
 
-                    Text( // Number of repetitions title
-                        text = stringResource(id = R.string.repetitions_number_label),
-                        style = customInteractiveTextStyle,
-                        color = AppTextColor,
-                        modifier = Modifier
+                    // The block title then
+                    RepetitionsNumberTitle(
+                        customInteractiveTextStyle,
+                        Modifier
                             .padding(bottom = generalPadding)
                             .wrapContentHeight()
                             .align(Alignment.CenterHorizontally)
                     )
 
+                    // Then the actual selector
                     RepetitionsSelectorWithScrollIndicators(  // Repetition lazy row with arrows
-                        selectedRepetition = numberOfRepetitions, //The state variable for the current selection
-                        onRepetitionSelected = { selected ->
-                            numberOfRepetitions = selected
-                        },
+                        numberOfRepetitions = numberOfRepetitions, //The state variable for the current selection
+                        onRepetitionSelected = { selected -> numberOfRepetitions = selected },
                         repetitionsListState = repetitionsLazyListState, // Pass the state
-                        repetitionRange
+                        repetitionsRange = repetitionRange,
+                        numbersTextSize = customInteractiveTextStyle,
+                        arrowButtonSizeDp = deviceScaling(24).dp,
+                        horizontalSpaceArrangement = deviceScaling(8).dp,
+                        repetitionBoxSize = deviceScaling(48).dp,
+                        borderStrokeWidth = deviceScaling(4).dp,
                     )
 
+
+                    //-- Shows the block for the selection of number of series
                     Spacer(modifier = Modifier.height(majorSpacerHeight))
 
                     Text( // Number of series title

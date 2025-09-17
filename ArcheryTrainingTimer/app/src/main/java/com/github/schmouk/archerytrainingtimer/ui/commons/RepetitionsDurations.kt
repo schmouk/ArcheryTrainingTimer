@@ -21,11 +21,12 @@ import com.github.schmouk.archerytrainingtimer.ui.theme.AppTextColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.SelectedButtonBackgroundColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.SelectedButtonBorderColor
 
+
 /**
  * A small text displayed as title for the Repetitions Duration selection.
  *
- * @param modifier: Modifier = Modifier, optional modifier for the Text composable
  * @param textStyle: TextStyle, the style to apply to the text
+ * @param modifier: Modifier = Modifier, optional modifier for the Text composable
  */
 @Composable
 fun RepetitionsDurationTitle(
