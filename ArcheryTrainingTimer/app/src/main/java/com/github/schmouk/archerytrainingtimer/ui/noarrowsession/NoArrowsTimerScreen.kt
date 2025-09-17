@@ -59,6 +59,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -89,9 +90,10 @@ import com.github.schmouk.archerytrainingtimer.R
 import com.github.schmouk.archerytrainingtimer.noarrowsession.ESignal
 import com.github.schmouk.archerytrainingtimer.noarrowsession.NoArrowsTimerViewModel
 import com.github.schmouk.archerytrainingtimer.noarrowsession.UserPreferencesRepository
-import com.github.schmouk.archerytrainingtimer.ui.utils.detectFoldedPosture
-import com.github.schmouk.archerytrainingtimer.ui.utils.isPortraitPositioned
 import com.github.schmouk.archerytrainingtimer.ui.theme.*
+import com.github.schmouk.archerytrainingtimer.ui.utils.considerDevicePortraitPositioned
+import com.github.schmouk.archerytrainingtimer.ui.utils.detectDeviceFoldedPosture
+import com.github.schmouk.archerytrainingtimer.ui.utils.EFoldedPosture
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -117,11 +119,10 @@ fun NoArrowsTimerScreen(
     val isTimerStopped by noArrowsViewModel.isTimerStopped
 
     // The screen content
-    Scaffold(
+    Scaffold /*(
         // topBar is no more useful since we call
         // WindowCompat.setDecorFitsSystemWindows(window, true)
         // in the related/embedding Activity --> we don't draw behind system bars
-        /*
         topBar = {
             Spacer(
                 Modifier
@@ -129,10 +130,9 @@ fun NoArrowsTimerScreen(
                     .windowInsetsTopHeight(WindowInsets.statusBars)
             )
         }
-        */
-        // We don't use Scaffold's bottomBar for this either,
-        // we will pad the content area directly.
-    ) { innerPaddingFromScaffold -> // This innerPadding from Scaffold handles the TOP spacer
+        // We don't use Scaffold's bottomBar for this either
+        // as we will pad the content area directly.
+    )*/ { innerPaddingFromScaffold -> // This innerPadding from Scaffold handles the TOP spacer
         BoxWithConstraints(
             modifier = Modifier
                 .padding(innerPaddingFromScaffold)
@@ -140,85 +140,37 @@ fun NoArrowsTimerScreen(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
         ) {
-
-            // Debug Mode - Adaptive Screen Tests  <-----<<<
-            //val deviceOrientation : Boolean = isPortraitPositioned(currentWindowAdaptiveInfo())
-            val devicePortraitOrientation : Boolean = isPortraitPositioned()
-            val deviceFoldedPosture = detectFoldedPosture()
-            val DBG = devicePortraitOrientation
-            /*
-            @OptIn(ExperimentalMaterial3AdaptiveApi::class)
-            @Composable
-            fun MyAdaptiveScreen() {
-                // This usually works if a parent composable (like an adaptive scaffold)
-                // is providing this information.
-                val windowAdaptiveInfo = currentWindowAdaptiveInfo()
-                val windowSizeClass = windowAdaptiveInfo.windowSizeClass
-
-                val widthSizeClass = windowSizeClass.windowWidthSizeClass
-                val heightSizeClass = windowSizeClass.windowHeightSizeClass
-
-                when (widthSizeClass) {
-                    WindowWidthSizeClass.COMPACT -> {
-                        // show vertical layout
-                        val DBG = 1
-                    }
-                    WindowWidthSizeClass.MEDIUM -> {
-                        if (heightSizeClass == WindowHeightSizeClass.COMPACT) {
-                            // show a 2-pane layout
-                            val DBG = 2
-                        }
-                        else {
-                            // show vertical layout
-                            val DBG = 3
-                        }
-                    }
-                    WindowWidthSizeClass.EXPANDED -> {
-                        if (heightSizeClass == WindowHeightSizeClass.COMPACT) {
-                            // show a 2-pane layout
-                            val DBG = 4
-                        }
-                        else {
-                            // show vertical layout
-                            val DBG = 5
-                        }
-                    }
-                }
-            }
-
-            MyAdaptiveScreen()
-            */
-            // End of Debug Mode - Adaptive Screen Tests  <-----<<<
-
-
+            // Available size for the content
             val availableHeightForContentDp = this.maxHeight
             val availableWidthForContentDp = this.maxWidth
 
-            // adapt items size to screen width
+            // Adapt items size to screen width
             val configuration = LocalConfiguration.current
             val currentScreenWidthDp = configuration.screenWidthDp.dp
             val currentScreenHeightDp = configuration.screenHeightDp.dp
             val refScreenWidthDp = 411.dp // Your baseline for good proportions
             val refScreenHeightDp = 914.dp // Your baseline for good proportions
 
-            // Calculate scale factor, ensure it's not Dp / Dp if you need a raw float
-            val textHorizontalScaleFactor =
-                availableWidthForContentDp.value / refScreenWidthDp.value
+            // Calculate scale factor
+            val textHorizontalScaleFactor = availableWidthForContentDp.value / refScreenWidthDp.value
             val horizontalScaleFactor = textHorizontalScaleFactor.coerceIn(0.60f, 1.0f)
             val verticalScaleFactor = (
                     availableHeightForContentDp.value / refScreenHeightDp.value
                     ).coerceIn(0.40f, 1.5f)
             val scaleFactor = min(horizontalScaleFactor, verticalScaleFactor)
 
-            // scales a dimension (width or height) according to the running device deviceScaling factor
+            // scales a dimension (width or height) according to the deviceScaling factor of the running device
             fun deviceScaling(dim: Int): Float {
                 return scaleFactor * dim
             }
 
-            // scales a dimension (width or height) according to the running device deviceScaling factor
+            // scales a dimension (width or height) according to the deviceScaling factor of the running device
+            // Notice: never used...
+            /*
             fun deviceScalingFloat(dim: Float): Float {
                 return scaleFactor * dim
             }
+            */
 
             // scales horizontal dimension (width) according to the running device horizontalScaleFactor factor
             fun horizontalDeviceScaling(dim: Int): Float {
@@ -226,9 +178,12 @@ fun NoArrowsTimerScreen(
             }
 
             // scales big text dimension (width or height) according to the running device horizontalScaleFactor factor
+            // Notice: finally never used
+            /*
             fun bigTextHorizontalDeviceScaling(dim: Int): Float {
                 return textHorizontalScaleFactor * dim
             }
+            */
 
             val heightScalingFactor = this.maxHeight.value / currentScreenHeightDp.value
             val widthScalingFactor = this.maxWidth.value / currentScreenWidthDp.value
@@ -290,10 +245,10 @@ fun NoArrowsTimerScreen(
             var numberOfSeries by remember { mutableStateOf<Int?>(null) }
             var intermediateBeepsChecked by remember { mutableStateOf<Boolean?>(null) }
 
-            var lastDurationSeconds by rememberSaveable { mutableStateOf<Int>(0) }
-            var lastNumberOfRepetitions by rememberSaveable { mutableStateOf<Int>(0) }
-            var lastNumberOfSeries by rememberSaveable { mutableStateOf<Int>(0) }
-            var lastIntermediateBeepsChecked by rememberSaveable { mutableStateOf<Boolean>(false) }
+            var lastDurationSeconds by rememberSaveable { mutableIntStateOf(0) }
+            var lastNumberOfRepetitions by rememberSaveable { mutableIntStateOf(0) }
+            var lastNumberOfSeries by rememberSaveable { mutableIntStateOf(0) }
+            var lastIntermediateBeepsChecked by rememberSaveable { mutableStateOf(false) }
 
             var initialDurationSeconds by rememberSaveable { mutableStateOf<Int?>(null) }
             var currentDurationSecondsLeft by rememberSaveable { mutableStateOf<Int?>(null) }
@@ -317,10 +272,10 @@ fun NoArrowsTimerScreen(
                     )
                     ).dp
             val seriesOptions =
-                mutableListOf<Int>(1, 2, 3, 5, 10, 15, 20, 25, 30)  // MutableList
+                mutableListOf(1, 2, 3, 5, 10, 15, 20, 25, 30)  // MutableList
             val intermediateBeepsDuration = 5 // seconds for intermediate beeps
 
-            val restModeText = stringResource(R.string.rest_indicator).toString()
+            val restModeText = stringResource(R.string.rest_indicator)
 
             var beepSoundId by remember { mutableStateOf<Int?>(null) }
             var endBeepSoundId by remember { mutableStateOf<Int?>(null) }
@@ -555,10 +510,10 @@ fun NoArrowsTimerScreen(
                         selectedDurationString?.split(" ")?.firstOrNull()?.toIntOrNull()
                     if (durationValue != null && durationValue != lastDurationSeconds) {
                         initialDurationSeconds = durationValue
-                        if (isRestMode) {
-                            currentDurationSecondsLeft = initialDurationSeconds
+                        currentDurationSecondsLeft = if (isRestMode) {
+                            initialDurationSeconds
                         } else {
-                            currentDurationSecondsLeft = min(
+                            min(
                                 max(
                                     1,
                                     (currentDurationSecondsLeft
@@ -906,7 +861,7 @@ fun NoArrowsTimerScreen(
                             ) { index ->
                                 val repetitionNum = items[index]
                                 val isNumberSelected = repetitionNum == numberOfRepetitions
-                                val isClickable = true
+                                val isClickable = !isNumberSelected  // true
 
                                 Box(
                                     modifier = Modifier
@@ -981,6 +936,8 @@ fun NoArrowsTimerScreen(
             }
 
 
+            // --- UI Layout ---
+
             // --- The Main Column for the entire screen content ---
             Column(
                 modifier = Modifier
@@ -994,7 +951,6 @@ fun NoArrowsTimerScreen(
                         numberOfRepetitions != null &&
                         numberOfSeries != null
 
-                // --- Main Column for the whole layout ---
                 // --- 1. Title of Series View ---
                 Text(
                     text = stringResource(id = R.string.series_view_title),
@@ -1005,7 +961,6 @@ fun NoArrowsTimerScreen(
                         .align(Alignment.CenterHorizontally)
                         .scale(scaleFactor)
                 )
-
                 // --- 2. First Row: Start Button and related items ---
                 val buttonScaling = 1f / 17.8f
                 val buttonHeight =
@@ -1062,7 +1017,7 @@ fun NoArrowsTimerScreen(
                     ) {
                         Text(
                             text = stringResource(
-                                id = if (isTimerRunning) R.string.stop_button
+                                id = if (isTimerRunning || isRestMode) R.string.stop_button
                                 else R.string.start_button
                             ),
                             style = customInteractiveTextStyle.copy(
@@ -1516,7 +1471,7 @@ fun NoArrowsTimerScreen(
                         Row(horizontalArrangement = Arrangement.spacedBy(deviceScaling(10).dp)) {
                             seriesOptions.forEach { seriesCount ->
                                 val isSeriesSelected = seriesCount == numberOfSeries
-                                val isClickable = true
+                                val isClickable = !isSeriesSelected  //true
                                 Box(
                                     modifier = Modifier
                                         .size(seriesBoxSize)
