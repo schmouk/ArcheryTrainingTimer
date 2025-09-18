@@ -68,7 +68,6 @@ fun RepetitionsNumberTitle(
 }
 
 
-
 /**
  * Repetitions selector with scroll indicators
  */

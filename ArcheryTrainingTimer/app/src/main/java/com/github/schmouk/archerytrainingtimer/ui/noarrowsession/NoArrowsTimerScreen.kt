@@ -90,12 +90,15 @@ import com.github.schmouk.archerytrainingtimer.R
 import com.github.schmouk.archerytrainingtimer.noarrowsession.ESignal
 import com.github.schmouk.archerytrainingtimer.noarrowsession.NoArrowsTimerViewModel
 import com.github.schmouk.archerytrainingtimer.noarrowsession.UserPreferencesRepository
+import com.github.schmouk.archerytrainingtimer.ui.commons.IntermediateBeepsCheckedRow
 import com.github.schmouk.archerytrainingtimer.ui.commons.LogoImage
 import com.github.schmouk.archerytrainingtimer.ui.commons.PleaseSelectText
 import com.github.schmouk.archerytrainingtimer.ui.commons.RepetitionsDurationButtons
 import com.github.schmouk.archerytrainingtimer.ui.commons.RepetitionsDurationTitle
 import com.github.schmouk.archerytrainingtimer.ui.commons.RepetitionsNumberTitle
 import com.github.schmouk.archerytrainingtimer.ui.commons.RepetitionsSelectorWithScrollIndicators
+import com.github.schmouk.archerytrainingtimer.ui.commons.SeriesNumbersButtons
+import com.github.schmouk.archerytrainingtimer.ui.commons.SeriesNumberTitle
 import com.github.schmouk.archerytrainingtimer.ui.theme.*
 import com.github.schmouk.archerytrainingtimer.ui.utils.considerDevicePortraitPositioned
 import com.github.schmouk.archerytrainingtimer.ui.utils.detectDeviceFoldedPosture
@@ -1161,45 +1164,43 @@ fun NoArrowsTimerScreen(
                         .wrapContentHeight() // Take only necessary vertical space for its content
                         .padding(top = deviceScaling(16).dp, bottom = deviceScaling(4).dp),
                 ) {
-                    //-- Shows the "Please select ..." text only if not all selections have been made
+                    //-- Shows the "Please select ..." text only if not all selections have been made --
                     PleaseSelectText(
                         allSelectionsMade,
                         smallerTextStyle,
                         Modifier.align(Alignment.CenterHorizontally),
                     )
 
-                    //-- Shows the block for the selection of durations of repetitions --//
-                    // Notice: no vertical spacer here
+                    //-- Shows the block for the selection of durations of repetitions --
+                    Spacer(modifier = Modifier.height(majorSpacerHeight))
 
                     // Title first
                     RepetitionsDurationTitle(
                         customInteractiveTextStyle,
                         Modifier
-                            .padding(top = deviceScaling(8).dp)
                             .wrapContentHeight()
                             .align(Alignment.CenterHorizontally),
                     )
 
                     // Then row of duration buttons
                     RepetitionsDurationButtons(
-                        selectedDurationString,
+                        selectedDurationString = selectedDurationString,
                         onDurationSelected = { newDuration -> selectedDurationString = newDuration },
-                        durationOptions,
+                        durationOptions = durationOptions,
                         borderStrokeWidth = deviceScaling(5).dp,
-                        durationButtonWidth,
-                        durationsTextScaling,
+                        durationButtonWidth = durationButtonWidth,
+                        durationsTextScaling = durationsTextScaling,
                         horizontalArrangement = Arrangement.Center,
                         rowModifier = Modifier
                             .fillMaxWidth()
                             .wrapContentHeight()
-                            .padding(top = 0.dp)
                     )
 
 
-                    //-- Shows the block for the selection of number of repetitions --//
+                    //-- Shows the block for the selection of number of repetitions --
                     Spacer(modifier = Modifier.height(majorSpacerHeight))
 
-                    // The block title
+                    // The block title for repetitions numbers
                     RepetitionsNumberTitle(
                         customInteractiveTextStyle,
                         Modifier
@@ -1222,89 +1223,62 @@ fun NoArrowsTimerScreen(
                     )
 
 
-                    //-- Shows the block for the selection of number of series --//
-                    Spacer(modifier = Modifier.height(majorSpacerHeight))
+                    //-- Shows the block for the selection of number of series --
+                    Spacer(modifier = Modifier.height(majorSpacerHeight * 1.8f))
 
-                    Text( // Number of series title
-                        text = stringResource(id = R.string.series_number_label),
-                        style = customInteractiveTextStyle,
-                        color = AppTextColor,
-                        modifier = Modifier
-                            .padding(top = generalPadding)
+                    // The block title
+                    SeriesNumberTitle(
+                        customInteractiveTextStyle,
+                        Modifier
+                            .padding(bottom = generalPadding)
                             .wrapContentHeight()
                             .align(Alignment.CenterHorizontally)
                     )
 
-                    Row( // Series Selector Row
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .wrapContentHeight()
-                            .padding(top = deviceScaling(12).dp, bottom = deviceScaling(8).dp),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        // Checks the available display width against the series-options list width
-                        with(LocalDensity.current) {
-                            val horizontalSpaceArrangementPx = deviceScaling(8).dp.toPx()
-                            val seriesBoxSizePx = seriesBoxSize.toPx()
-                            val visibleWidth =
-                                availableWidthForContentDp.toPx() - 2 * mainHorizontalSpacingDp.toPx()
+                    // Then the actual selector
+                    // Checks first the available display width against the series-options list width
+                    with(LocalDensity.current) {
+                        val horizontalSpaceArrangementPx = deviceScaling(8).dp.toPx()
+                        val seriesBoxSizePx = seriesBoxSize.toPx()
+                        val visibleWidth =
+                            availableWidthForContentDp.toPx() - 2 * mainHorizontalSpacingDp.toPx()
 
-                            while (seriesOptions.size > 1 &&
-                                seriesOptions.size * (seriesBoxSizePx + horizontalSpaceArrangementPx) -
-                                horizontalSpaceArrangementPx > visibleWidth
-                            ) {
-                                // Removes one of the Series number, let's says the one in second position (index 1)
-                                seriesOptions.removeAt(1)
-                            }
-
-                        }
-
-                        Row(horizontalArrangement = Arrangement.spacedBy(deviceScaling(10).dp)) {
-                            seriesOptions.forEach { seriesCount ->
-                                val isSeriesSelected = seriesCount == numberOfSeries
-                                val isClickable = !isSeriesSelected  //true
-                                Box(
-                                    modifier = Modifier
-                                        .size(seriesBoxSize)
-                                        .then(
-                                            if (isSeriesSelected) Modifier.border(
-                                                BorderStroke(
-                                                    deviceScaling(4).dp,
-                                                    SelectedButtonBorderColor
-                                                ), shape = CircleShape
-                                            ) else Modifier
-                                        )
-                                        .padding(if (isSeriesSelected) deviceScaling(4).dp else 0.dp)
-                                        .clip(CircleShape)
-                                        .background(
-                                            color = if (isSeriesSelected) AppTitleColor
-                                            else if (isClickable) AppButtonDarkerColor
-                                            else AppDimmedButtonColor
-                                        )
-                                        .clickable {
-                                            if (isClickable)
-                                                numberOfSeries =
-                                                    if (isSeriesSelected) null else seriesCount
-                                        },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = "$seriesCount",
-                                        style = customInteractiveTextStyle.copy(
-                                            color = if (isSeriesSelected) AppButtonTextColor
-                                            else AppTextColor
-                                        ),
-                                        fontWeight = if (isSeriesSelected) FontWeight.Bold else FontWeight.Normal
-                                    )
-                                }
-                            }
+                        while (seriesOptions.size > 1 &&
+                            seriesOptions.size * (seriesBoxSizePx + horizontalSpaceArrangementPx) -
+                            horizontalSpaceArrangementPx > visibleWidth
+                        ) {
+                            // Removes one of the Series number, let's says the one in second position (index 1)
+                            seriesOptions.removeAt(1)
                         }
                     }
+                    // Then displays the selector row
+                    SeriesNumbersButtons(
+                        numberOfSeries = numberOfSeries,
+                        onNumberSelected = { seriesCount : Int -> numberOfSeries = seriesCount },
+                        seriesOptions = seriesOptions,
+                        borderStrokeWidth = deviceScaling(4).dp,
+                        seriesBoxSize = seriesBoxSize,
+                        textStyle = customInteractiveTextStyle,
+                        horizontalSpacing = deviceScaling(10).dp,
+                        horizontalArrangement = Arrangement.Center,
+                        rowModifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                    )
 
+
+                    //-- Checkbox for intermediate beeps --
                     Spacer(modifier = Modifier.height(majorSpacerHeight))
 
-                    Row( // Checkbox Row
-                        modifier = Modifier
+                    // Shows the whole row, which is toggleable - not just the checkbox
+                    IntermediateBeepsCheckedRow(
+                        intermediateBeepsChecked = intermediateBeepsChecked,
+                        allSelectionsMade = allSelectionsMade,
+                        scaleFactor = scaleFactor,
+                        horizontalSpacer = deviceScaling(6).dp,
+                        textStyle = smallerTextStyle,
+                        verticalAlignment = Alignment.CenterVertically,
+                        rowModifier = Modifier
                             .wrapContentHeight()
                             .padding(top = deviceScaling(4).dp, bottom = 0.dp)
                             .toggleable(
@@ -1316,35 +1290,15 @@ fun NoArrowsTimerScreen(
                                 }
                             )
                             .align(Alignment.CenterHorizontally),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Checkbox(
-                            checked = intermediateBeepsChecked ?: false,
-                            onCheckedChange = null,
-                            enabled = allSelectionsMade,
-                            colors = CheckboxDefaults.colors(
-                                checkedColor = AppTitleColor,
-                                uncheckedColor = AppTextColor.copy(alpha = if (allSelectionsMade) 1f else 0.5f),
-                                checkmarkColor = AppButtonTextColor,
-                                disabledCheckedColor = AppTitleColor.copy(alpha = 0.5f),
-                                disabledUncheckedColor = AppButtonDarkerColor
-                            ),
-                            modifier = Modifier.scale(scaleFactor)
-                        )
-                        Spacer(modifier = Modifier.width(deviceScaling(6).dp))
-                        Text(
-                            text = stringResource(id = R.string.intermediate_beeps),
-                            style = smallerTextStyle,
-                            color = AppTextColor.copy(alpha = if (allSelectionsMade) 1f else 0.38f)
-                        )
-                    }
+                    )
                 }
             }
 
-            // --- Add Logo Here, Aligned to Bottom-Right ---
+
+            // --- Finally, add Logo Here - Aligned to Bottom-Right ---
             LogoImage(
                 Modifier
-                    .align(Alignment.BottomEnd) // Aligns this Image to the bottom end (right) of the parent Box
+                    .align(Alignment.BottomEnd)
                     .padding(end = deviceScaling(16).dp)
                     .size(deviceScaling(34).dp)
             )
