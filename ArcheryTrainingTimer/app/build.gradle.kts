@@ -161,8 +161,10 @@ dependencies {
     //implementation("androidx.compose.material3.adaptive:adaptive:1.1.0") // Or the latest version shown in the docs (e.g., 1.2.0-beta01 if that's current)
     implementation("androidx.compose.material3.adaptive:adaptive-layout:1.1.0")  // 1.2.0-beta01 is available also
     //implementation("androidx.compose.material3.adaptive:adaptive-navigation:1.1.0")  // 1.2.0-beta01 is available also
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-graphics")
+    implementation("androidx.compose.ui:ui:1.9.1")
+    //implementation("androidx.compose.ui:ui-graphics:1.9.1")
+    //implementation("androidx.compose.ui:ui-unit:1.9.1")
+
 
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.3")
     /*
@@ -202,6 +204,7 @@ dependencies {
 
     //-- Tooling for Previews (optional but very helpful)
     implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation(libs.androidx.ui.unit)
     debugImplementation("androidx.compose.ui:ui-tooling") // For tools like Layout Inspector
 
     // DataStore Preferences

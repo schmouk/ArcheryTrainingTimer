@@ -12,18 +12,11 @@ import android.text.TextPaint
 import android.view.WindowManager
 
 import androidx.activity.ComponentActivity
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -34,40 +27,25 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -76,12 +54,9 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -90,6 +65,7 @@ import com.github.schmouk.archerytrainingtimer.R
 import com.github.schmouk.archerytrainingtimer.noarrowsession.ESignal
 import com.github.schmouk.archerytrainingtimer.noarrowsession.NoArrowsTimerViewModel
 import com.github.schmouk.archerytrainingtimer.noarrowsession.UserPreferencesRepository
+import com.github.schmouk.archerytrainingtimer.ui.commons.BigStartButton
 import com.github.schmouk.archerytrainingtimer.ui.commons.IntermediateBeepsCheckedRow
 import com.github.schmouk.archerytrainingtimer.ui.commons.LogoImage
 import com.github.schmouk.archerytrainingtimer.ui.commons.PleaseSelectText
@@ -99,7 +75,12 @@ import com.github.schmouk.archerytrainingtimer.ui.commons.RepetitionsNumberTitle
 import com.github.schmouk.archerytrainingtimer.ui.commons.RepetitionsSelectorWithScrollIndicators
 import com.github.schmouk.archerytrainingtimer.ui.commons.SeriesNumbersButtons
 import com.github.schmouk.archerytrainingtimer.ui.commons.SeriesNumberTitle
+import com.github.schmouk.archerytrainingtimer.ui.commons.StartButtonRow
+import com.github.schmouk.archerytrainingtimer.ui.commons.TimerCountdown
+import com.github.schmouk.archerytrainingtimer.ui.commons.TimerCountdownConstrainedBox
+import com.github.schmouk.archerytrainingtimer.ui.commons.ViewHeader
 import com.github.schmouk.archerytrainingtimer.ui.theme.*
+import com.github.schmouk.archerytrainingtimer.ui.theme.TimerBorderColor
 import com.github.schmouk.archerytrainingtimer.ui.utils.considerDevicePortraitPositioned
 import com.github.schmouk.archerytrainingtimer.ui.utils.detectDeviceFoldedPosture
 import com.github.schmouk.archerytrainingtimer.ui.utils.EFoldedPosture
@@ -242,7 +223,7 @@ fun NoArrowsTimerScreen(
             val countDownDelay = if (DEBUG_MODE) 600L else 1000L
 
             // --- Dynamic Sizes & SPs ---
-            val mainTimerStrokeWidth = deviceScaling(14).dp
+            val mainTimerStrokeWidthDp = deviceScaling(14).dp
             val repetitionBoxSize = deviceScaling(48).dp
             val seriesBoxSize = deviceScaling(48).dp
             val majorSpacerHeight = deviceScaling(8).dp
@@ -766,87 +747,48 @@ fun NoArrowsTimerScreen(
                         numberOfRepetitions != null &&
                         numberOfSeries != null
 
+
                 // --- 1. Title of Series View ---
-                Text(
-                    text = stringResource(id = R.string.series_view_title),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = AppTitleColor,
-                    modifier = Modifier
+                ViewHeader(
+                    stringResource(id = R.string.series_view_title),
+                    Modifier
                         .padding(bottom = generalPadding)
                         .align(Alignment.CenterHorizontally)
                         .scale(scaleFactor)
                 )
+
+
                 // --- 2. First Row: Start Button and related items ---
                 val buttonScaling = 1f / 17.8f
-                val buttonHeight =
-                    currentScreenHeightDp.value * buttonScaling  //deviceScaling(56)
-                Row(
-                    modifier = Modifier
+                val buttonHeight = currentScreenHeightDp.value * buttonScaling
+
+                // the start button on-click lambda
+                val onStartButtonClick = {
+                    if (isTimerRunning) {
+                        pauseCountdowns()
+                    } else if (isTimerStopped) {
+                        resumeCountdowns()
+                    } else {
+                        // Trying to Start (or Restart after session completion)
+                        startNewSession(allSelectionsMade)
+                    }
+                }
+
+                // Shows the start button row
+                StartButtonRow(
+                    allSelectionsMade,
+                    isTimerRunning,
+                    isRestMode,
+                    customInteractiveTextStyle,
+                    buttonHeight,
+                    onStartButtonClick,
+                    rowModifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = deviceScaling(8).dp)
                         .height(buttonHeight.dp),
-                    horizontalArrangement = Arrangement.Center,
-                ) {
-                    //-- START Button --
-                    Button(
-                        onClick = {
-                            if (isTimerRunning) {
-                                pauseCountdowns()
-                            } else if (isTimerStopped) {
-                                resumeCountdowns()
-                            } else {
-                                // Trying to Start (or Restart after session completion)
-                                startNewSession(allSelectionsMade)
-                                /*
-                                if (allSelectionsMade) {
-                                    // If currentRepetitionsLeft is 0, it means a cycle just finished (dimmed state).
-                                    // Reset both countdowns for a new cycle.
-                                    if (currentSeriesLeft == null || currentSeriesLeft == 0) {
-                                        currentSeriesLeft = numberOfSeries
-                                        currentRepetitionsLeft = numberOfRepetitions
-                                        currentDurationSecondsLeft = initialDurationSeconds
-                                    } else {
-                                        // Handle cases where selections might have been cleared or timer never run
-                                        if (currentDurationSecondsLeft == null || currentDurationSecondsLeft == 0) {
-                                            currentDurationSecondsLeft = initialDurationSeconds
-                                        }
-                                        if (currentRepetitionsLeft == null) { // This should ideally not happen if allSelectionsMade is true
-                                            currentRepetitionsLeft = numberOfRepetitions
-                                        }
-                                    }
-                                    resumeCountdowns()
-                                }
-                                */
-                            }
-                        },
-                        enabled = allSelectionsMade && !isRestMode,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = AppButtonColor,
-                            contentColor = AppButtonTextColor,
-                            disabledContainerColor = AppButtonColor.copy(alpha = 0.5f),
-                            disabledContentColor = AppButtonTextColor.copy(alpha = 0.5f)
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth(0.75f)
-                            .fillMaxHeight(1f)
-                    ) {
-                        Text(
-                            text = stringResource(
-                                id = if (isTimerRunning || isRestMode) R.string.stop_button
-                                else R.string.start_button
-                            ),
-                            style = customInteractiveTextStyle.copy(
-                                color = if (allSelectionsMade && !isRestMode) AppButtonTextColor
-                                else AppButtonTextColor.copy(alpha = 0.5f)
-                            ),
-                            fontSize = (18 * buttonHeight / 35f).sp
-                        )
-                    }
+                    rowHorizontalArrangement = Arrangement.Center
+                )
 
-                    // We can add other elements to this Row if needed,
-                    // for example, a small status icon or text next to the button.
-                    // If so, let's adjust Arrangement.Center or use Spacers.
-                }
 
                 // --- 3. Second Row: Timer and Countdowns ---
                 Row(
@@ -862,9 +804,8 @@ fun NoArrowsTimerScreen(
                                     interactionSource = remember { MutableInteractionSource() }, // To disable ripple if desired
                                     indication = null, // Set to 'LocalIndication.current' for default ripple or custom
                                     onClick = {
-                                        // Send a signal to your ViewModel to toggle pause/resume
-                                        // This signal should be handled by your FSM
-                                        // e.g., ESignal.TOGGLE_PAUSE_RESUME or separate ESignal.PAUSE / ESignal.RESUME
+                                        // Send a signal to our ViewModel to toggle pause/resume
+                                        // This signal should be handled by our session state automaton
                                         if (isTimerRunning) {
                                             pauseCountdowns()
                                         } else {
@@ -880,146 +821,32 @@ fun NoArrowsTimerScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     //-- Left Cell (Big Timer Display) --
-                    BoxWithConstraints(
-                        modifier = Modifier
+                    TimerCountdownConstrainedBox(
+                        selectedDurationString,
+                        initialDurationSeconds,
+                        currentDurationSecondsLeft,
+                        numberOfRepetitions,
+                        currentRepetitionsLeft,
+                        currentRestTimeLeft,
+                        isTimerRunning,
+                        isTimerStopped,
+                        isDimmedDisplay(),
+                        isRestMode,
+                        restModeText,
+                        mainTimerStrokeWidthDp,
+                        timerBorderColor = TimerBorderColor,
+                        dimmedTimerBorderColor = DimmedTimerBorderColor,
+                        restingTimerColor = WABlueColor,
+                        progressBorderColor = ProgressBorderColor,
+                        dimmedProgressBorderColor = DimmedProgressBorderColor,
+                        heightScalingFactor = heightScalingFactor,
+                        widthScalingFactor = widthScalingFactor,
+                        boxModifier = Modifier
                             .weight(0.70f)
                             .fillMaxWidth()
-                            .fillMaxHeight(), // Fill the height of THIS Row
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        val circleRadius =
-                            min(
-                                widthScalingFactor * constraints.maxWidth,
-                                heightScalingFactor * constraints.maxHeight
-                            ) / 2f * 0.9f
-
-                        val strokeWidthPx =
-                            with(LocalDensity.current) { mainTimerStrokeWidth.toPx() }
-
-                        Canvas(modifier = Modifier.fillMaxSize()) {
-                            val canvasCenterX = size.width / 2f
-                            val canvasCenterY = size.height / 2f
-
-                            // 1. Draw the main circle border
-                            drawCircle(
-                                color = if (isRestMode) WABlueColor
-                                else if (isDimmedDisplay()) DimmedTimerBorderColor
-                                else TimerBorderColor,
-                                radius = circleRadius - strokeWidthPx / 2f, // Radius to the center of the stroke
-                                style = Stroke(width = strokeWidthPx),
-                                center = Offset(canvasCenterX, canvasCenterY)
-                            )
-
-                            // 2. Draw the progress arc
-                            val sweepAngle =
-                                if (numberOfRepetitions != null && numberOfRepetitions!! > 0 && currentRepetitionsLeft != null) {
-                                    if (currentRepetitionsLeft!! > 1)
-                                        ((numberOfRepetitions!! - currentRepetitionsLeft!!) / numberOfRepetitions!!.toFloat()) * 360f
-                                    else
-                                        ((numberOfRepetitions!! * initialDurationSeconds!! - currentDurationSecondsLeft!! + 1) / (numberOfRepetitions!! * initialDurationSeconds!!).toFloat()) * 360f
-                                } else {
-                                    0f
-                                }
-
-                            if (!isRestMode && (isTimerRunning || isTimerStopped) && sweepAngle > 0f) {
-                                // Notice, reminder:
-                                //  (isTimerRunning || isTimerStopped) avoids red-ghost display
-                                //  in big timer border when selecting number of repetitions
-                                val arcDiameter =
-                                    (circleRadius - strokeWidthPx / 2f) * 2f
-                                val arcTopLeftX = canvasCenterX - arcDiameter / 2f
-                                val arcTopLeftY = canvasCenterY - arcDiameter / 2f
-
-                                val progressStrokeWidth =
-                                    (0.72f * mainTimerStrokeWidth.value).dp.toPx()
-
-                                drawArc(
-                                    color = if (isDimmedDisplay()) DimmedProgressBorderColor
-                                    else ProgressBorderColor,
-                                    startAngle = -90f,
-                                    sweepAngle = sweepAngle,
-                                    useCenter = false,
-                                    style = Stroke(width = progressStrokeWidth),
-                                    topLeft = Offset(arcTopLeftX, arcTopLeftY),
-                                    size = androidx.compose.ui.geometry.Size(
-                                        arcDiameter,
-                                        arcDiameter
-                                    )
-                                )
-                            }
-
-                            // --- Column to hold Time Countdown numbers and "Rest..." text ---
-                            // Text for the main duration
-                            val showDimmedTimers = currentRepetitionsLeft == 0 &&
-                                                    !(isTimerRunning || isTimerStopped || isRestMode)
-
-                            val durationToDisplayValue =
-                                if (showDimmedTimers) 0
-                                else if (isRestMode) currentRestTimeLeft
-                                else currentDurationSecondsLeft
-
-                            val durationToDisplayString = durationToDisplayValue?.toString()
-                                ?: initialDurationSeconds?.toString()
-                                ?: selectedDurationString?.split(" ")
-                                    ?.firstOrNull() ?: ""
-
-                            if (durationToDisplayString.isNotEmpty()) {
-                                val targetTextHeightPx = circleRadius * 0.9f
-
-                                val countdownTextPaint =
-                                    TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
-                                        color =
-                                            (if (isRestMode) WABlueColor
-                                            else if (isDimmedDisplay()) DimmedTimerBorderColor
-                                            else TimerBorderColor
-                                                    ).toArgb()
-                                        textSize = targetTextHeightPx
-                                        isAntiAlias = true
-                                        textAlign = Paint.Align.CENTER
-                                        typeface = Typeface.DEFAULT_BOLD
-                                    }
-
-                                val countdownBounds = Rect()
-                                countdownTextPaint.getTextBounds(
-                                    "0",  // one of the tallest digits to ensure proper vertical centering
-                                    0,
-                                    1,
-                                    countdownBounds
-                                )
-
-                                val yBaseLine = canvasCenterY - countdownBounds.exactCenterY()
-
-                                drawContext.canvas.nativeCanvas.drawText(
-                                    durationToDisplayString,
-                                    canvasCenterX,
-                                    yBaseLine, // Draw at the calculated baseline
-                                    countdownTextPaint
-                                )
-
-                                // "Rest..." Text, displayed only during rest mode
-                                if (isRestMode) {
-                                    val restTextSizePx = targetTextHeightPx * 0.22f
-                                    val restTextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
-                                        color = WABlueColor.toArgb()
-                                        textSize = max(16f, restTextSizePx)
-                                        isAntiAlias = true
-                                        textAlign = Paint.Align.CENTER
-                                        typeface = Typeface.create(
-                                            Typeface.DEFAULT_BOLD,
-                                            Typeface.ITALIC
-                                        )
-                                    }
-
-                                    drawContext.canvas.nativeCanvas.drawText(
-                                        restModeText,
-                                        canvasCenterX,
-                                        yBaseLine + 5 * restTextSizePx / 3,
-                                        restTextPaint
-                                    )
-                                }
-                            }
-                        }
-                    }
+                            .fillMaxHeight(),
+                        boxContentAlignment = Alignment.Center
+                    )
 
                     //-- Right Control Cell (Small Series Countdown Display) --
                     BoxWithConstraints(
@@ -1090,7 +917,6 @@ fun NoArrowsTimerScreen(
                                     0f
                                 }
 
-                            //if (sessionAutomaton.isTimerActivated() && sweepAngle > 0f) {
                             if ((isTimerRunning || isTimerStopped) && sweepAngle > 0f) {
                                 // Notice, reminder:
                                 //  (isTimerRunning || isTimerStopped) avoids red-ghost display
