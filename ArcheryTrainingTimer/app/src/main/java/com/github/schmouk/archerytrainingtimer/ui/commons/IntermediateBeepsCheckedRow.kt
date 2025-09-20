@@ -40,10 +40,10 @@ fun IntermediateBeepsCheckedRow(
     horizontalSpacer : Dp,
     textStyle : TextStyle,
     verticalAlignment : Alignment.Vertical,
-    rowModifier : Modifier
+    modifier : Modifier
 ) {
     Row(
-        modifier = rowModifier,
+        modifier = modifier,
         verticalAlignment = verticalAlignment
     ) {
         Checkbox(

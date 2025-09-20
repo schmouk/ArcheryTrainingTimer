@@ -17,20 +17,256 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 
+import com.github.schmouk.archerytrainingtimer.DEBUG_MODE
+import com.github.schmouk.archerytrainingtimer.ui.theme.AppTextColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.DimmedProgressBorderColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.DimmedTimerBorderColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.ProgressBorderColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.TimerBorderColor
-import com.github.schmouk.archerytrainingtimer.ui.theme.WABlueColor
+import com.github.schmouk.archerytrainingtimer.ui.theme.TimerRestColor
 
 import kotlin.math.max
 import kotlin.math.min
 
 
+//=====   SERIES COUNTDOWN STUFF   ============================
 /**
- * The graphical entity for timers count-down
+ * The graphical entity for series count-down
+ *
+ * @param initialDurationSeconds : Int?, the currently selected durations
+ * @param currentDurationSecondsLeft : Int?, the actual seconds left before end of current repetition
+ * @param numberOfRepetitions : Int?, the currently selected number of repetitions in series
+ * @param currentRepetitionsLeft : Int?, the actual left number of repetitions before end
+ * @param numberOfSeries : Int?, the total number of series selected for the session
+ * @param currentSeriesLeft : Int?, the actual left number of series before end
+ * @param isTimerRunning : Boolean, true if timer is currently running, or false otherwise
+ * @param isTimerStopped : Boolean, true if timer is currently stopped, or false otherwise
+ * @param isDimmedDisplay : Boolean, true if display should be dimmed, or false otherwise
+ * @param timerBorderColor : Color = TimerBorderColor, the color of the text displaying the series count
+ * @param dimmedTimerBorderColor : Color = DimmedTimerBorderColor, the color of the text displaying the series count when dimmed
+ * @param restingTimerColor : Color = TimerRestColor,
+ * @param progressBorderColor : Color = ProgressBorderColor,
+ * @param dimmedProgressBorderColor : Color = DimmedProgressBorderColor,
+ * @param seriesCircleRadius : Float, the radius of the series circle
+ * @param seriesStrokeWidthPx : Float, the width of the series circle border, in pixels
+ * @param localPaddingPx : Float, the local padding to be applied around the series
+ */
+@Composable
+fun SeriesCountdown(
+    initialDurationSeconds : Int?,
+    currentDurationSecondsLeft : Int?,
+    numberOfRepetitions : Int?,
+    currentRepetitionsLeft : Int?,
+    numberOfSeries : Int?,
+    currentSeriesLeft : Int?,
+    isTimerRunning : Boolean,
+    isTimerStopped : Boolean,
+    isDimmedDisplay : Boolean,
+    timerBorderColor : Color = TimerBorderColor,
+    dimmedTimerBorderColor : Color = DimmedTimerBorderColor,
+    restingTimerColor : Color = TimerRestColor,
+    progressBorderColor : Color = ProgressBorderColor,
+    dimmedProgressBorderColor : Color = DimmedProgressBorderColor,
+    seriesCircleRadius : Float,
+    seriesStrokeWidthPx: Float,
+    localPaddingPx : Float
+) {
+
+    Canvas(modifier = Modifier.fillMaxSize()) {
+        if (DEBUG_MODE) {
+            val debugTextSizePx = 36f
+            val restTextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = AppTextColor.toArgb()
+                textSize = debugTextSizePx
+                isAntiAlias = true
+                textAlign = Paint.Align.CENTER
+                typeface =
+                    Typeface.create(Typeface.DEFAULT_BOLD, Typeface.ITALIC)
+            }
+
+            drawContext.canvas.nativeCanvas.drawText(
+                ">>> DEBUG mode",
+                30f,
+                38f,
+                restTextPaint
+            )
+        }
+
+        val circleCenterX = size.width / 2
+        val circleCenterY = size.height - seriesCircleRadius - localPaddingPx
+
+        // Draw circle border
+        drawCircle(
+            color = if (isDimmedDisplay) DimmedTimerBorderColor else TimerBorderColor,
+            radius = seriesCircleRadius - seriesStrokeWidthPx / 2,
+            style = Stroke(width = seriesStrokeWidthPx),
+            center = Offset(circleCenterX, circleCenterY)
+        )
+
+        // Draw the progress arc
+        val totalRepetitions =
+            (numberOfRepetitions ?: 0) * (numberOfSeries ?: 0)
+        val sweepAngle =
+            if (numberOfSeries != null && numberOfSeries > 0 &&
+                currentSeriesLeft != null &&
+                initialDurationSeconds != null &&
+                currentDurationSecondsLeft != null)
+            {
+                if (currentSeriesLeft > 1)
+                    ((numberOfSeries - currentSeriesLeft) / numberOfSeries.toFloat()) * 360f
+                else if (currentRepetitionsLeft!! > 1)
+                    (totalRepetitions - currentRepetitionsLeft) / totalRepetitions.toFloat() * 360f
+                else
+                    ((totalRepetitions * initialDurationSeconds - currentDurationSecondsLeft + 1) /
+                            (totalRepetitions * initialDurationSeconds).toFloat()) * 360f
+            } else {
+                0f
+            }
+
+        if ((isTimerRunning || isTimerStopped) && sweepAngle > 0f) {
+            // Notice, reminder:
+            //  (isTimerRunning || isTimerStopped) avoids red-ghost display
+            //  in big timer border when selecting number of repetitions
+            val arcDiameter =
+                (seriesCircleRadius - seriesStrokeWidthPx / 2f) * 2f
+            val arcTopLeftX = circleCenterX - arcDiameter / 2f
+            val arcTopLeftY = circleCenterY - arcDiameter / 2f
+
+            val progressStrokeWidthPx = 0.5f * seriesStrokeWidthPx
+
+            drawArc(
+                color = if (isDimmedDisplay) DimmedProgressBorderColor else ProgressBorderColor,
+                startAngle = -90f,
+                sweepAngle = sweepAngle,
+                useCenter = false,
+                style = Stroke(width = progressStrokeWidthPx),
+                topLeft = Offset(arcTopLeftX, arcTopLeftY),
+                size = androidx.compose.ui.geometry.Size(
+                    arcDiameter,
+                    arcDiameter
+                )
+            )
+        }
+
+        // Series display will show 0 when dimmed
+        val seriesToDisplayValue = currentSeriesLeft
+        val seriesToDisplayString =
+            seriesToDisplayValue?.toString()
+                ?: currentSeriesLeft?.toString() ?: ""
+
+        if (seriesToDisplayString.isNotEmpty()) {
+            val targetTextHeightPx = seriesCircleRadius * 0.9f
+
+            val countdownTextPaint =
+                TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+                    color = (if (isDimmedDisplay) DimmedTimerBorderColor
+                             else TimerBorderColor
+                            ).toArgb()
+                    textSize = targetTextHeightPx
+                    isAntiAlias = true
+                    textAlign = Paint.Align.CENTER
+                    typeface = Typeface.DEFAULT_BOLD
+                }
+
+            val countdownBounds = Rect()
+            countdownTextPaint.getTextBounds(
+                "0",  // one of the tallest digits to ensure proper centering
+                0,
+                1,
+                countdownBounds
+            )
+
+            drawContext.canvas.nativeCanvas.drawText(
+                seriesToDisplayString,
+                circleCenterX,
+                circleCenterY - countdownBounds.exactCenterY(), // Draw at the calculated baseline
+                countdownTextPaint
+            )
+        }
+    }
+}
+
+
+/**
+ * A BoxWithConstraints composable that contains the SeriesCountdown composable,
+ * ensuring that the countdown fits within the available space while maintaining its aspect ratio.
+ *
+ * @param initialDurationSeconds : Int?, the currently selected durations
+ * @param currentDurationSecondsLeft : Int?, the actual seconds left before end of current repetition
+ * @param numberOfRepetitions : Int?, the currently selected number of repetitions in series
+ * @param currentRepetitionsLeft : Int?, the actual left number of repetitions before end
+ * @param numberOfSeries : Int?, the total number of series selected for the session
+ * @param currentSeriesLeft : Int?, the actual left number of series before end
+ * @param isTimerRunning : Boolean, true if timer is currently running, or false otherwise
+ * @param isTimerStopped : Boolean, true if timer is currently stopped, or false otherwise
+ * @param isDimmedDisplay : Boolean, true if display should be dimmed, or false otherwise
+ * @param textColor : Color = TimerBorderColor, the color of the text displaying the series count
+ * @param dimmedTextColor : Color = DimmedTimerBorderColor, the color of the text displaying the series count when dimmed
+ * @param restingTimerColor : Color = TimerRestColor,
+ * @param progressBorderColor : Color = ProgressBorderColor,
+ * @param dimmedProgressBorderColor : Color = DimmedProgressBorderColor,
+ * @param seriesStrokeWidthPx : Float, the width of the series circle border, in pixels
+ * @param localPaddingPx : Float, the local padding to be applied around the series
+ * @param modifier : Modifier, the modifier to be applied to the BoxWithConstraints composable
+ * @param boxContentAlignment : Alignment = Alignment.Center, the alignment of the content within the
+ */
+@Composable
+fun SeriesCountdownConstrainedBox(
+    initialDurationSeconds : Int?,
+    currentDurationSecondsLeft : Int?,
+    numberOfRepetitions : Int?,
+    currentRepetitionsLeft : Int?,
+    numberOfSeries : Int?,
+    currentSeriesLeft : Int?,
+    isTimerRunning : Boolean,
+    isTimerStopped : Boolean,
+    isDimmedDisplay : Boolean,
+    textColor : Color = TimerBorderColor,
+    dimmedTextColor : Color = DimmedTimerBorderColor,
+    restingTimerColor : Color = TimerRestColor,
+    progressBorderColor : Color = ProgressBorderColor,
+    dimmedProgressBorderColor : Color = DimmedProgressBorderColor,
+    seriesStrokeWidthPx : Float,
+    localPaddingPx : Float,
+    modifier : Modifier,
+    boxContentAlignment : Alignment = Alignment.Center
+) {
+    BoxWithConstraints(
+        modifier = modifier,
+        contentAlignment = boxContentAlignment
+    ) {
+        val seriesCircleRadius =
+            min(
+                constraints.maxWidth,
+                constraints.maxHeight
+            ) / 2f * 0.85f
+
+        SeriesCountdown(
+            initialDurationSeconds,
+            currentDurationSecondsLeft,
+            numberOfRepetitions,
+            currentRepetitionsLeft,
+            numberOfSeries,
+            currentSeriesLeft,
+            isTimerRunning,
+            isTimerStopped,
+            isDimmedDisplay,
+            textColor,
+            dimmedTextColor,
+            restingTimerColor,
+            progressBorderColor,
+            dimmedProgressBorderColor,
+            seriesCircleRadius,
+            seriesStrokeWidthPx,
+            localPaddingPx
+        )
+    }
+}
+
+//=====   TIMER COUNTDOWN STUFF   =============================
+/**
+ * The graphical entity for timer count-down
  *
  * @param selectedDurationString : String?, the currently selected duration string value
  * @param initialDurationSeconds : Int?, the currently selected durations
@@ -47,10 +283,10 @@ import kotlin.math.min
  * @param strokeWidthPx : Float, the width of the timer border, in pixels
  * @param timerBorderColor : Color = TimerBorderColor,
  * @param dimmedTimerBorderColor : Color = DimmedTimerBorderColor,
- * @param restingTimerColor : Color = WABlueColor,
+ * @param restingTimerColor : Color = TimerRestColor,
  * @param progressBorderColor : Color = ProgressBorderColor,
  * @param dimmedProgressBorderColor : Color = DimmedProgressBorderColor,
- * @param canvasModifier : Modifier
+ * @param modifier : Modifier, the modifier to be applied to the internal canvas that contains the timer countdown
  */
 @Composable
 fun TimerCountdown(
@@ -69,12 +305,12 @@ fun TimerCountdown(
     strokeWidthPx : Float,
     timerBorderColor : Color = TimerBorderColor,
     dimmedTimerBorderColor : Color = DimmedTimerBorderColor,
-    restingTimerColor : Color = WABlueColor,
+    restingTimerColor : Color = TimerRestColor,
     progressBorderColor : Color = ProgressBorderColor,
     dimmedProgressBorderColor : Color = DimmedProgressBorderColor,
-    canvasModifier : Modifier
+    modifier : Modifier
 ) {
-    Canvas(modifier = canvasModifier) {
+    Canvas(modifier = modifier) {
         val canvasCenterX = size.width / 2f
         val canvasCenterY = size.height / 2f
 
@@ -198,7 +434,32 @@ fun TimerCountdown(
     }
 }
 
-
+/**
+ * A BoxWithConstraints composable that contains the TimerCountdown composable,
+ * ensuring that the timer fits within the available space while maintaining its aspect ratio.
+ *
+ * @param selectedDurationString : String?, the currently selected duration string value
+ * @param initialDurationSeconds : Int?, the currently selected durations
+ * @param currentDurationSecondsLeft : Int?, the actual seconds left before end of current repetition
+ * @param numberOfRepetitions : Int?, the currently selected number of repetitions in series
+ * @param currentRepetitionsLeft : Int?, the actual left number of repetitions before end of current series
+ * @param currentRestTimeLeft : Int?, the actual number of seconds left before enf of resting time
+ * @param isTimerRunning : Boolean, true if timer is currently running, or false otherwise
+ * @param isTimerStopped : Boolean, true if timer is currently stopped, or false otherwise
+ * @param isDimmedDisplay : Boolean, true if display should be dimmed, or false otherwise
+ * @param isRestMode : Boolean, true if timer is currently counting down resting time, or false otherwise
+ * @param restModeText : String, the text related to the "Rest..." caption
+ * @param timerStrokeWidthDp : Dp, the width of the timer border, in Dp
+ * @param timerBorderColor : Color = TimerBorderColor, the color of the timer border
+ * @param dimmedTimerBorderColor : Color = DimmedTimerBorderColor, the color of the timer border when dimmed
+ * @param restingTimerColor : Color = WABlueColor, the color of the timer border in resting mode
+ * @param progressBorderColor : Color = ProgressBorderColor, the color of the progress arc
+ * @param dimmedProgressBorderColor : Color = DimmedProgressBorderColor, the color of the progress arc when dimmed
+ * @param heightScalingFactor : Float, the overall height scaling factor associated with the device display
+ * @param widthScalingFactor : Float, the overall width scaling factor associated with the device display
+ * @param modifier : Modifier, the modifier to be applied to the BoxWithConstraints composable
+ * @param boxContentAlignment : Alignment = Alignment.Center, the alignment of the content within the BoxWithConstraints
+ */
 @Composable
 fun TimerCountdownConstrainedBox(
     selectedDurationString : String?,
@@ -215,16 +476,16 @@ fun TimerCountdownConstrainedBox(
     timerStrokeWidthDp : Dp,
     timerBorderColor : Color = TimerBorderColor,
     dimmedTimerBorderColor : Color = DimmedTimerBorderColor,
-    restingTimerColor : Color = WABlueColor,
+    restingTimerColor : Color = AppTextColor,
     progressBorderColor : Color = ProgressBorderColor,
     dimmedProgressBorderColor : Color = DimmedProgressBorderColor,
     heightScalingFactor : Float,
     widthScalingFactor : Float,
-    boxModifier : Modifier,
+    modifier : Modifier,
     boxContentAlignment : Alignment = Alignment.Center
 ) {
     BoxWithConstraints(
-        modifier = boxModifier,
+        modifier = modifier,
         contentAlignment = boxContentAlignment
     ) {
         val circleRadius =
@@ -255,7 +516,7 @@ fun TimerCountdownConstrainedBox(
             restingTimerColor,
             progressBorderColor,
             dimmedProgressBorderColor,
-            canvasModifier = Modifier.fillMaxSize()
+            Modifier.fillMaxSize()
         )
     }
 }

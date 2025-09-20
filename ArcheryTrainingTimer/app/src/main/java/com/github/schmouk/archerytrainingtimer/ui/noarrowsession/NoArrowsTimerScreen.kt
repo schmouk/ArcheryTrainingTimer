@@ -2,17 +2,12 @@ package com.github.schmouk.archerytrainingtimer.ui.noarrowsession
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.Paint
-import android.graphics.Rect
-import android.graphics.Typeface
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.SoundPool
-import android.text.TextPaint
 import android.view.WindowManager
 
 import androidx.activity.ComponentActivity
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -30,11 +25,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -47,11 +39,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -65,7 +52,6 @@ import com.github.schmouk.archerytrainingtimer.R
 import com.github.schmouk.archerytrainingtimer.noarrowsession.ESignal
 import com.github.schmouk.archerytrainingtimer.noarrowsession.NoArrowsTimerViewModel
 import com.github.schmouk.archerytrainingtimer.noarrowsession.UserPreferencesRepository
-import com.github.schmouk.archerytrainingtimer.ui.commons.BigStartButton
 import com.github.schmouk.archerytrainingtimer.ui.commons.IntermediateBeepsCheckedRow
 import com.github.schmouk.archerytrainingtimer.ui.commons.LogoImage
 import com.github.schmouk.archerytrainingtimer.ui.commons.PleaseSelectText
@@ -73,13 +59,14 @@ import com.github.schmouk.archerytrainingtimer.ui.commons.RepetitionsDurationBut
 import com.github.schmouk.archerytrainingtimer.ui.commons.RepetitionsDurationTitle
 import com.github.schmouk.archerytrainingtimer.ui.commons.RepetitionsNumberTitle
 import com.github.schmouk.archerytrainingtimer.ui.commons.RepetitionsSelectorWithScrollIndicators
+import com.github.schmouk.archerytrainingtimer.ui.commons.SeriesCountdownConstrainedBox
 import com.github.schmouk.archerytrainingtimer.ui.commons.SeriesNumbersButtons
 import com.github.schmouk.archerytrainingtimer.ui.commons.SeriesNumberTitle
 import com.github.schmouk.archerytrainingtimer.ui.commons.StartButtonRow
-import com.github.schmouk.archerytrainingtimer.ui.commons.TimerCountdown
 import com.github.schmouk.archerytrainingtimer.ui.commons.TimerCountdownConstrainedBox
 import com.github.schmouk.archerytrainingtimer.ui.commons.ViewHeader
 import com.github.schmouk.archerytrainingtimer.ui.theme.*
+import com.github.schmouk.archerytrainingtimer.ui.theme.ProgressBorderColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.TimerBorderColor
 import com.github.schmouk.archerytrainingtimer.ui.utils.considerDevicePortraitPositioned
 import com.github.schmouk.archerytrainingtimer.ui.utils.detectDeviceFoldedPosture
@@ -87,7 +74,6 @@ import com.github.schmouk.archerytrainingtimer.ui.utils.EFoldedPosture
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -134,10 +120,6 @@ fun NoArrowsTimerScreen(
             val availableHeightForContentDp = this.maxHeight
             val availableWidthForContentDp = this.maxWidth
 
-            // Adapt items size to screen width
-            val configuration = LocalConfiguration.current
-            val currentScreenWidthDp = configuration.screenWidthDp.dp
-            val currentScreenHeightDp = configuration.screenHeightDp.dp
             val refScreenWidthDp = 411.dp // Your baseline for good proportions
             val refScreenHeightDp = 914.dp // Your baseline for good proportions
 
@@ -175,8 +157,8 @@ fun NoArrowsTimerScreen(
             }
             */
 
-            val heightScalingFactor = this.maxHeight.value / currentScreenHeightDp.value
-            val widthScalingFactor = this.maxWidth.value / currentScreenWidthDp.value
+            val heightScalingFactor = this.maxHeight.value / availableHeightForContentDp.value  //currentScreenHeightDp.value
+            val widthScalingFactor = this.maxWidth.value / availableWidthForContentDp.value  //currentScreenWidthDp.value
 
             val customInteractiveTextStyle = TextStyle(fontSize = deviceScaling(18).sp)
             val smallerTextStyle = TextStyle(fontSize = deviceScaling(16).sp)
@@ -224,7 +206,6 @@ fun NoArrowsTimerScreen(
 
             // --- Dynamic Sizes & SPs ---
             val mainTimerStrokeWidthDp = deviceScaling(14).dp
-            val repetitionBoxSize = deviceScaling(48).dp
             val seriesBoxSize = deviceScaling(48).dp
             val majorSpacerHeight = deviceScaling(8).dp
             val generalPadding = deviceScaling(12).dp
@@ -257,7 +238,7 @@ fun NoArrowsTimerScreen(
             val durationOptions = listOf("10 s", "15 s", "20 s", "30 s")
             val durationsTextScaling = 4f / durationOptions.size
             val durationButtonWidth = (
-                    currentScreenWidthDp.value / durationOptions.size - horizontalDeviceScaling(
+                    /*currentScreenWidthDp*/availableWidthForContentDp.value / durationOptions.size - horizontalDeviceScaling(
                         8
                     )
                     ).dp
@@ -314,7 +295,7 @@ fun NoArrowsTimerScreen(
              * Evaluates the resting time
              */
             fun evaluateRestTime(): Int {
-                return ((numberOfRepetitions ?: 0) * (lastDurationSeconds ?: 0) * restingRatio)
+                return ((numberOfRepetitions ?: 0) * lastDurationSeconds * restingRatio)
                     .roundToInt()
                     .coerceAtLeast(endOfRestBeepTime + 2) // Ensure rest gets a minimum value for the beep logic
             }
@@ -632,8 +613,9 @@ fun NoArrowsTimerScreen(
                                 // current repetition timer tick
                                 if (isTimerRunning)
                                     delay(countDownDelay)
-                                if (!(isTimerRunning || isTimerStopped) || isRestMode)
-                                    break
+                                //if (!(isTimerRunning || isTimerStopped) || isRestMode) // Notice: always false here
+                                //if (isRestMode)  // Notice: always false here...
+                                //    break
                                 currentDurationSecondsLeft = currentDurationSecondsLeft!! - 1
                                 // intermediate beep logic
                                 if (intermediateBeepsChecked != null &&
@@ -678,10 +660,11 @@ fun NoArrowsTimerScreen(
                                 } else {
                                     // end of current series
                                     // Notice: if end of session also, will be checked in the outer loop
-                                    if (isRestMode)
+                                    /*if (isRestMode)  // Notice: always false here...
                                         currentSeriesLeft = currentSeriesLeft!! + 1  // Must be restored to previous value
                                     else
-                                        setRestMode()
+                                        setRestMode()*/
+                                    setRestMode()
                                     break
                                 }
                             }
@@ -707,7 +690,8 @@ fun NoArrowsTimerScreen(
                             playRestBeepEvent = true
 
                         // Check isRestMode again, as it could have been modified in the block above
-                        while (isActive && isRestMode) {
+                        //while (isActive && isRestMode) {  // Notice: isRestMode is always true here
+                        while (isActive) {  // Notice: isRestMode is always true here
                             if (currentRestTimeLeft != null && currentRestTimeLeft!! > 0) {
                                 // Check for some seconds left --> to play rest-beeps
                                 if (currentRestTimeLeft == endOfRestBeepTime) {
@@ -760,7 +744,7 @@ fun NoArrowsTimerScreen(
 
                 // --- 2. First Row: Start Button and related items ---
                 val buttonScaling = 1f / 17.8f
-                val buttonHeight = currentScreenHeightDp.value * buttonScaling
+                val buttonHeight = availableHeightForContentDp.value * buttonScaling  //currentScreenHeightDp.value * buttonScaling
 
                 // the start button on-click lambda
                 val onStartButtonClick = {
@@ -782,7 +766,7 @@ fun NoArrowsTimerScreen(
                     customInteractiveTextStyle,
                     buttonHeight,
                     onStartButtonClick,
-                    rowModifier = Modifier
+                    modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = deviceScaling(8).dp)
                         .height(buttonHeight.dp),
@@ -834,14 +818,14 @@ fun NoArrowsTimerScreen(
                         isRestMode,
                         restModeText,
                         mainTimerStrokeWidthDp,
-                        timerBorderColor = TimerBorderColor,
-                        dimmedTimerBorderColor = DimmedTimerBorderColor,
-                        restingTimerColor = WABlueColor,
-                        progressBorderColor = ProgressBorderColor,
-                        dimmedProgressBorderColor = DimmedProgressBorderColor,
-                        heightScalingFactor = heightScalingFactor,
-                        widthScalingFactor = widthScalingFactor,
-                        boxModifier = Modifier
+                        TimerBorderColor,
+                        DimmedTimerBorderColor,
+                        TimerRestColor,
+                        ProgressBorderColor,
+                        DimmedProgressBorderColor,
+                        heightScalingFactor,
+                        widthScalingFactor,
+                        modifier = Modifier
                             .weight(0.70f)
                             .fillMaxWidth()
                             .fillMaxHeight(),
@@ -849,136 +833,34 @@ fun NoArrowsTimerScreen(
                     )
 
                     //-- Right Control Cell (Small Series Countdown Display) --
-                    BoxWithConstraints(
-                        modifier = Modifier
-                            .weight(0.3f) // 30% of this Row's width
-                        ,
-                        contentAlignment = Alignment.BottomCenter // Align small circle to bottom center of this cell
-                    ) {
-                        val seriesCircleRadius =
-                            min(
-                                constraints.maxWidth,
-                                constraints.maxHeight
-                            ) / 2f * 0.85f
-
-                        val seriesStrokeWidthDp = with(LocalDensity.current) {
-                            deviceScaling(7).dp
-                        }
-                        val seriesStrokeWidthPx = with(LocalDensity.current) {
-                            seriesStrokeWidthDp.toPx()
-                        }
-
-                        val localPadding = deviceScaling(8).dp
-
-                        Canvas(modifier = Modifier.fillMaxSize()) {
-                            if (DEBUG_MODE) {
-                                val debugTextSizePx = 36f
-                                val restTextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
-                                    color = WAWhiteColor.toArgb()
-                                    textSize = debugTextSizePx
-                                    isAntiAlias = true
-                                    textAlign = Paint.Align.CENTER
-                                    typeface =
-                                        Typeface.create(Typeface.DEFAULT_BOLD, Typeface.ITALIC)
-                                }
-
-                                drawContext.canvas.nativeCanvas.drawText(
-                                    ">>> DEBUG mode",
-                                    30f,
-                                    38f,
-                                    restTextPaint
-                                )
-                            }
-
-                            val circleCenterX = size.width / 2
-                            val circleCenterY =
-                                size.height - seriesCircleRadius - localPadding.toPx()
-
-                            // Draw circle border
-                            drawCircle(
-                                color = if (isDimmedDisplay()) DimmedTimerBorderColor else TimerBorderColor,
-                                radius = seriesCircleRadius - seriesStrokeWidthPx / 2,
-                                style = Stroke(width = seriesStrokeWidthPx),
-                                center = Offset(circleCenterX, circleCenterY)
-                            )
-
-                            // Draw the progress arc
-                            val totalRepetitions =
-                                (numberOfRepetitions ?: 0) * (numberOfSeries ?: 0)
-                            val sweepAngle =
-                                if (numberOfSeries != null && numberOfSeries!! > 0 && currentSeriesLeft != null) {
-                                    if (currentSeriesLeft!! > 1)
-                                        ((numberOfSeries!! - currentSeriesLeft!!) / numberOfSeries!!.toFloat()) * 360f
-                                    else if (currentRepetitionsLeft!! > 1)
-                                        (totalRepetitions - currentRepetitionsLeft!!) / totalRepetitions.toFloat() * 360f
-                                    else
-                                        ((totalRepetitions * initialDurationSeconds!! - currentDurationSecondsLeft!! + 1) / (totalRepetitions * initialDurationSeconds!!).toFloat()) * 360f
-                                } else {
-                                    0f
-                                }
-
-                            if ((isTimerRunning || isTimerStopped) && sweepAngle > 0f) {
-                                // Notice, reminder:
-                                //  (isTimerRunning || isTimerStopped) avoids red-ghost display
-                                //  in big timer border when selecting number of repetitions
-                                val arcDiameter =
-                                    (seriesCircleRadius - seriesStrokeWidthPx / 2f) * 2f
-                                val arcTopLeftX = circleCenterX - arcDiameter / 2f
-                                val arcTopLeftY = circleCenterY - arcDiameter / 2f
-
-                                val progressStrokeWidthPx = 0.5f * seriesStrokeWidthPx
-
-                                drawArc(
-                                    color = if (isDimmedDisplay()) DimmedProgressBorderColor else ProgressBorderColor,
-                                    startAngle = -90f,
-                                    sweepAngle = sweepAngle,
-                                    useCenter = false,
-                                    style = Stroke(width = progressStrokeWidthPx),
-                                    topLeft = Offset(arcTopLeftX, arcTopLeftY),
-                                    size = androidx.compose.ui.geometry.Size(
-                                        arcDiameter,
-                                        arcDiameter
-                                    )
-                                )
-                            }
-
-                            // Series display will show 0 when dimmed
-                            val seriesToDisplayValue = currentSeriesLeft
-                            val seriesToDisplayString =
-                                seriesToDisplayValue?.toString()
-                                    ?: currentSeriesLeft?.toString() ?: ""
-
-                            if (seriesToDisplayString.isNotEmpty()) {
-                                val targetTextHeightPx = seriesCircleRadius * 0.9f
-
-                                val countdownTextPaint =
-                                    TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
-                                        color = (if (isDimmedDisplay()) DimmedTimerBorderColor
-                                        else TimerBorderColor
-                                                ).toArgb()
-                                        textSize = targetTextHeightPx
-                                        isAntiAlias = true
-                                        textAlign = Paint.Align.CENTER
-                                        typeface = Typeface.DEFAULT_BOLD
-                                    }
-
-                                val countdownBounds = Rect()
-                                countdownTextPaint.getTextBounds(
-                                    "0",  // one of the tallest digits to ensure proper centering
-                                    0,
-                                    1,
-                                    countdownBounds
-                                )
-
-                                drawContext.canvas.nativeCanvas.drawText(
-                                    seriesToDisplayString,
-                                    circleCenterX,
-                                    circleCenterY - countdownBounds.exactCenterY(), // Draw at the calculated baseline
-                                    countdownTextPaint
-                                )
-                            }
-                        }
+                    val seriesStrokeWidthPx = with(LocalDensity.current) {
+                        deviceScaling(7).dp.toPx()
                     }
+
+                    val localPaddingPx = with(LocalDensity.current) {
+                        deviceScaling(8).dp.toPx()
+                    }
+
+                    SeriesCountdownConstrainedBox(
+                        initialDurationSeconds,
+                        currentDurationSecondsLeft,
+                        numberOfRepetitions,
+                        currentRepetitionsLeft,
+                        numberOfSeries,
+                        currentSeriesLeft,
+                        isTimerRunning,
+                        isTimerStopped,
+                        isDimmedDisplay(),
+                        TimerBorderColor,
+                        DimmedTimerBorderColor,
+                        TimerRestColor,
+                        ProgressBorderColor,
+                        DimmedProgressBorderColor,
+                        seriesStrokeWidthPx,
+                        localPaddingPx,
+                        modifier = Modifier.weight(0.3f), // 30% of this Row's width,
+                        boxContentAlignment = Alignment.Center
+                    )
                 }
 
                 // --- 4. SECTION FOR SELECTABLE ITEMS & RELATED TEXTS ---
@@ -1104,7 +986,7 @@ fun NoArrowsTimerScreen(
                         horizontalSpacer = deviceScaling(6).dp,
                         textStyle = smallerTextStyle,
                         verticalAlignment = Alignment.CenterVertically,
-                        rowModifier = Modifier
+                        modifier = Modifier
                             .wrapContentHeight()
                             .padding(top = deviceScaling(4).dp, bottom = 0.dp)
                             .toggleable(

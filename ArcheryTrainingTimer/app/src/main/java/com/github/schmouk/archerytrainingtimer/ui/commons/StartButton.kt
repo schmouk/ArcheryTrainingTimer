@@ -79,7 +79,7 @@ fun BigStartButton(
  * @param buttonTextStyle: TextStyle, the style to be applied to the text of the button
  * @param buttonHeight: Float, the height of the button
  * @param onButtonClick: Unit, a lambda to be called when button is clicked
- * @param rowModifier: Modifier, the modifier to be applied to the Row composable
+ * @param modifier: Modifier, the modifier to be applied to the Row composable
  * @param rowHorizontalArrangement: Arrangement.Horizontal, the horizontal arrangement of the Row content
  */
 @Composable
@@ -90,11 +90,11 @@ fun StartButtonRow(
     buttonTextStyle : TextStyle,
     buttonHeight : Float,
     onButtonClick : () -> Unit,
-    rowModifier : Modifier,
+    modifier : Modifier,
     rowHorizontalArrangement : Arrangement.Horizontal
 ) {
     Row(
-        modifier = rowModifier,
+        modifier = modifier,
         horizontalArrangement = rowHorizontalArrangement,
     ) {
         //-- START Button --
