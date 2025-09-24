@@ -1,16 +1,28 @@
 package com.github.schmouk.archerytrainingtimer.ui.commons
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ButtonElevation
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+//import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 import com.github.schmouk.archerytrainingtimer.R
@@ -20,6 +32,7 @@ import com.github.schmouk.archerytrainingtimer.ui.theme.AppButtonTextColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppTextColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.SelectedButtonBackgroundColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.SelectedButtonBorderColor
+import com.github.schmouk.archerytrainingtimer.ui.utils.VerticalAdaptiveTextButton
 
 
 /**
@@ -51,47 +64,44 @@ fun RepetitionsDurationButtons(
     onDurationSelected: (String) -> Unit,
     durationOptions : List<String>,
     borderStrokeWidth : Dp,
-    durationButtonWidth : Dp,
-    durationsTextScaling : Float,
+    durationButtonHeight : Dp,
+    durationsTextStyle : TextStyle,
     horizontalArrangement : Arrangement.Horizontal,
-    rowModifier : Modifier = Modifier
+    modifier : Modifier = Modifier
 ) {
-    Row( // Duration Buttons Row
+    FlowRow(
         horizontalArrangement = horizontalArrangement,
-        modifier = rowModifier
+        modifier = modifier
     ) {
         var selectedDurationString = selectedDurationString
 
-        Row() {
-            durationOptions.forEach { durationString ->
-                val isSelected = selectedDurationString == durationString
-                Button(
-                    onClick = {
-                        if (!isSelected)
-                            onDurationSelected(durationString)
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isSelected) SelectedButtonBackgroundColor
-                                         else AppButtonDarkerColor,
-                        contentColor = AppButtonTextColor
-                    ),
-                    border = BorderStroke(
-                        borderStrokeWidth,
-                        if (isSelected) SelectedButtonBorderColor else AppBackgroundColor
-                    ),
-                    enabled = true,
-                    modifier = Modifier
-                        .width(durationButtonWidth)
-                ) {
-                    Text(
-                        text = durationString,
-                        style = TextStyle(
-                            fontSize = (13f * durationsTextScaling).toInt().sp,
-                            color = if (isSelected) AppButtonTextColor else AppTextColor
-                        )
-                    )
-                }
-            }
+        durationOptions.forEach { durationString ->
+            val isSelected = selectedDurationString == durationString
+
+            VerticalAdaptiveTextButton(
+                onClick = {
+                    if (!isSelected)
+                        onDurationSelected(durationString)
+                },
+                buttonModifier = Modifier.padding(borderStrokeWidth),
+                enabled = true,
+                buttonContainerColor =
+                    if (isSelected) SelectedButtonBackgroundColor
+                    else AppButtonDarkerColor,
+                border = BorderStroke(
+                    borderStrokeWidth,
+                    if (isSelected) SelectedButtonBorderColor else AppBackgroundColor
+                ),
+                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 0.dp),
+                forcedButtonHeightDp = durationButtonHeight,
+                text = durationString,
+                textColor = if (isSelected) AppButtonTextColor else AppTextColor,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                textProportionalHeight = 0.33f,
+                softWrap = false, // Prevents the text from wrapping to the next line
+                maxLines = 1,     // Explicitly sets the maximum lines to 1
+                textModifier = Modifier.wrapContentWidth() // Adapts width to text content
+            )
         }
     }
 }
