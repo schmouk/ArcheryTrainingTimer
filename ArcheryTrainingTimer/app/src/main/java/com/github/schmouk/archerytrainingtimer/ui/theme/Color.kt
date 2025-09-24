@@ -14,7 +14,7 @@ val AppTextColor = WAWhiteColor
 val AppDimmedTextColor = Color(0xFF313233) // Dimmed text color for less emphasis
 val AppTitleColor = WAYellowColor
 val AppButtonColor = Color(0xFF00B4E4)
-val AppButtonDarkerColor = AppButtonColor.copy(alpha = 0.38f)
+val AppButtonDarkerColor = Color(0xFF17728B)  //AppButtonColor.copy(alpha = 0.38f)
 val AppDimmedButtonColor = Color(0xFF484A4C)
 val AppButtonTextColor = Color(0xFF33373F)
 

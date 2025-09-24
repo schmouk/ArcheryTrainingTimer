@@ -90,7 +90,7 @@ fun RepetitionsDurationButtons(
                     else AppButtonDarkerColor,
                 border = BorderStroke(
                     borderStrokeWidth,
-                    if (isSelected) SelectedButtonBorderColor else AppBackgroundColor
+                    if (isSelected) SelectedButtonBorderColor else AppButtonDarkerColor //AppBackgroundColor
                 ),
                 contentPadding = PaddingValues(horizontal = 24.dp, vertical = 0.dp),
                 forcedButtonHeightDp = durationButtonHeight,
