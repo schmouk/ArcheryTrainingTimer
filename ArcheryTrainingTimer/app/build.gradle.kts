@@ -212,4 +212,6 @@ dependencies {
 
     // Lifecycle KTX (often useful with Compose)
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.2") // Or our version
+
+    implementation("com.google.accompanist:accompanist-flowlayout:0.36.0")
 }

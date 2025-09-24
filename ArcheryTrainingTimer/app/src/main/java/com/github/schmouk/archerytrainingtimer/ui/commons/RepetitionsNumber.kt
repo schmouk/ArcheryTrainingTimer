@@ -77,7 +77,7 @@ fun RepetitionsSelectorWithScrollIndicators(
     onRepetitionSelected: (Int) -> Unit,
     repetitionsListState: LazyListState = rememberLazyListState(),
     repetitionsRange: List<Int>,
-    numbersTextSize : TextStyle,
+    numbersTextStyle : TextStyle,
     arrowButtonSizeDp : Dp,
     horizontalSpaceArrangement : Dp,
     repetitionBoxSize : Dp,
@@ -200,7 +200,7 @@ fun RepetitionsSelectorWithScrollIndicators(
                     ) {
                         Text(
                             text = "$repetitionNum",
-                            style = numbersTextSize.copy(
+                            style = numbersTextStyle.copy(
                                 color = if (isNumberSelected) AppButtonTextColor else AppTextColor
                             ),
                             fontWeight = if (isNumberSelected) FontWeight.Bold else FontWeight.Normal
