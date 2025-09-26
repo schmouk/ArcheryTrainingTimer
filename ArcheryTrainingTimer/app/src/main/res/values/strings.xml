@@ -13,6 +13,7 @@
     <string name="repetitions_number_label">Répétitions par série</string>
     <string name="repetitions_duration_label">Durée de chaque répétition</string>
     <string name="rest_indicator">Récup\'</string>
+    <string name="rest_time_ratio">Temps de récupération (%)</string>
     <string name="save_selection_label">Sauvegarder la sélection</string>
     <string name="series_number_label">Nombre de séries</string>
     <string name="series_view_title">Series Training Timer</string>

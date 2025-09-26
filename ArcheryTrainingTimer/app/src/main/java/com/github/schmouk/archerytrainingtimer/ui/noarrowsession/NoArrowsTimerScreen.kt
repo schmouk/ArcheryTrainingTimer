@@ -45,6 +45,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -203,7 +204,7 @@ fun NoArrowsTimerScreen(
             val selectionItemsBaseSizeDp = deviceScaling(48).dp
             //val seriesBoxSize = selectionItemsBaseSizeDp  //deviceScaling(48).dp
             val majorSpacerHeight = deviceScaling(8).dp
-            val generalPadding = deviceScaling(12).dp
+            val generalPadding = deviceScaling(8).dp
             val mainHorizontalSpacingDp = deviceScaling(10).dp
 
             var selectedDurationString by rememberSaveable { mutableStateOf<String?>(null) }
@@ -228,6 +229,7 @@ fun NoArrowsTimerScreen(
             // Rest Mode & Series Tracking
             var currentRestTimeLeft by rememberSaveable { mutableStateOf<Int?>(null) }
             val restingRatio = 0.5f
+            var restingTimeRatio by rememberSaveable { mutableIntStateOf(50) } // Default to 50%
             val endOfRestBeepTime = 7 // seconds before end of rest to play beep
 
             val durationOptions = listOf("10 s", "15 s", "20 s", "30 s")

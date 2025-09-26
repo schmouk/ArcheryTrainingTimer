@@ -42,7 +42,7 @@ fun SeriesNumberTitle(
     modifier: Modifier = Modifier
 ) {
     Text( // Number of repetitions title
-        text = stringResource(id = R.string.series_number_label),
+        text = stringResource(R.string.series_number_label),
         style = textStyle,
         color = AppTextColor,
         modifier = modifier
