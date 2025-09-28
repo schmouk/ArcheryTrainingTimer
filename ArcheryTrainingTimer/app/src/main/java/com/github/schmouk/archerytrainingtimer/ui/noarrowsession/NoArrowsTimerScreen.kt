@@ -712,7 +712,339 @@ fun NoArrowsTimerScreen(
             }
 
 
+            // -------------------------------------------------
+            // --- Different functions for responsive layout ---
+            // -------------------------------------------------
+
+            //-- The screen view title --
+            /**
+             * Checks if all selections have been made
+             */
+            fun allSelectionsMade(): Boolean {
+                return selectedDurationString != null &&
+                        numberOfRepetitions != null &&
+                        numberOfSeries != null
+            }
+
+            //-- The Start button stuff --
+            val buttonScaling = 1f / 17.8f
+            val buttonHeight = availableHeightForContentDp.value * buttonScaling
+
+            /**
+             * The Start button on-click lambda
+             */
+            val onStartButtonClick = {
+                if (isTimerRunning) {
+                    pauseCountdowns()
+                } else if (isTimerStopped) {
+                    resumeCountdowns()
+                } else {
+                    // Trying to Start (or Restart after session completion)
+                    startNewSession(allSelectionsMade())
+                }
+            }
+
+
+            // ------------------------------------------------------
+            // --- The different blocks of UI Items (DRY concept) ---
+            // ------------------------------------------------------
+
+            /**
+             * The screen title block
+             */
+            @Composable
+            fun ViewTitleBlock() {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(0.dp),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    ViewHeader(
+                        stringResource(id = R.string.series_view_title),
+                        Modifier
+                            .padding(bottom = generalPadding)
+                            .scale(scaleFactor)
+                    )
+                }
+            }
+
+            /**
+             * The Countdowns block
+             */
+            @Composable
+            fun CountdownsBlock(
+                countdownsRowModifier: Modifier
+            ) {
+                // Shows the start button row
+                StartButtonRow(
+                    allSelectionsMade(),
+                    isTimerRunning,
+                    isRestMode,
+                    customInteractiveTextStyle,
+                    buttonHeight,
+                    onStartButtonClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = deviceScaling(8).dp)
+                        .height(buttonHeight.dp),
+                    rowHorizontalArrangement = Arrangement.Center
+                )
+
+
+                // --- 3. Second Row: Timer and Countdowns ---
+                Row(
+                    modifier = countdownsRowModifier
+                        .fillMaxWidth()
+                        .background(AppTimerRowBackgroundColor)
+                        .padding(vertical = deviceScaling(4).dp)
+                        .let {
+                            // Conditionally apply the clickable modifier
+                            if (allSelectionsMade() && !isRestMode) {
+                                it.clickable(
+                                    interactionSource = remember { MutableInteractionSource() }, // To disable ripple if desired
+                                    indication = null, // Set to 'LocalIndication.current' for default ripple or custom
+                                    onClick = {
+                                        // Send a signal to our ViewModel to toggle pause/resume
+                                        // This signal should be handled by our session state automaton
+                                        if (isTimerRunning) {
+                                            pauseCountdowns()
+                                        } else {
+                                            // Ensure we only resume if there's time left and it's not completed
+                                            startNewSession(true)  // Notice: (allSelectionsMade) is always true here
+                                        }
+                                    }
+                                )
+                            } else {
+                                it // Not clickable if conditions aren't met
+                            }
+                        },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    //-- Left Cell (Big Timer Display) --
+                    TimerCountdownConstrainedBox(
+                        selectedDurationString,
+                        initialDurationSeconds,
+                        currentDurationSecondsLeft,
+                        numberOfRepetitions,
+                        currentRepetitionsLeft,
+                        currentRestTimeLeft,
+                        isTimerRunning,
+                        isTimerStopped,
+                        isDimmedDisplay(),
+                        isRestMode,
+                        restModeText,
+                        mainTimerStrokeWidthDp,
+                        TimerBorderColor,
+                        DimmedTimerBorderColor,
+                        TimerRestColor,
+                        ProgressBorderColor,
+                        DimmedProgressBorderColor,
+                        heightScalingFactor,
+                        widthScalingFactor,
+                        modifier = Modifier
+                            .weight(0.70f)
+                            .fillMaxWidth()
+                            .fillMaxHeight(),
+                        boxContentAlignment = Alignment.Center
+                    )
+
+                    //-- Right Control Cell (Small Series Countdown Display) --
+                    val seriesStrokeWidthPx = with(LocalDensity.current) {
+                        deviceScaling(7).dp.toPx()
+                    }
+
+                    val localPaddingPx = with(LocalDensity.current) {
+                        deviceScaling(8).dp.toPx()
+                    }
+
+                    SeriesCountdownConstrainedBox(
+                        initialDurationSeconds,
+                        currentDurationSecondsLeft,
+                        numberOfRepetitions,
+                        currentRepetitionsLeft,
+                        numberOfSeries,
+                        currentSeriesLeft,
+                        isTimerRunning,
+                        isTimerStopped,
+                        isDimmedDisplay(),
+                        TimerBorderColor,
+                        DimmedTimerBorderColor,
+                        TimerRestColor,
+                        ProgressBorderColor,
+                        DimmedProgressBorderColor,
+                        seriesStrokeWidthPx,
+                        localPaddingPx,
+                        modifier = Modifier.weight(0.3f), // 30% of this Row's width,
+                        boxContentAlignment = Alignment.Center
+                    )
+                }
+            }
+
+            /**
+             * The Selection Items block
+             */
+            @Composable
+            fun SelectionItemsBlock() {
+                // --- 4. SECTION FOR SELECTABLE ITEMS & RELATED TEXTS ---
+                // (Repetitions duration, Number of repetitions, etc.)
+                // This section appears *under* the countdowns and has its own height.
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth() // Take full width
+                        .wrapContentHeight() // Take only necessary vertical space for its content
+                        .padding(top = deviceScaling(16).dp, bottom = deviceScaling(4).dp),
+                ) {
+                    //-- Shows the "Please select ..." text only if not all selections have been made --
+                    PleaseSelectText(
+                        allSelectionsMade(),
+                        smallerTextStyle,
+                        Modifier.align(Alignment.CenterHorizontally),
+                    )
+
+                    //-- Shows the block for the selection of durations of repetitions --
+                    Spacer(modifier = Modifier.height(majorSpacerHeight))
+
+                    // Title first
+                    RepetitionsDurationTitle(
+                        customInteractiveTextStyle,
+                        Modifier
+                            .padding(bottom = generalPadding)
+                            .wrapContentHeight()
+                            .align(Alignment.CenterHorizontally),
+                    )
+
+                    // Then row of duration buttons
+                    RepetitionsDurationButtons(
+                        selectedDurationString = selectedDurationString,
+                        onDurationSelected = { newDuration ->
+                            selectedDurationString = newDuration
+                        },
+                        durationOptions = durationOptions,
+                        borderStrokeWidth = deviceScaling(5).dp,
+                        durationButtonHeight = selectionItemsBaseSizeDp,
+                        durationsTextStyle = customInteractiveTextStyle,
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                    )
+
+
+                    //-- Shows the block for the selection of number of repetitions --
+                    Spacer(modifier = Modifier.height(majorSpacerHeight))
+
+                    // The block title for repetitions numbers
+                    RepetitionsNumberTitle(
+                        customInteractiveTextStyle,
+                        Modifier
+                            .padding(bottom = generalPadding)
+                            .wrapContentHeight()
+                            .align(Alignment.CenterHorizontally)
+                    )
+
+                    // Then the actual selector
+                    RepetitionsSelectorWithScrollIndicators(
+                        // Repetition lazy row with arrows
+                        numberOfRepetitions = numberOfRepetitions, //The state variable for the current selection
+                        onRepetitionSelected = { selected -> numberOfRepetitions = selected },
+                        repetitionsListState = repetitionsLazyListState, // Pass the state
+                        repetitionsRange = repetitionRange,
+                        numbersTextStyle = customInteractiveTextStyle,
+                        arrowButtonSizeDp = deviceScaling(24).dp,
+                        horizontalSpaceArrangement = deviceScaling(8).dp,
+                        repetitionBoxSize = selectionItemsBaseSizeDp, //deviceScaling(48).dp,
+                        borderStrokeWidth = deviceScaling(4).dp,
+                    )
+
+
+                    //-- Shows the block for the selection of number of series --
+                    Spacer(modifier = Modifier.height(majorSpacerHeight * 1.8f))
+
+                    // The block title
+                    SeriesNumberTitle(
+                        customInteractiveTextStyle,
+                        Modifier
+                            .padding(bottom = generalPadding)
+                            .wrapContentHeight()
+                            .align(Alignment.CenterHorizontally)
+                    )
+
+                    // Then the actual selector
+                    // Checks first the available display width against the series-options list width
+                    with(LocalDensity.current) {
+                        val horizontalSpaceArrangementPx = deviceScaling(8).dp.toPx()
+                        val seriesBoxSizePx = selectionItemsBaseSizeDp.toPx()  //seriesBoxSize.toPx()
+                        val visibleWidth =
+                            availableWidthForContentDp.toPx() - 2 * mainHorizontalSpacingDp.toPx()
+
+                        while (seriesOptions.size > 1 &&
+                            seriesOptions.size * (seriesBoxSizePx + horizontalSpaceArrangementPx) -
+                            horizontalSpaceArrangementPx > visibleWidth
+                        ) {
+                            // Removes one of the Series number, let's says the one in second position (index 1)
+                            seriesOptions.removeAt(1)
+                        }
+                    }
+                    // Then displays the selector row
+                    SeriesNumbersButtons(
+                        numberOfSeries = numberOfSeries,
+                        onNumberSelected = { seriesCount: Int -> numberOfSeries = seriesCount },
+                        seriesOptions = seriesOptions,
+                        borderStrokeWidth = deviceScaling(4).dp,
+                        seriesBoxSize = selectionItemsBaseSizeDp,  //seriesBoxSize,
+                        textStyle = customInteractiveTextStyle,
+                        horizontalSpacing = deviceScaling(10).dp,
+                        horizontalArrangement = Arrangement.Center,
+                        rowModifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                    )
+
+
+                    //-- Checkbox for intermediate beeps --
+                    Spacer(modifier = Modifier.height(majorSpacerHeight * 0.6f))
+
+                    // Shows the whole row, which is toggleable - not just the checkbox
+                    IntermediateBeepsCheckedRow(
+                        intermediateBeepsChecked = intermediateBeepsChecked,
+                        allSelectionsMade = allSelectionsMade(),
+                        scaleFactor = scaleFactor,
+                        horizontalSpacer = deviceScaling(6).dp,
+                        textStyle = smallerTextStyle,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .wrapContentHeight()
+                            .padding(top = deviceScaling(4).dp, bottom = 0.dp)
+                            .toggleable(
+                                value = intermediateBeepsChecked ?: false,
+                                role = Role.Checkbox,
+                                enabled = allSelectionsMade(),
+                                onValueChange = {
+                                    intermediateBeepsChecked = !intermediateBeepsChecked!!
+                                }
+                            )
+                            .align(Alignment.CenterHorizontally),
+                    )
+                }
+            }
+
+            /**
+             * The bottom-right logo image
+             */
+            @Composable
+            fun BottomEndLogoImage() {
+                LogoImage(
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = deviceScaling(16).dp)
+                        .size(deviceScaling(34).dp)
+                )
+            }
+
+            // ---------------------------------------------------------------------
             // --- A Main Column for the entire screen content (portrait layout) ---
+            // ---------------------------------------------------------------------
             @Composable
             fun OneColumn() {
                 Column(
@@ -722,315 +1054,35 @@ fun NoArrowsTimerScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     // Add verticalArrangement as needed, e.g., Arrangement.SpaceAround
                 ) {
-                    // Determine if all selections are made
-                    val allSelectionsMade = selectedDurationString != null &&
-                            numberOfRepetitions != null &&
-                            numberOfSeries != null
+                    // Title of Series View
+                    ViewTitleBlock()
 
+                    // The block of countdowns
+                    CountdownsBlock(Modifier.weight(1f))
 
-                    // --- 1. Title of Series View ---
-                    ViewHeader(
-                        stringResource(id = R.string.series_view_title),
-                        Modifier
-                            .padding(bottom = generalPadding)
-                            .align(Alignment.CenterHorizontally)
-                            .scale(scaleFactor)
-                    )
-
-
-                    // --- 2. First Row: Start Button and related items ---
-                    val buttonScaling = 1f / 17.8f
-                    val buttonHeight =
-                        availableHeightForContentDp.value * buttonScaling  //currentScreenHeightDp.value * buttonScaling
-
-                    // the start button on-click lambda
-                    val onStartButtonClick = {
-                        if (isTimerRunning) {
-                            pauseCountdowns()
-                        } else if (isTimerStopped) {
-                            resumeCountdowns()
-                        } else {
-                            // Trying to Start (or Restart after session completion)
-                            startNewSession(allSelectionsMade)
-                        }
-                    }
-
-                    // Shows the start button row
-                    StartButtonRow(
-                        allSelectionsMade,
-                        isTimerRunning,
-                        isRestMode,
-                        customInteractiveTextStyle,
-                        buttonHeight,
-                        onStartButtonClick,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = deviceScaling(8).dp)
-                            .height(buttonHeight.dp),
-                        rowHorizontalArrangement = Arrangement.Center
-                    )
-
-
-                    // --- 3. Second Row: Timer and Countdowns ---
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
-                            .background(AppTimerRowBackgroundColor)
-                            .padding(vertical = deviceScaling(4).dp)
-                            .let {
-                                // Conditionally apply the clickable modifier
-                                if (allSelectionsMade && !isRestMode) {
-                                    it.clickable(
-                                        interactionSource = remember { MutableInteractionSource() }, // To disable ripple if desired
-                                        indication = null, // Set to 'LocalIndication.current' for default ripple or custom
-                                        onClick = {
-                                            // Send a signal to our ViewModel to toggle pause/resume
-                                            // This signal should be handled by our session state automaton
-                                            if (isTimerRunning) {
-                                                pauseCountdowns()
-                                            } else {
-                                                // Ensure we only resume if there's time left and it's not completed
-                                                startNewSession(true)  // Notice: (allSelectionsMade) is always true here
-                                            }
-                                        }
-                                    )
-                                } else {
-                                    it // Not clickable if conditions aren't met
-                                }
-                            },
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        //-- Left Cell (Big Timer Display) --
-                        TimerCountdownConstrainedBox(
-                            selectedDurationString,
-                            initialDurationSeconds,
-                            currentDurationSecondsLeft,
-                            numberOfRepetitions,
-                            currentRepetitionsLeft,
-                            currentRestTimeLeft,
-                            isTimerRunning,
-                            isTimerStopped,
-                            isDimmedDisplay(),
-                            isRestMode,
-                            restModeText,
-                            mainTimerStrokeWidthDp,
-                            TimerBorderColor,
-                            DimmedTimerBorderColor,
-                            TimerRestColor,
-                            ProgressBorderColor,
-                            DimmedProgressBorderColor,
-                            heightScalingFactor,
-                            widthScalingFactor,
-                            modifier = Modifier
-                                .weight(0.70f)
-                                .fillMaxWidth()
-                                .fillMaxHeight(),
-                            boxContentAlignment = Alignment.Center
-                        )
-
-                        //-- Right Control Cell (Small Series Countdown Display) --
-                        val seriesStrokeWidthPx = with(LocalDensity.current) {
-                            deviceScaling(7).dp.toPx()
-                        }
-
-                        val localPaddingPx = with(LocalDensity.current) {
-                            deviceScaling(8).dp.toPx()
-                        }
-
-                        SeriesCountdownConstrainedBox(
-                            initialDurationSeconds,
-                            currentDurationSecondsLeft,
-                            numberOfRepetitions,
-                            currentRepetitionsLeft,
-                            numberOfSeries,
-                            currentSeriesLeft,
-                            isTimerRunning,
-                            isTimerStopped,
-                            isDimmedDisplay(),
-                            TimerBorderColor,
-                            DimmedTimerBorderColor,
-                            TimerRestColor,
-                            ProgressBorderColor,
-                            DimmedProgressBorderColor,
-                            seriesStrokeWidthPx,
-                            localPaddingPx,
-                            modifier = Modifier.weight(0.3f), // 30% of this Row's width,
-                            boxContentAlignment = Alignment.Center
-                        )
-                    }
-
-                    // --- 4. SECTION FOR SELECTABLE ITEMS & RELATED TEXTS ---
-                    // (Repetitions duration, Number of repetitions, etc.)
-                    // This section appears *under* the countdowns and has its own height.
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth() // Take full width
-                            .wrapContentHeight() // Take only necessary vertical space for its content
-                            .padding(top = deviceScaling(16).dp, bottom = deviceScaling(4).dp),
-                    ) {
-                        //-- Shows the "Please select ..." text only if not all selections have been made --
-                        PleaseSelectText(
-                            allSelectionsMade,
-                            smallerTextStyle,
-                            Modifier.align(Alignment.CenterHorizontally),
-                        )
-
-                        //-- Shows the block for the selection of durations of repetitions --
-                        Spacer(modifier = Modifier.height(majorSpacerHeight))
-
-                        // Title first
-                        RepetitionsDurationTitle(
-                            customInteractiveTextStyle,
-                            Modifier
-                                .padding(bottom = generalPadding)
-                                .wrapContentHeight()
-                                .align(Alignment.CenterHorizontally),
-                        )
-
-                        // Then row of duration buttons
-                        RepetitionsDurationButtons(
-                            selectedDurationString = selectedDurationString,
-                            onDurationSelected = { newDuration ->
-                                selectedDurationString = newDuration
-                            },
-                            durationOptions = durationOptions,
-                            borderStrokeWidth = deviceScaling(5).dp,
-                            durationButtonHeight = selectionItemsBaseSizeDp,
-                            durationsTextStyle = customInteractiveTextStyle,
-                            horizontalArrangement = Arrangement.Center,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .wrapContentHeight()
-                        )
-
-
-                        //-- Shows the block for the selection of number of repetitions --
-                        Spacer(modifier = Modifier.height(majorSpacerHeight))
-
-                        // The block title for repetitions numbers
-                        RepetitionsNumberTitle(
-                            customInteractiveTextStyle,
-                            Modifier
-                                .padding(bottom = generalPadding)
-                                .wrapContentHeight()
-                                .align(Alignment.CenterHorizontally)
-                        )
-
-                        // Then the actual selector
-                        RepetitionsSelectorWithScrollIndicators(
-                            // Repetition lazy row with arrows
-                            numberOfRepetitions = numberOfRepetitions, //The state variable for the current selection
-                            onRepetitionSelected = { selected -> numberOfRepetitions = selected },
-                            repetitionsListState = repetitionsLazyListState, // Pass the state
-                            repetitionsRange = repetitionRange,
-                            numbersTextStyle = customInteractiveTextStyle,
-                            arrowButtonSizeDp = deviceScaling(24).dp,
-                            horizontalSpaceArrangement = deviceScaling(8).dp,
-                            repetitionBoxSize = selectionItemsBaseSizeDp, //deviceScaling(48).dp,
-                            borderStrokeWidth = deviceScaling(4).dp,
-                        )
-
-
-                        //-- Shows the block for the selection of number of series --
-                        Spacer(modifier = Modifier.height(majorSpacerHeight * 1.8f))
-
-                        // The block title
-                        SeriesNumberTitle(
-                            customInteractiveTextStyle,
-                            Modifier
-                                .padding(bottom = generalPadding)
-                                .wrapContentHeight()
-                                .align(Alignment.CenterHorizontally)
-                        )
-
-                        // Then the actual selector
-                        // Checks first the available display width against the series-options list width
-                        with(LocalDensity.current) {
-                            val horizontalSpaceArrangementPx = deviceScaling(8).dp.toPx()
-                            val seriesBoxSizePx = selectionItemsBaseSizeDp.toPx()  //seriesBoxSize.toPx()
-                            val visibleWidth =
-                                availableWidthForContentDp.toPx() - 2 * mainHorizontalSpacingDp.toPx()
-
-                            while (seriesOptions.size > 1 &&
-                                seriesOptions.size * (seriesBoxSizePx + horizontalSpaceArrangementPx) -
-                                horizontalSpaceArrangementPx > visibleWidth
-                            ) {
-                                // Removes one of the Series number, let's says the one in second position (index 1)
-                                seriesOptions.removeAt(1)
-                            }
-                        }
-                        // Then displays the selector row
-                        SeriesNumbersButtons(
-                            numberOfSeries = numberOfSeries,
-                            onNumberSelected = { seriesCount: Int -> numberOfSeries = seriesCount },
-                            seriesOptions = seriesOptions,
-                            borderStrokeWidth = deviceScaling(4).dp,
-                            seriesBoxSize = selectionItemsBaseSizeDp,  //seriesBoxSize,
-                            textStyle = customInteractiveTextStyle,
-                            horizontalSpacing = deviceScaling(10).dp,
-                            horizontalArrangement = Arrangement.Center,
-                            rowModifier = Modifier
-                                .fillMaxWidth()
-                                .wrapContentHeight()
-                        )
-
-
-                        //-- Checkbox for intermediate beeps --
-                        Spacer(modifier = Modifier.height(majorSpacerHeight))
-
-                        // Shows the whole row, which is toggleable - not just the checkbox
-                        IntermediateBeepsCheckedRow(
-                            intermediateBeepsChecked = intermediateBeepsChecked,
-                            allSelectionsMade = allSelectionsMade,
-                            scaleFactor = scaleFactor,
-                            horizontalSpacer = deviceScaling(6).dp,
-                            textStyle = smallerTextStyle,
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .wrapContentHeight()
-                                .padding(top = deviceScaling(4).dp, bottom = 0.dp)
-                                .toggleable(
-                                    value = intermediateBeepsChecked ?: false,
-                                    role = Role.Checkbox,
-                                    enabled = allSelectionsMade,
-                                    onValueChange = {
-                                        intermediateBeepsChecked = !intermediateBeepsChecked!!
-                                    }
-                                )
-                                .align(Alignment.CenterHorizontally),
-                        )
-                    }
+                    // The block of selection items & related texts
+                    // This block takes the remaining height
+                    SelectionItemsBlock()
                 }
 
-
-                // --- Finally, add Logo Here - Aligned to Bottom-Right ---
-                LogoImage(
-                    Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(end = deviceScaling(16).dp)
-                        .size(deviceScaling(34).dp)
-                )
+                // Finally, add Logo Here - Aligned to Bottom-Right
+                BottomEndLogoImage()
             }
 
 
+            // ----------------------------------------------------------------------------
             // --- Two Columns for the entire screen content (landscape or book layout) ---
+            // ----------------------------------------------------------------------------
             @Composable
             fun TwoColumns(equallySized: Boolean = false) {
                 Column(modifier = Modifier
                     .padding(horizontal = mainHorizontalSpacingDp)
                     .fillMaxSize()
                 ) {
-                    // --- 1. Title of Series View ---
-                    ViewHeader(
-                        stringResource(id = R.string.series_view_title),
-                        Modifier
-                            .padding(bottom = generalPadding)
-                            .align(Alignment.CenterHorizontally)
-                            .scale(scaleFactor)
-                    )
+                    // Title of Series View
+                    ViewTitleBlock()
 
-                    // --- The two main columns in next row ---
+                    // The two main columns in next row
                     Row(
                         modifier = Modifier
                             .padding(mainHorizontalSpacingDp)
@@ -1039,139 +1091,14 @@ fun NoArrowsTimerScreen(
                         val leftWeight = if (equallySized) 0.5f else 0.6f
                         val rightWeight = 1f - leftWeight
 
-                        // Determine if all selections are made
-                        val allSelectionsMade = selectedDurationString != null &&
-                                numberOfRepetitions != null &&
-                                numberOfSeries != null
-
-                        // Left column with start button, and timer countdowns
+                        // Left column with start button and timer countdowns
                         Column(
                             modifier = Modifier
                                 .weight(leftWeight)
                                 .padding(end = mainHorizontalSpacingDp),
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
-                            // --- 2. First Row: Start Button and related items ---
-                            val buttonScaling = 1f / 17.8f
-                            val buttonHeight =
-                                availableWidthForContentDp.value * buttonScaling  //currentScreenHeightDp.value * buttonScaling
-
-                            // the start button on-click lambda
-                            val onStartButtonClick = {
-                                if (isTimerRunning) {
-                                    pauseCountdowns()
-                                } else if (isTimerStopped) {
-                                    resumeCountdowns()
-                                } else {
-                                    // Trying to Start (or Restart after session completion)
-                                    startNewSession(allSelectionsMade)
-                                }
-                            }
-
-                            // Shows the start button row
-                            StartButtonRow(
-                                allSelectionsMade,
-                                isTimerRunning,
-                                isRestMode,
-                                customInteractiveTextStyle,
-                                buttonHeight,
-                                onStartButtonClick,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = mainHorizontalSpacingDp)
-                                    .height(buttonHeight.dp),
-                                rowHorizontalArrangement = Arrangement.Center
-                            )
-
-
-                            // --- 3. Second Row: Timer and Countdowns ---
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f)
-                                    .background(AppTimerRowBackgroundColor)
-                                    .padding(vertical = deviceScaling(4).dp)
-                                    .let {
-                                        // Conditionally apply the clickable modifier
-                                        if (allSelectionsMade && !isRestMode) {
-                                            it.clickable(
-                                                interactionSource = remember { MutableInteractionSource() }, // To disable ripple if desired
-                                                indication = null, // Set to 'LocalIndication.current' for default ripple or custom
-                                                onClick = {
-                                                    // Send a signal to our ViewModel to toggle pause/resume
-                                                    // This signal should be handled by our session state automaton
-                                                    if (isTimerRunning) {
-                                                        pauseCountdowns()
-                                                    } else {
-                                                        // Ensure we only resume if there's time left and it's not completed
-                                                        startNewSession(true)  // Notice: (allSelectionsMade) is always true here
-                                                    }
-                                                }
-                                            )
-                                        } else {
-                                            it // Not clickable if conditions aren't met
-                                        }
-                                    },
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                //-- Left Cell (Big Timer Display) --
-                                TimerCountdownConstrainedBox(
-                                    selectedDurationString,
-                                    initialDurationSeconds,
-                                    currentDurationSecondsLeft,
-                                    numberOfRepetitions,
-                                    currentRepetitionsLeft,
-                                    currentRestTimeLeft,
-                                    isTimerRunning,
-                                    isTimerStopped,
-                                    isDimmedDisplay(),
-                                    isRestMode,
-                                    restModeText,
-                                    mainTimerStrokeWidthDp,
-                                    TimerBorderColor,
-                                    DimmedTimerBorderColor,
-                                    TimerRestColor,
-                                    ProgressBorderColor,
-                                    DimmedProgressBorderColor,
-                                    heightScalingFactor,
-                                    widthScalingFactor,
-                                    modifier = Modifier
-                                        .weight(0.70f)
-                                        .fillMaxWidth()
-                                        .fillMaxHeight(),
-                                    boxContentAlignment = Alignment.Center
-                                )
-
-                                //-- Right Control Cell (Small Series Countdown Display) --
-                                val seriesStrokeWidthPx = with(LocalDensity.current) {
-                                    deviceScaling(7).dp.toPx()
-                                }
-
-                                val localPaddingPx = with(LocalDensity.current) {
-                                    deviceScaling(8).dp.toPx()
-                                }
-
-                                SeriesCountdownConstrainedBox(
-                                    initialDurationSeconds,
-                                    currentDurationSecondsLeft,
-                                    numberOfRepetitions,
-                                    currentRepetitionsLeft,
-                                    numberOfSeries,
-                                    currentSeriesLeft,
-                                    isTimerRunning,
-                                    isTimerStopped,
-                                    isDimmedDisplay(),
-                                    TimerBorderColor,
-                                    DimmedTimerBorderColor,
-                                    TimerRestColor,
-                                    ProgressBorderColor,
-                                    DimmedProgressBorderColor,
-                                    seriesStrokeWidthPx,
-                                    localPaddingPx,
-                                    modifier = Modifier.weight(0.3f), // 30% of this Row's width,
-                                    boxContentAlignment = Alignment.Center
-                                )
-                            }
+                            CountdownsBlock(Modifier.weight(1f))
                         }
 
                         // Right column with the selection items
@@ -1182,167 +1109,13 @@ fun NoArrowsTimerScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Bottom
                         ) {
-                            // --- 4. SECTION FOR SELECTABLE ITEMS & RELATED TEXTS ---
-                            // (Repetitions duration, Number of repetitions, etc.)
-                            // This section appears *under* the countdowns and has its own height.
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth() // Take full width
-                                    .wrapContentHeight() // Take only necessary vertical space for its content
-                                    .padding(
-                                        start = mainHorizontalSpacingDp,
-                                        top = deviceScaling(16).dp,
-                                        bottom = deviceScaling(4).dp
-                                    ),
-                            ) {
-                                //-- Shows the "Please select ..." text only if not all selections have been made --
-                                PleaseSelectText(
-                                    allSelectionsMade,
-                                    smallerTextStyle,
-                                    Modifier.align(Alignment.CenterHorizontally),
-                                )
-
-                                //-- Shows the block for the selection of durations of repetitions --
-                                Spacer(modifier = Modifier.height(majorSpacerHeight))
-
-                                // Title first
-                                RepetitionsDurationTitle(
-                                    customInteractiveTextStyle,
-                                    Modifier
-                                        .padding(bottom = generalPadding)
-                                        .wrapContentHeight()
-                                        .align(Alignment.CenterHorizontally),
-                                )
-
-                                // Then row of duration buttons
-                                RepetitionsDurationButtons(
-                                    selectedDurationString = selectedDurationString,
-                                    onDurationSelected = { newDuration ->
-                                        selectedDurationString = newDuration
-                                    },
-                                    durationOptions = durationOptions,
-                                    borderStrokeWidth = deviceScaling(5).dp,
-                                    durationButtonHeight = selectionItemsBaseSizeDp,
-                                    durationsTextStyle = customInteractiveTextStyle,
-                                    horizontalArrangement = Arrangement.Center,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .wrapContentHeight()
-                                )
-
-
-                                //-- Shows the block for the selection of number of repetitions --
-                                Spacer(modifier = Modifier.height(majorSpacerHeight))
-
-                                // The block title for repetitions numbers
-                                RepetitionsNumberTitle(
-                                    customInteractiveTextStyle,
-                                    Modifier
-                                        .padding(bottom = generalPadding)
-                                        .wrapContentHeight()
-                                        .align(Alignment.CenterHorizontally)
-                                )
-
-                                // Then the actual selector
-                                RepetitionsSelectorWithScrollIndicators(
-                                    // Repetition lazy row with arrows
-                                    numberOfRepetitions = numberOfRepetitions, //The state variable for the current selection
-                                    onRepetitionSelected = { selected ->
-                                        numberOfRepetitions = selected
-                                    },
-                                    repetitionsListState = repetitionsLazyListState, // Pass the state
-                                    repetitionsRange = repetitionRange,
-                                    numbersTextStyle = customInteractiveTextStyle,
-                                    arrowButtonSizeDp = deviceScaling(24).dp,
-                                    horizontalSpaceArrangement = deviceScaling(8).dp,
-                                    repetitionBoxSize = selectionItemsBaseSizeDp,  //deviceScaling(48).dp,
-                                    borderStrokeWidth = deviceScaling(4).dp,
-                                )
-
-
-                                //-- Shows the block for the selection of number of series --
-                                Spacer(modifier = Modifier.height(majorSpacerHeight * 1.8f))
-
-                                // The block title
-                                SeriesNumberTitle(
-                                    customInteractiveTextStyle,
-                                    Modifier
-                                        .padding(bottom = generalPadding)
-                                        .wrapContentHeight()
-                                        .align(Alignment.CenterHorizontally)
-                                )
-
-                                // Then the actual selector
-                                // Checks first the available display width against the series-options list width
-                                with(LocalDensity.current) {
-                                    val horizontalSpaceArrangementPx = deviceScaling(8).dp.toPx()
-                                    val seriesBoxSizePx = selectionItemsBaseSizeDp.toPx()  //seriesBoxSize.toPx()
-                                    val visibleWidth =
-                                        availableWidthForContentDp.toPx() - 2 * mainHorizontalSpacingDp.toPx()
-
-                                    while (seriesOptions.size > 1 &&
-                                        seriesOptions.size * (seriesBoxSizePx + horizontalSpaceArrangementPx) -
-                                        horizontalSpaceArrangementPx > visibleWidth
-                                    ) {
-                                        // Removes one of the Series number, let's says the one in second position (index 1)
-                                        seriesOptions.removeAt(1)
-                                    }
-                                }
-                                // Then displays the selector row
-                                SeriesNumbersButtons(
-                                    numberOfSeries = numberOfSeries,
-                                    onNumberSelected = { seriesCount: Int ->
-                                        numberOfSeries = seriesCount
-                                    },
-                                    seriesOptions = seriesOptions,
-                                    borderStrokeWidth = deviceScaling(4).dp,
-                                    seriesBoxSize = selectionItemsBaseSizeDp,  //seriesBoxSize,
-                                    textStyle = customInteractiveTextStyle,
-                                    horizontalSpacing = deviceScaling(10).dp,
-                                    horizontalArrangement = Arrangement.Center,
-                                    rowModifier = Modifier
-                                        .fillMaxWidth()
-                                        .wrapContentHeight()
-                                )
-
-
-                                //-- Checkbox for intermediate beeps --
-                                Spacer(modifier = Modifier.height(majorSpacerHeight))
-
-                                // Shows the whole row, which is toggleable - not just the checkbox
-                                IntermediateBeepsCheckedRow(
-                                    intermediateBeepsChecked = intermediateBeepsChecked,
-                                    allSelectionsMade = allSelectionsMade,
-                                    scaleFactor = scaleFactor,
-                                    horizontalSpacer = deviceScaling(6).dp,
-                                    textStyle = smallerTextStyle,
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier
-                                        .wrapContentHeight()
-                                        .padding(top = deviceScaling(4).dp, bottom = 0.dp)
-                                        .toggleable(
-                                            value = intermediateBeepsChecked ?: false,
-                                            role = Role.Checkbox,
-                                            enabled = allSelectionsMade,
-                                            onValueChange = {
-                                                intermediateBeepsChecked =
-                                                    !intermediateBeepsChecked!!
-                                            }
-                                        )
-                                        .align(Alignment.CenterHorizontally),
-                                )
-                            }
+                            SelectionItemsBlock()
                         }
                     }
                 }
 
                 // --- Finally, add Logo here - Aligned to Bottom-Right ---
-                LogoImage(
-                    Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(end = deviceScaling(16).dp)
-                        .size(deviceScaling(34).dp)
-                )
+                BottomEndLogoImage()
             }
 
 
@@ -1356,21 +1129,8 @@ fun NoArrowsTimerScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     // Add verticalArrangement as needed, e.g., Arrangement.SpaceAround
                 ) {
-                    // Determine if all selections are made
-                    val allSelectionsMade = selectedDurationString != null &&
-                            numberOfRepetitions != null &&
-                            numberOfSeries != null
-
-
-                    // --- 1. Title of Series View ---
-                    ViewHeader(
-                        stringResource(id = R.string.series_view_title),
-                        Modifier
-                            .padding(bottom = generalPadding)
-                            .align(Alignment.CenterHorizontally)
-                            .scale(scaleFactor)
-                    )
-
+                    // Title of Series View
+                    ViewTitleBlock()
 
                     // --- Upper row with Start button and countdowns ---
                     val upperNearlyHalfWeight = 0.47f
@@ -1387,8 +1147,9 @@ fun NoArrowsTimerScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             // Add verticalArrangement as needed, e.g., Arrangement.SpaceAround
                         ) {
+                            CountdownsBlock(Modifier.weight(1f))
 
-                            // --- 2. First Row: Start Button and related items ---
+                            /*// --- 2. First Row: Start Button and related items ---
                             val buttonScaling = 1f / 17.8f
                             val buttonHeight =
                                 availableHeightForContentDp.value * buttonScaling  //currentScreenHeightDp.value * buttonScaling
@@ -1508,7 +1269,7 @@ fun NoArrowsTimerScreen(
                                     modifier = Modifier.weight(0.3f), // 30% of this Row's width,
                                     boxContentAlignment = Alignment.Center
                                 )
-                            }
+                            }*/
                         }
                     }
 
@@ -1521,8 +1282,9 @@ fun NoArrowsTimerScreen(
                             .weight(1f - upperNearlyHalfWeight), // the other nearly half of the available height
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
+                        SelectionItemsBlock()
 
-                        // --- 4. SECTION FOR SELECTABLE ITEMS & RELATED TEXTS ---
+                        /*// --- 4. SECTION FOR SELECTABLE ITEMS & RELATED TEXTS ---
                         // (Repetitions duration, Number of repetitions, etc.)
                         // This section appears *under* the countdowns and has its own height.
                         Column(
@@ -1644,7 +1406,7 @@ fun NoArrowsTimerScreen(
 
 
                             //-- Checkbox for intermediate beeps --
-                            Spacer(modifier = Modifier.height(majorSpacerHeight))
+                            Spacer(modifier = Modifier.height(majorSpacerHeight * 0.6f))
 
                             // Shows the whole row, which is toggleable - not just the checkbox
                             IntermediateBeepsCheckedRow(
@@ -1667,18 +1429,12 @@ fun NoArrowsTimerScreen(
                                     )
                                     .align(Alignment.CenterHorizontally),
                             )
-                        }
+                        }*/
                     }
                 }
 
-
                 // --- Finally, add Logo Here - Aligned to Bottom-Right ---
-                LogoImage(
-                    Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(end = deviceScaling(16).dp)
-                        .size(deviceScaling(34).dp)
-                )
+                BottomEndLogoImage()
             }
 
 
