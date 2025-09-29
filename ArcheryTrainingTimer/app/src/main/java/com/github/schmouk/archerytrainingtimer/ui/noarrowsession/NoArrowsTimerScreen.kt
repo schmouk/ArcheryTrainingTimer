@@ -728,7 +728,8 @@ fun NoArrowsTimerScreen(
 
             //-- The Start button stuff --
             val buttonScaling = 1f / 17.8f
-            val buttonHeight = availableHeightForContentDp.value * buttonScaling
+            val buttonHeight =
+                (availableHeightForContentDp.value * buttonScaling).coerceAtLeast(32f)
 
             /**
              * The Start button on-click lambda
