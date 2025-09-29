@@ -618,7 +618,8 @@ fun NoArrowsTimerScreen(
                                 // current repetition timer tick
                                 if (isTimerRunning)
                                     delay(countDownDelay)
-                                currentDurationSecondsLeft = currentDurationSecondsLeft!! - 1
+                                if (!isTimerStopped)
+                                    currentDurationSecondsLeft = currentDurationSecondsLeft!! - 1
                                 // intermediate beep logic
                                 if (intermediateBeepsChecked != null &&
                                     intermediateBeepsChecked == true &&
