@@ -59,8 +59,8 @@ fun RepetitionsNumberTitle(
     textStyle: TextStyle,
     modifier: Modifier = Modifier
 ) {
-    Text( // Number of repetitions title
-        text = stringResource(id = R.string.repetitions_number_label),
+    Text(
+        text = stringResource(R.string.repetitions_number_label),
         style = textStyle,
         color = AppTextColor,
         modifier = modifier
