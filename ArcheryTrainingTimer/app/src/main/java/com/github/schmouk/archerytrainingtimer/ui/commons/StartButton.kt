@@ -63,7 +63,7 @@ fun BigStartButton(
                 color = if (allSelectionsMade && !isRestMode) AppButtonTextColor
                 else AppButtonTextColor.copy(alpha = 0.5f)
             ),
-            fontSize = (18 * buttonHeight / 35f).sp
+            fontSize = (18f * buttonHeight / 35f).sp
         )
     }
 }
