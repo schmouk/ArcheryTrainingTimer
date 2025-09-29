@@ -22,7 +22,6 @@ import com.github.schmouk.archerytrainingtimer.ui.theme.AppTitleColor
  */
 @Composable
 fun PleaseSelectText(
-    allSelectionsMade: Boolean,
     textStyle: TextStyle,
     modifier: Modifier = Modifier,
 ) {
@@ -30,7 +29,7 @@ fun PleaseSelectText(
         text = stringResource(id = R.string.please_select),
         style = textStyle,
         fontStyle = FontStyle.Italic,
-        color = AppTitleColor.copy(alpha = if (allSelectionsMade) 0f else 1f),
+        color = AppTitleColor,
         modifier = modifier
     )
 }

@@ -13,7 +13,7 @@
     <string name="repetitions_number_label">Numero di ripetizioni per serie</string>
     <string name="repetitions_duration_label">Durata delle ripetizioni</string>
     <string name="rest_indicator">Riposo</string>
-    <string name="rest_time_ratio">Tempo di riposo (%)</string>
+    <string name="rest_time">Tempo di riposo : </string>
     <string name="save_selection_label">Salva la selezione corrente</string>
     <string name="series_number_label">Numero di serie</string>
     <string name="series_view_title">Series Training Timer</string>

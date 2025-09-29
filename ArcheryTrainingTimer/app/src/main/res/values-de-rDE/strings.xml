@@ -13,7 +13,7 @@
     <string name="repetitions_number_label">Anzahl der Wiederholungen pro Serie</string>
     <string name="repetitions_duration_label">Wiederholungsdauer</string>
     <string name="rest_indicator">Pause...</string>
-    <string name="rest_time_ratio">Ruhezeit (%)</string>
+    <string name="rest_time">Ruhezeit : </string>
     <string name="save_selection_label">Aktuelle Auswahl speichern</string>
     <string name="series_number_label">Anzahl der Serien</string>
     <string name="series_view_title">Series Training Timer</string>

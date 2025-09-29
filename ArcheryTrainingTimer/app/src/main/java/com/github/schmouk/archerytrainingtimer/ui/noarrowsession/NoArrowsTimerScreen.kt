@@ -27,7 +27,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -45,7 +44,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -61,6 +59,7 @@ import com.github.schmouk.archerytrainingtimer.ui.commons.RepetitionsDurationBut
 import com.github.schmouk.archerytrainingtimer.ui.commons.RepetitionsDurationTitle
 import com.github.schmouk.archerytrainingtimer.ui.commons.RepetitionsNumberTitle
 import com.github.schmouk.archerytrainingtimer.ui.commons.RepetitionsSelectorWithScrollIndicators
+import com.github.schmouk.archerytrainingtimer.ui.commons.RestingDurationText
 import com.github.schmouk.archerytrainingtimer.ui.commons.SeriesCountdownConstrainedBox
 import com.github.schmouk.archerytrainingtimer.ui.commons.SeriesNumbersButtons
 import com.github.schmouk.archerytrainingtimer.ui.commons.SeriesNumberTitle
@@ -202,7 +201,6 @@ fun NoArrowsTimerScreen(
             // --- Dynamic Sizes & SPs ---
             val mainTimerStrokeWidthDp = deviceScaling(14).dp
             val selectionItemsBaseSizeDp = deviceScaling(48).dp
-            //val seriesBoxSize = selectionItemsBaseSizeDp  //deviceScaling(48).dp
             val majorSpacerHeight = deviceScaling(8).dp
             val generalPadding = deviceScaling(8).dp
             val mainHorizontalSpacingDp = deviceScaling(10).dp
@@ -228,16 +226,9 @@ fun NoArrowsTimerScreen(
 
             // Rest Mode & Series Tracking
             var currentRestTimeLeft by rememberSaveable { mutableStateOf<Int?>(null) }
-            val restingRatio = 0.5f
-            var restingTimeRatio by rememberSaveable { mutableIntStateOf(50) } // Default to 50%
             val endOfRestBeepTime = 7 // seconds before end of rest to play beep
 
             val durationOptions = listOf("10 s", "15 s", "20 s", "30 s")
-            val durationsTextScaling = 4f / durationOptions.size
-            val durationButtonWidth = (
-                    availableWidthForContentDp.value / durationOptions.size -
-                            horizontalDeviceScaling(8)
-                    ).dp
             val seriesOptions = mutableListOf(1, 2, 3, 5, 10, 15, 20, 25, 30)
             val intermediateBeepsDuration = 5 // seconds for intermediate beeps
 
@@ -288,12 +279,36 @@ fun NoArrowsTimerScreen(
             }
 
             /**
+             * Evaluates the resting time ratio
+             */
+            fun evaluateRestingRatio(
+                repetitionsDuration: Int,
+                repetitionsNumberPerSeries: Int?
+            ) : Float {
+                val ratio: Float = if (repetitionsNumberPerSeries == null) {
+                    0.5f
+                }
+                else if (repetitionsDuration <= 20){
+                    1.1f - repetitionsDuration / 25f
+                }
+                else {
+                    (0.3f - (repetitionsDuration - 20) / 50f).coerceAtLeast(0.0f)
+                }
+
+                return (100f * ratio).roundToInt().toFloat() / 100f
+            }
+
+            /**
              * Evaluates the resting time
              */
             fun evaluateRestTime(): Int {
-                return ((numberOfRepetitions ?: 0) * lastDurationSeconds * restingRatio)
+                val ratio = evaluateRestingRatio(
+                    lastDurationSeconds,
+                    numberOfRepetitions
+                )
+                return ((numberOfRepetitions ?: 0) * lastDurationSeconds * ratio)  //restingRatio)
                     .roundToInt()
-                    .coerceAtLeast(endOfRestBeepTime + 2) // Ensure rest gets a minimum value for the beep logic
+                    //.coerceAtLeast(endOfRestBeepTime + 2) // Ensure rest gets a minimum value for the beep logic
             }
 
 
@@ -373,7 +388,6 @@ fun NoArrowsTimerScreen(
                     setRestMode()
                 }
             }
-
 
             /**
              * Play sound effect - single beep
@@ -592,11 +606,7 @@ fun NoArrowsTimerScreen(
                             }
                         }
 
-                        while (isActive &&
-                            currentSeriesLeft!! > 0 //&&
-                        //(isTimerRunning || isTimerStopped) &&  // Notice: always true here
-                        //!isRestMode                            // Notice: always true here
-                        ) {
+                        while (isActive && currentSeriesLeft!! > 0) {
                             if (currentDurationSecondsLeft!! == initialDurationSeconds!!) {
                                 playBeepEvent = true
                             } else if (currentDurationSecondsLeft!! == initialDurationSeconds!! - 1) {
@@ -604,14 +614,10 @@ fun NoArrowsTimerScreen(
                                 playBeepEvent = false
                             }
 
-                            //if (currentDurationSecondsLeft != null && currentDurationSecondsLeft!! > 0) {
                             if (currentDurationSecondsLeft!! > 0) {
                                 // current repetition timer tick
                                 if (isTimerRunning)
                                     delay(countDownDelay)
-                                //if (!(isTimerRunning || isTimerStopped) || isRestMode) // Notice: always false here
-                                //if (isRestMode)  // Notice: always false here...
-                                //    break
                                 currentDurationSecondsLeft = currentDurationSecondsLeft!! - 1
                                 // intermediate beep logic
                                 if (intermediateBeepsChecked != null &&
@@ -638,8 +644,6 @@ fun NoArrowsTimerScreen(
                                                 break
                                             } else {
                                                 // enters the rest mode
-                                                //playRestBeepEvent = true
-                                                //isRestMode = true
                                                 setRestMode()
                                                 currentRestTimeLeft = evaluateRestTime()
                                             }
@@ -656,21 +660,12 @@ fun NoArrowsTimerScreen(
                                 } else {
                                     // end of current series
                                     // Notice: if end of session also, will be checked in the outer loop
-                                    /*if (isRestMode)  // Notice: always false here...
-                                        currentSeriesLeft = currentSeriesLeft!! + 1  // Must be restored to previous value
-                                    else
-                                        setRestMode()*/
                                     setRestMode()
                                     break
                                 }
                             }
 
                             if (isTimerStopped) {
-                                /*
-                                if (isRestMode)
-                                    currentSeriesLeft =
-                                        currentSeriesLeft!! + 1  // Must be restored to previous value
-                                */
                                 break
                             }
                         }
@@ -686,7 +681,6 @@ fun NoArrowsTimerScreen(
                             playRestBeepEvent = true
 
                         // Check isRestMode again, as it could have been modified in the block above
-                        //while (isActive && isRestMode) {  // Notice: isRestMode is always true here
                         while (isActive) {  // Notice: isRestMode is always true here
                             if (currentRestTimeLeft != null && currentRestTimeLeft!! > 0) {
                                 // Check for some seconds left --> to play rest-beeps
@@ -896,12 +890,27 @@ fun NoArrowsTimerScreen(
                         .wrapContentHeight() // Take only necessary vertical space for its content
                         .padding(top = deviceScaling(16).dp, bottom = deviceScaling(4).dp),
                 ) {
-                    //-- Shows the "Please select ..." text only if not all selections have been made --
-                    PleaseSelectText(
-                        allSelectionsMade(),
-                        smallerTextStyle,
-                        Modifier.align(Alignment.CenterHorizontally),
-                    )
+                    if (allSelectionsMade()) {
+                        //-- Shows the resting duration --
+                        RestingDurationText(
+                            evaluateRestTime(),
+                            evaluateRestingRatio(
+                                lastDurationSeconds,
+                                numberOfRepetitions
+                            ),
+                            numberOfSeries,
+                            smallerTextStyle,
+                            Modifier.align(Alignment.CenterHorizontally),
+                        )
+                    }
+                    else {
+                        //-- Shows the "Please select ..." text only if not all selections have been made --
+                        PleaseSelectText(
+                            //allSelectionsMade(),
+                            smallerTextStyle,
+                            Modifier.align(Alignment.CenterHorizontally),
+                        )
+                    }
 
                     //-- Shows the block for the selection of durations of repetitions --
                     Spacer(modifier = Modifier.height(majorSpacerHeight))
