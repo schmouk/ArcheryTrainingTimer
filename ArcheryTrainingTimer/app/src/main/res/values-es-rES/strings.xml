@@ -14,6 +14,7 @@
     <string name="preparation_label">Inicio de sesión en </string>
     <string name="repetitions_number_label">Tiempo de preparación :</string>
     <string name="repetitions_duration_label">Duración de las repeticiones</string>
+    <string name="reset_button">Restablecer</string>
     <string name="rest_indicator">Descanso</string>
     <string name="rest_time">Tiempo de descanso : </string>
     <string name="save_selection_label">Guardar selección actual</string>

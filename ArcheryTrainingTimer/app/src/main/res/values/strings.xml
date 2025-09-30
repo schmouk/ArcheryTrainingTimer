@@ -14,6 +14,7 @@
     <string name="preparation_label">Temps de préparation :</string>
     <string name="repetitions_number_label">Répétitions par série</string>
     <string name="repetitions_duration_label">Durée de chaque répétition</string>
+    <string name="reset_button">Réinitialiser</string>
     <string name="rest_indicator">Récup\'</string>
     <string name="rest_time">Temps de récupération : </string>
     <string name="save_selection_label">Sauvegarder la sélection</string>

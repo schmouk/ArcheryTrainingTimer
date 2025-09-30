@@ -11,7 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
+//import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -24,6 +24,7 @@ import com.github.schmouk.archerytrainingtimer.ui.theme.AppButtonTextColor
  * A big Start/Stop button
  *
  * @param allSelectionsMade: Boolean, true when all session parameters have been selected
+ * @param isPreparationMode: Boolean, true when the session is in preparation mode, false otherwise
  * @param isTimerRunning: Boolean, true when the timer countdown is currently active, false otherwise
  * @param isRestMode: Boolean, true when resting mode is active, false otherwise
  * @param buttonTextStyle: TextStyle, the style to be applied to the text of the button
@@ -33,13 +34,14 @@ import com.github.schmouk.archerytrainingtimer.ui.theme.AppButtonTextColor
  */
 @Composable
 fun BigStartButton(
-    allSelectionsMade : Boolean,
-    isTimerRunning : Boolean,
-    isRestMode : Boolean,
-    buttonTextStyle : TextStyle,
-    buttonHeight : Float,
-    widthFilling : Float = 0.75f,
-    onButtonClick : () -> Unit,
+    allSelectionsMade: Boolean,
+    isPreparationMode: Boolean,
+    isTimerRunning: Boolean,
+    isRestMode: Boolean,
+    buttonTextStyle: TextStyle,
+    buttonHeight: Float,
+    widthFilling: Float = 0.75f,
+    onButtonClick: () -> Unit,
 ) {
     Button(
         onClick = onButtonClick,
@@ -58,13 +60,13 @@ fun BigStartButton(
         Text(
             text = stringResource(
                 id = if (isTimerRunning || isRestMode) R.string.stop_button
-                else R.string.start_button
+                     else if (isPreparationMode) R.string.reset_button
+                     else R.string.start_button
             ),
             style = buttonTextStyle.copy(
                 color = if (allSelectionsMade && !isRestMode) AppButtonTextColor
                         else AppButtonTextColor.copy(alpha = 0.5f),
                 fontSize = (0.5f * buttonHeight).sp,
-                //fontWeight = FontWeight.Bold
             ),
         )
     }
@@ -76,6 +78,7 @@ fun BigStartButton(
  * This composable can be extended to include other elements in the row if needed.
  *
  * @param allSelectionsMade: Boolean, true when all session parameters have been selected
+ * @param isPreparationMode: Boolean, true when the session is in preparation mode, false otherwise
  * @param isTimerRunning: Boolean, true when the timer countdown is currently active, false otherwise
  * @param isRestMode: Boolean, true when resting mode is active, false otherwise
  * @param buttonTextStyle: TextStyle, the style to be applied to the text of the button
@@ -86,14 +89,15 @@ fun BigStartButton(
  */
 @Composable
 fun StartButtonRow(
-    allSelectionsMade : Boolean,
-    isTimerRunning : Boolean,
-    isRestMode : Boolean,
-    buttonTextStyle : TextStyle,
-    buttonHeight : Float,
-    onButtonClick : () -> Unit,
-    modifier : Modifier,
-    rowHorizontalArrangement : Arrangement.Horizontal
+    allSelectionsMade: Boolean,
+    isPreparationMode: Boolean,
+    isTimerRunning: Boolean,
+    isRestMode: Boolean,
+    buttonTextStyle: TextStyle,
+    buttonHeight: Float,
+    onButtonClick: () -> Unit,
+    modifier: Modifier,
+    rowHorizontalArrangement: Arrangement.Horizontal
 ) {
     Row(
         modifier = modifier,
@@ -103,6 +107,7 @@ fun StartButtonRow(
         // Notice: default width and height filling values are used here
         BigStartButton(
             allSelectionsMade,
+            isPreparationMode,
             isTimerRunning,
             isRestMode,
             buttonTextStyle,

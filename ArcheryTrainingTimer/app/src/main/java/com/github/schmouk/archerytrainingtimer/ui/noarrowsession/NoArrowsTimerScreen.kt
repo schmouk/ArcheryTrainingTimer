@@ -807,6 +807,7 @@ fun NoArrowsTimerScreen(
                 // Shows the start button row
                 StartButtonRow(
                     allSelectionsMade(),
+                    isPreparationMode,
                     isTimerRunning,
                     isRestMode,
                     customInteractiveTextStyle,

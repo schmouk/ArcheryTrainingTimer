@@ -14,6 +14,7 @@
     <string name="preparation_label">Preparation time:</string>
     <string name="repetitions_number_label">Number of repetitions per series</string>
     <string name="repetitions_duration_label">Repetitions duration</string>
+    <string name="reset_button">Reset</string>
     <string name="rest_indicator">Rest...</string>
     <string name="rest_time">Rest time: </string>
     <string name="save_selection_label">Save current selection</string>
