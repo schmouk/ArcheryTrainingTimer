@@ -22,10 +22,11 @@ val SelectedButtonBackgroundColor = AppTitleColor // Background for selected but
 val SelectedButtonBorderColor = WARedColor
 
 val TimerBorderColor = WAYellowColor
+val TimerPreparationColor = WARedColor
 val TimerRestColor = WABlueColor
-val ProgressBorderColor = Color(0xFF923035) // i.e 60% of WARedColor
-val DimmedTimerBorderColor = Color(0xFF4B4A19) // i.e 30% of WAYellowColor
-val DimmedProgressBorderColor = Color(0xFF4A1813) // i.e 30% of WARedColor
+val ProgressBorderColor = Color(0xFF92302C) // i.e 60% of WARedColor
+val DimmedTimerBorderColor = Color(0xFF4C4418) // i.e 30% of WAYellowColor
+val DimmedProgressBorderColor = Color(0xFF4A1816) // i.e 30% of WARedColor
 
 val AppSurfaceContainerLow = Color(0xFF08090A)
 val AppSurfaceContainerHigh = Color(0xFF212325)

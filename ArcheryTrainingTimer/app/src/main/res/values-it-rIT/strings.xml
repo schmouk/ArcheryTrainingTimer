@@ -9,7 +9,9 @@
     <string name="editor_logo">Logo dell\'editore</string>
     <string name="empty_string"></string>
     <string name="intermediate_beeps">Pitidos intermedios cada 5 segundos</string>
-    <string name="please_select">Seleziona i controlli della sessione :</string>
+    <string name="please_select">Tempo di preparazione :</string>
+    <string name="preparation">Inizio sessione tra </string>
+    <string name="preparation_label">Inizio...</string>
     <string name="repetitions_number_label">Numero di ripetizioni per serie</string>
     <string name="repetitions_duration_label">Durata delle ripetizioni</string>
     <string name="rest_indicator">Riposo</string>

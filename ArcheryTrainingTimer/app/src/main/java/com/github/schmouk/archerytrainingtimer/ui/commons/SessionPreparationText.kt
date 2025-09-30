@@ -6,29 +6,30 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
-
 import com.github.schmouk.archerytrainingtimer.R
-import com.github.schmouk.archerytrainingtimer.ui.theme.AppTitleColor
+import com.github.schmouk.archerytrainingtimer.ui.theme.TimerPreparationColor
 
 
 /**
- * A small text displayed for asking to select parameters for a session,
- * when not all selections have been made yet. Not shown when all selections
- * have been made.
+ * A small text displayed to inform that session will start in n seconds
  *
  * @param textStyle: TextStyle, the style to apply to the text
  * @param modifier: Modifier = Modifier, optional modifier for the Text composable
  */
 @Composable
-fun PleaseSelectText(
+fun SessionPreparationText(
+    preparationTime: Int,
     textStyle: TextStyle,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
-    Text( // Select Session parameters Row
-        text = stringResource(id = R.string.please_select),
+    Text(
+        text = String.format("%s %d s",
+            stringResource(id = R.string.preparation_label),
+            preparationTime
+        ),
         style = textStyle,
         fontStyle = FontStyle.Italic,
-        color = AppTitleColor,
+        color = TimerPreparationColor,
         modifier = modifier
     )
 }

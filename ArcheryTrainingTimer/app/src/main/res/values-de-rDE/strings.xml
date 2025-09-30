@@ -10,6 +10,8 @@
     <string name="empty_string"></string>
     <string name="intermediate_beeps">Zwischentöne alle 5 Sekunden</string>
     <string name="please_select">Wählen Sie Ihre Sitzungssteuerung aus :</string>
+    <string name="preparation">Sitzungsbeginn</string>
+    <string name="preparation_label">Vorbereitungszeit :</string>
     <string name="repetitions_number_label">Anzahl der Wiederholungen pro Serie</string>
     <string name="repetitions_duration_label">Wiederholungsdauer</string>
     <string name="rest_indicator">Pause...</string>

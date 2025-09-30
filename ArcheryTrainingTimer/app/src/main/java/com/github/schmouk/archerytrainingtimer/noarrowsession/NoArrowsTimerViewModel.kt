@@ -45,6 +45,10 @@ class NoArrowsTimerViewModel : ViewModel() {
     private val _isIdleMode = mutableStateOf(stateAutomaton.isIdleMode())
     val isIdleMode: State<Boolean> = _isIdleMode
 
+    // Mutable checking of the internal state - preparation mode
+    private val _isPreparationMode = mutableStateOf(stateAutomaton.isPreparationMode())
+    val isPreparationMode: State<Boolean> = _isPreparationMode
+
     // Mutable checking of the internal state - rest mode
     private val _isRestMode = mutableStateOf(stateAutomaton.isRestMode())
     val isRestMode: State<Boolean> = _isRestMode
@@ -69,6 +73,7 @@ class NoArrowsTimerViewModel : ViewModel() {
 
         // sets accordingly the local delegates
         _isIdleMode.value = stateAutomaton.isIdleMode()
+        _isPreparationMode.value = stateAutomaton.isPreparationMode()
         _isRestMode.value = stateAutomaton.isRestMode()
         _isSessionCompleted.value = stateAutomaton.isSessionCompleted()
         _isTimerRunning.value = stateAutomaton.isTimerRunning()

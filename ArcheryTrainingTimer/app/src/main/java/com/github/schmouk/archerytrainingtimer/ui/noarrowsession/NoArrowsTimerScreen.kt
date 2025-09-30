@@ -63,6 +63,7 @@ import com.github.schmouk.archerytrainingtimer.ui.commons.RestingDurationText
 import com.github.schmouk.archerytrainingtimer.ui.commons.SeriesCountdownConstrainedBox
 import com.github.schmouk.archerytrainingtimer.ui.commons.SeriesNumbersButtons
 import com.github.schmouk.archerytrainingtimer.ui.commons.SeriesNumberTitle
+import com.github.schmouk.archerytrainingtimer.ui.commons.SessionPreparationText
 import com.github.schmouk.archerytrainingtimer.ui.commons.StartButtonRow
 import com.github.schmouk.archerytrainingtimer.ui.commons.TimerCountdownConstrainedBox
 import com.github.schmouk.archerytrainingtimer.ui.commons.ViewHeader
@@ -94,6 +95,7 @@ fun NoArrowsTimerScreen(
     val isSessionCompleted by noArrowsViewModel.isSessionCompleted
     val isTimerRunning by noArrowsViewModel.isTimerRunning
     val isTimerStopped by noArrowsViewModel.isTimerStopped
+    val isPreparationMode by noArrowsViewModel.isPreparationMode
 
     // The screen content
     Scaffold /*(
@@ -234,6 +236,9 @@ fun NoArrowsTimerScreen(
 
             val restModeText = stringResource(R.string.rest_indicator)
 
+            val preparationTime = 7 // seconds for preparation time before start
+            val resPreparationText = stringResource(R.string.preparation)
+
             var beepSoundId by remember { mutableStateOf<Int?>(null) }
             var endBeepSoundId by remember { mutableStateOf<Int?>(null) }
             var intermediateBeepSoundId by remember { mutableStateOf<Int?>(null) }
@@ -256,6 +261,15 @@ fun NoArrowsTimerScreen(
                 onDispose {
                     soundPool.release()
                 }
+            }
+
+            /**
+             * Checks if all selections have been made
+             */
+            fun allSelectionsMade(): Boolean {
+                return selectedDurationString != null &&
+                        numberOfRepetitions != null &&
+                        numberOfSeries != null
             }
 
             /**
@@ -313,11 +327,20 @@ fun NoArrowsTimerScreen(
 
 
             /**
+             * Starts the preparation mode before starting countdowns
+             */
+            fun startPreparationMode() {
+                noArrowsViewModel.action(ESignal.SIG_PREPARE)
+                currentDurationSecondsLeft = preparationTime
+            }
+
+
+            /**
              * Starts or Restarts a new session
              */
-            fun startNewSession(allSelectionsMade: Boolean) {
+            fun startNewSession() {
                 // Trying to Start (or Restart after session completion)
-                if (allSelectionsMade) {
+                if (allSelectionsMade()) {
                     // If currentRepetitionsLeft is 0, it means a cycle just finished (dimmed state).
                     // Reset both countdowns for a new cycle.
                     if (currentSeriesLeft == null || currentSeriesLeft == 0) {
@@ -333,8 +356,18 @@ fun NoArrowsTimerScreen(
                             currentRepetitionsLeft = numberOfRepetitions
                         }
                     }
-                    noArrowsViewModel.action(ESignal.SIG_START)
+                    startPreparationMode()
                 }
+            }
+
+            /**
+             * Starts countdown
+             */
+            fun startCountdowns() {
+                noArrowsViewModel.action(ESignal.SIG_START)
+                currentDurationSecondsLeft = initialDurationSeconds
+                // currentRepetitionsLeft = numberOfRepetitions
+                // currentSeriesLeft = numberOfSeries
             }
 
             /**
@@ -570,8 +603,8 @@ fun NoArrowsTimerScreen(
              * rest periods, and state transitions.
              * It reacts to changes in isTimerRunning and isRestMode states.
              */
-            LaunchedEffect(isTimerRunning, isRestMode) {
-                if (isTimerRunning || isRestMode) {
+            LaunchedEffect(isTimerRunning, isRestMode, isPreparationMode) {
+                if (isTimerRunning || isRestMode || isPreparationMode) {
                     (this as? ComponentActivity)?.window?.addFlags(
                         WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
                     )
@@ -581,7 +614,7 @@ fun NoArrowsTimerScreen(
                     )
                 }
 
-                while (isActive && (isTimerRunning || isRestMode || isTimerStopped)) {
+                while (isActive && (isTimerRunning || isRestMode || isTimerStopped || isPreparationMode)) {
                     // --- Normal Repetition Countdown ---
                     if (!isRestMode) {
                         // Ensure values are sane before starting countdown loop
@@ -606,68 +639,77 @@ fun NoArrowsTimerScreen(
                             }
                         }
 
-                        while (isActive && currentSeriesLeft!! > 0) {
-                            if (currentDurationSecondsLeft!! == initialDurationSeconds!!) {
-                                playBeepEvent = true
-                            } else if (currentDurationSecondsLeft!! == initialDurationSeconds!! - 1) {
-                                // in some dark circumstances, the cancelling of the first beep may be missed
-                                playBeepEvent = false
-                            }
-
-                            if (currentDurationSecondsLeft!! > 0) {
-                                // current repetition timer tick
-                                if (isTimerRunning)
-                                    delay(countDownDelay)
-                                if (!isTimerStopped)
-                                    currentDurationSecondsLeft = currentDurationSecondsLeft!! - 1
-                                // intermediate beep logic
-                                if (intermediateBeepsChecked != null &&
-                                    intermediateBeepsChecked == true &&
-                                    currentDurationSecondsLeft != null &&
-                                    currentDurationSecondsLeft!! > 0 &&
-                                    (initialDurationSeconds!! - currentDurationSecondsLeft!!) % intermediateBeepsDuration == 0
-                                ) {
-                                    playIntermediateBeep = true
+                        if (isPreparationMode) {
+                            delay(countDownDelay)
+                            currentDurationSecondsLeft = currentDurationSecondsLeft!! - 1
+                            if (currentDurationSecondsLeft == 0)
+                                startCountdowns()
+                        }
+                        else {
+                            while (isActive && currentSeriesLeft!! > 0) {
+                                if (currentDurationSecondsLeft!! == initialDurationSeconds!!) {
+                                    playBeepEvent = true
+                                } else if (currentDurationSecondsLeft!! == initialDurationSeconds!! - 1) {
+                                    // in some dark circumstances, the cancelling of the first beep may be missed
+                                    playBeepEvent = false
                                 }
-                            } else if (currentDurationSecondsLeft!! == 0) {
-                                // end of current repetition duration
-                                if (currentRepetitionsLeft != null && currentRepetitionsLeft!! > 0) {
-                                    // go to next repetition in current series
-                                    currentRepetitionsLeft = currentRepetitionsLeft!! - 1
 
-                                    if (currentRepetitionsLeft == 0) {
-                                        // this was the last repetition in current series
-                                        if (currentSeriesLeft != null && currentSeriesLeft!! > 0) {
-                                            // then, count down series number
-                                            if (currentSeriesLeft == 1) {
+                                if (currentDurationSecondsLeft!! > 0) {
+                                    // current repetition timer tick
+                                    if (isTimerRunning)
+                                        delay(countDownDelay)
+                                    if (!isTimerStopped)
+                                        currentDurationSecondsLeft =
+                                            currentDurationSecondsLeft!! - 1
+                                    // intermediate beep logic
+                                    if (intermediateBeepsChecked != null &&
+                                        intermediateBeepsChecked == true &&
+                                        currentDurationSecondsLeft != null &&
+                                        currentDurationSecondsLeft!! > 0 &&
+                                        (initialDurationSeconds!! - currentDurationSecondsLeft!!) % intermediateBeepsDuration == 0
+                                    ) {
+                                        playIntermediateBeep = true
+                                    }
+                                } else if (currentDurationSecondsLeft!! == 0) {
+                                    // end of current repetition duration
+                                    if (currentRepetitionsLeft != null && currentRepetitionsLeft!! > 0) {
+                                        // go to next repetition in current series
+                                        currentRepetitionsLeft = currentRepetitionsLeft!! - 1
+
+                                        if (currentRepetitionsLeft == 0) {
+                                            // this was the last repetition in current series
+                                            if (currentSeriesLeft != null && currentSeriesLeft!! > 0) {
+                                                // then, count down series number
+                                                if (currentSeriesLeft == 1) {
+                                                    // If no more series left, stop the timer and show dimmed state
+                                                    sessionHasCompleted()
+                                                    break
+                                                } else {
+                                                    // enters the rest mode
+                                                    setRestMode()
+                                                    currentRestTimeLeft = evaluateRestTime()
+                                                }
+                                            } else {
+                                                // --> this is the end of the training session
                                                 // If no more series left, stop the timer and show dimmed state
                                                 sessionHasCompleted()
                                                 break
-                                            } else {
-                                                // enters the rest mode
-                                                setRestMode()
-                                                currentRestTimeLeft = evaluateRestTime()
                                             }
                                         } else {
-                                            // --> this is the end of the training session
-                                            // If no more series left, stop the timer and show dimmed state
-                                            sessionHasCompleted()
-                                            break
+                                            // let's start a new repetition into current series
+                                            currentDurationSecondsLeft = initialDurationSeconds
                                         }
                                     } else {
-                                        // let's start a new repetition into current series
-                                        currentDurationSecondsLeft = initialDurationSeconds
+                                        // end of current series
+                                        // Notice: if end of session also, will be checked in the outer loop
+                                        setRestMode()
+                                        break
                                     }
-                                } else {
-                                    // end of current series
-                                    // Notice: if end of session also, will be checked in the outer loop
-                                    setRestMode()
+                                }
+
+                                if (isTimerStopped) {
                                     break
                                 }
-                            }
-
-                            if (isTimerStopped) {
-                                break
                             }
                         }
                     }
@@ -711,16 +753,6 @@ fun NoArrowsTimerScreen(
             // --- Different functions for responsive layout ---
             // -------------------------------------------------
 
-            //-- The screen view title --
-            /**
-             * Checks if all selections have been made
-             */
-            fun allSelectionsMade(): Boolean {
-                return selectedDurationString != null &&
-                        numberOfRepetitions != null &&
-                        numberOfSeries != null
-            }
-
             //-- The Start button stuff --
             val buttonScaling = 1f / 17.8f
             val buttonHeight =
@@ -736,7 +768,7 @@ fun NoArrowsTimerScreen(
                     resumeCountdowns()
                 } else {
                     // Trying to Start (or Restart after session completion)
-                    startNewSession(allSelectionsMade())
+                    startNewSession()
                 }
             }
 
@@ -797,19 +829,14 @@ fun NoArrowsTimerScreen(
                         .let {
                             // Conditionally apply the clickable modifier
                             if (allSelectionsMade() && !isRestMode) {
+                                // Notice: still clickable while in preparation mode,
+                                // this will restart the preparation countdown and is
+                                // only available when clicking this timer and count-
+                                // down row
                                 it.clickable(
                                     interactionSource = remember { MutableInteractionSource() }, // To disable ripple if desired
                                     indication = null, // Set to 'LocalIndication.current' for default ripple or custom
-                                    onClick = {
-                                        // Send a signal to our ViewModel to toggle pause/resume
-                                        // This signal should be handled by our session state automaton
-                                        if (isTimerRunning) {
-                                            pauseCountdowns()
-                                        } else {
-                                            // Ensure we only resume if there's time left and it's not completed
-                                            startNewSession(true)  // Notice: (allSelectionsMade) is always true here
-                                        }
-                                    }
+                                    onClick = onStartButtonClick
                                 )
                             } else {
                                 it // Not clickable if conditions aren't met
@@ -825,17 +852,20 @@ fun NoArrowsTimerScreen(
                         numberOfRepetitions,
                         currentRepetitionsLeft,
                         currentRestTimeLeft,
+                        isPreparationMode,
                         isTimerRunning,
                         isTimerStopped,
                         isDimmedDisplay(),
                         isRestMode,
                         restModeText,
+                        resPreparationText,
                         mainTimerStrokeWidthDp,
                         TimerBorderColor,
                         DimmedTimerBorderColor,
                         TimerRestColor,
                         ProgressBorderColor,
                         DimmedProgressBorderColor,
+                        TimerPreparationColor,
                         heightScalingFactor,
                         widthScalingFactor,
                         modifier = Modifier
@@ -861,6 +891,7 @@ fun NoArrowsTimerScreen(
                         currentRepetitionsLeft,
                         numberOfSeries,
                         currentSeriesLeft,
+                        isPreparationMode,
                         isTimerRunning,
                         isTimerStopped,
                         isDimmedDisplay(),
@@ -891,8 +922,16 @@ fun NoArrowsTimerScreen(
                         .wrapContentHeight() // Take only necessary vertical space for its content
                         .padding(top = deviceScaling(16).dp, bottom = deviceScaling(4).dp),
                 ) {
-                    if (allSelectionsMade()) {
-                        //-- Shows the resting duration --
+                    if (isPreparationMode) {
+                        // Shows the "Get Ready" text only if in preparation mode
+                        SessionPreparationText(
+                            preparationTime,
+                            smallerTextStyle,
+                            Modifier.align(Alignment.CenterHorizontally),
+                        )
+                    }
+                    else if (allSelectionsMade()) {
+                        // Shows the resting duration
                         RestingDurationText(
                             evaluateRestTime(),
                             evaluateRestingRatio(
@@ -905,9 +944,8 @@ fun NoArrowsTimerScreen(
                         )
                     }
                     else {
-                        //-- Shows the "Please select ..." text only if not all selections have been made --
+                        // Shows the "Please select ..." text only if not all selections have been made
                         PleaseSelectText(
-                            //allSelectionsMade(),
                             smallerTextStyle,
                             Modifier.align(Alignment.CenterHorizontally),
                         )

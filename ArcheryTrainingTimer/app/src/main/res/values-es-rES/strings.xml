@@ -10,7 +10,9 @@
     <string name="empty_string"></string>
     <string name="intermediate_beeps">Pitidos intermedios cada 5 segundos</string>
     <string name="please_select">Seleccione los controles de su sesión :</string>
-    <string name="repetitions_number_label">Número de repeticiones por serie</string>
+    <string name="preparation">Inicio...</string>
+    <string name="preparation_label">Inicio de sesión en </string>
+    <string name="repetitions_number_label">Tiempo de preparación :</string>
     <string name="repetitions_duration_label">Duración de las repeticiones</string>
     <string name="rest_indicator">Descanso</string>
     <string name="rest_time">Tiempo de descanso : </string>

@@ -31,6 +31,7 @@ package com.github.schmouk.archerytrainingtimer.noarrowsession
  * to trigger state transitions.
  */
 enum class ESignal {
+    SIG_PREPARE,    // The session is under preparation step, after what the timer will start countdown
     SIG_START,      // The Start button has been tapped
     SIG_STOP,       // The Stop button has been tapped
     SIG_REST_ON,    // The session is entering a rest period
@@ -50,6 +51,7 @@ open class SessionStateAutomaton {
      */
     protected enum class EState {
         STATE_IDLE,             // Timer is not active, ready to be configured or started
+        STATE_PREPARATION,      // Preparation countdown before the main timer starts
         STATE_TIMER_RUNNING,    // Main timer is actively counting down
         STATE_TIMER_STOPPED,    // Main timer was running but is now paused
         STATE_REST_MODE,        // Rest timer is actively counting down
@@ -70,15 +72,28 @@ open class SessionStateAutomaton {
         when (currentState) {
             EState.STATE_IDLE, EState.STATE_COMPLETED -> {
                 when (signal) {
-                    ESignal.SIG_START -> {
+                    ESignal.SIG_PREPARE -> {
                         // This is the only action that makes sense from IDLE state
                         // related with the finite state automaton associated with
                         // the training session timer:
-                        // Start the main timer.
-                        currentState = EState.STATE_TIMER_RUNNING
+                        // The session is under preparation step, after what the timer will start countdown
+                        currentState = EState.STATE_PREPARATION
                     }
                     else -> {
                         // In IDLE or COMPLETED state, STOP, REST_ON, REST_OFF or
+                        // COMPLETED signals can never happen. No state change occurs.
+                    }
+                }
+            }
+            EState.STATE_PREPARATION -> {
+                when (signal) {
+                    ESignal.SIG_START -> {
+                        // The preparation countdown has completed,
+                        // and the main timer should start now.
+                        currentState = EState.STATE_TIMER_RUNNING
+                    }
+                    else -> {
+                        // In PREPARATION state, STOP, REST_ON, REST_OFF or
                         // COMPLETED signals can never happen. No state change occurs.
                     }
                 }
@@ -159,6 +174,8 @@ open class SessionStateAutomaton {
     // --- Public methods to query the current state ---
 
     fun isIdleMode(): Boolean = currentState == EState.STATE_IDLE
+
+    fun isPreparationMode(): Boolean = currentState == EState.STATE_PREPARATION
 
     fun isTimerRunning(): Boolean = currentState == EState.STATE_TIMER_RUNNING
 

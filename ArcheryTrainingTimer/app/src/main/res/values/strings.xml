@@ -10,6 +10,8 @@
     <string name="empty_string"> </string>
     <string name="intermediate_beeps">Bips intermédiaires toutes les 5 secondes</string>
     <string name="please_select">Choisissez les paramètres de votre séance :</string>
+    <string name="preparation">Préparation</string>
+    <string name="preparation_label">Temps de préparation :</string>
     <string name="repetitions_number_label">Répétitions par série</string>
     <string name="repetitions_duration_label">Durée de chaque répétition</string>
     <string name="rest_indicator">Récup\'</string>
