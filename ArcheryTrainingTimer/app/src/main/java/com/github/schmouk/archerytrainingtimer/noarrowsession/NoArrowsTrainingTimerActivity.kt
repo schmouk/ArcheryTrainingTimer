@@ -125,5 +125,4 @@ class NoArrowsTrainingTimerActivity : ComponentActivity() {
     private fun keepScreenOn() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
-
 }
