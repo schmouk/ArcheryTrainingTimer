@@ -65,11 +65,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -848,11 +850,14 @@ fun NoArrowsTimerScreen(
 
 
                 // --- 3. Second Row: Timer and Countdowns ---
+                var rowSize by remember { mutableStateOf(IntSize.Zero) }
+
                 Row(
                     modifier = countdownsRowModifier
                         .fillMaxWidth()
                         .background(AppTimerRowBackgroundColor)
                         .padding(vertical = deviceScaling(4).dp)
+                        .onSizeChanged { newSize -> rowSize = newSize }
                         .let {
                             // Conditionally apply the clickable modifier
                             if (allSelectionsMade() && !isRestMode) {
@@ -871,6 +876,9 @@ fun NoArrowsTimerScreen(
                         },
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    val currentRowWidth = rowSize.width
+                    val currentRowHeight = rowSize.height
+
                     //-- Left Cell (Big Timer Display) --
                     TimerCountdownConstrainedBox(
                         selectedDurationString,
@@ -1050,16 +1058,21 @@ fun NoArrowsTimerScreen(
                     // Checks first the available display width against the series-options list width
                     with(LocalDensity.current) {
                         val horizontalSpaceArrangementPx = deviceScaling(8).dp.toPx()
-                        val seriesBoxSizePx = selectionItemsBaseSizeDp.toPx()  //seriesBoxSize.toPx()
+                        val seriesBoxSizePx = selectionItemsBaseSizeDp.toPx()
                         val visibleWidth =
                             availableWidthForContentDp.toPx() - 2 * mainHorizontalSpacingDp.toPx()
+                        var removedIndex = 1
 
-                        while (seriesOptions.size > 1 &&
-                            seriesOptions.size * (seriesBoxSizePx + horizontalSpaceArrangementPx) -
-                            horizontalSpaceArrangementPx > visibleWidth
+                        while (seriesOptions.size > removedIndex &&
+                               seriesOptions.size * (seriesBoxSizePx + horizontalSpaceArrangementPx) -
+                                   horizontalSpaceArrangementPx > visibleWidth
                         ) {
                             // Removes one of the Series number, let's says the one in second position (index 1)
-                            seriesOptions.removeAt(1)
+                            // but only if this is NOT the currently selected number of series
+                            if (seriesOptions[removedIndex] == numberOfSeries)
+                                removedIndex++
+                            else
+                                seriesOptions.removeAt(removedIndex)
                         }
                     }
 
