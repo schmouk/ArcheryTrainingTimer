@@ -104,7 +104,7 @@ fun SeriesCountdown(
 
     Canvas(modifier = Modifier.fillMaxSize()) {
         if (DEBUG_MODE) {
-            val debugTextSizePx = 36f
+            val debugTextSizePx = 46f
             val restTextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
                 color = AppTextColor.toArgb()
                 textSize = debugTextSizePx
@@ -116,13 +116,13 @@ fun SeriesCountdown(
 
             drawContext.canvas.nativeCanvas.drawText(
                 ">>> DEBUG mode",
-                30f,
+                150f,
                 38f,
                 restTextPaint
             )
         }
 
-        val circleCenterX = size.width / 2
+        val circleCenterX = size.width - seriesCircleRadius - localPaddingPx  //size.width / 2
         val circleCenterY = size.height - seriesCircleRadius - localPaddingPx
         val mainColor = if (isDimmedDisplay || isPreparationMode) DimmedTimerBorderColor else TimerBorderColor
 

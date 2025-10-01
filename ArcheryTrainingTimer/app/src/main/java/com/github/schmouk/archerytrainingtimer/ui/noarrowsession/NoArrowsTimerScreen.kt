@@ -168,15 +168,19 @@ fun NoArrowsTimerScreen(
                 return scaleFactor * dim
             }
 
+            /*
             // scales horizontal dimension (width) according to the running device horizontalScaleFactor factor
             fun horizontalDeviceScaling(dim: Int): Float {
                 return horizontalScaleFactor * dim
             }
+            */
 
+            /*
             // scales vertical dimension (height) according to the running device verticalScaleFactor factor
             fun verticalDeviceScaling(dim: Int): Float {
                 return verticalScaleFactor * dim
             }
+            */
 
             val heightScalingFactor =
                 this.maxHeight.value / availableHeightForContentDp.value  //currentScreenHeightDp.value
@@ -276,9 +280,9 @@ fun NoArrowsTimerScreen(
              *  Loads sound and releases SoundPool
              */
             DisposableEffect(Unit) {
-                beepSoundId = soundPool.load(context, R.raw.beep, 1)
+                beepSoundId = soundPool.load(context, R.raw.beep_short, 1)
                 endBeepSoundId = soundPool.load(context, R.raw.beep_end, 1)
-                intermediateBeepSoundId = soundPool.load(context, R.raw.beep_intermediate, 1)
+                intermediateBeepSoundId = soundPool.load(context, R.raw.beep_intermediate_short, 1)
 
                 soundPool.setOnLoadCompleteListener { _, _, status ->
                     if (status == 0) {
@@ -874,72 +878,152 @@ fun NoArrowsTimerScreen(
                                 it // Not clickable if conditions aren't met
                             }
                         },
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.End
                 ) {
                     val currentRowWidth = rowSize.width
                     val currentRowHeight = rowSize.height
 
-                    //-- Left Cell (Big Timer Display) --
-                    TimerCountdownConstrainedBox(
-                        selectedDurationString,
-                        initialDurationSeconds,
-                        currentDurationSecondsLeft,
-                        numberOfRepetitions,
-                        currentRepetitionsLeft,
-                        currentRestTimeLeft,
-                        isPreparationMode,
-                        isTimerRunning,
-                        isTimerStopped,
-                        isDimmedDisplay(),
-                        isRestMode,
-                        restModeText,
-                        resPreparationText,
-                        mainTimerStrokeWidthDp,
-                        TimerBorderColor,
-                        DimmedTimerBorderColor,
-                        TimerRestColor,
-                        ProgressBorderColor,
-                        DimmedProgressBorderColor,
-                        TimerPreparationColor,
-                        heightScalingFactor,
-                        widthScalingFactor,
-                        modifier = Modifier
-                            .weight(0.70f)
-                            .fillMaxWidth()
-                            .fillMaxHeight(),
-                        boxContentAlignment = Alignment.Center
-                    )
+                    if (currentRowHeight >= 1.05f * currentRowWidth) {
+                        //-- This a a higher than wide row, let's split it into a two-cells column
+                        val upperCellHeightRatio = 0.7f
 
-                    //-- Right Control Cell (Small Series Countdown Display) --
-                    val seriesStrokeWidthPx = with(LocalDensity.current) {
-                        deviceScaling(7).dp.toPx()
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 0.dp),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            //-- Upper Cell (Big Timer Display) --
+                            TimerCountdownConstrainedBox(
+                                selectedDurationString,
+                                initialDurationSeconds,
+                                currentDurationSecondsLeft,
+                                numberOfRepetitions,
+                                currentRepetitionsLeft,
+                                currentRestTimeLeft,
+                                isPreparationMode,
+                                isTimerRunning,
+                                isTimerStopped,
+                                isDimmedDisplay(),
+                                isRestMode,
+                                restModeText,
+                                resPreparationText,
+                                mainTimerStrokeWidthDp,
+                                TimerBorderColor,
+                                DimmedTimerBorderColor,
+                                TimerRestColor,
+                                ProgressBorderColor,
+                                DimmedProgressBorderColor,
+                                TimerPreparationColor,
+                                heightScalingFactor,
+                                widthScalingFactor,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(upperCellHeightRatio),
+                                boxContentAlignment = Alignment.Center
+                            )
+
+                            //-- Lower Control Cell (Small Series Countdown Display) --
+                            val seriesStrokeWidthPx = with(LocalDensity.current) {
+                                deviceScaling(7).dp.toPx()
+                            }
+
+                            val localPaddingPx = with(LocalDensity.current) {
+                                deviceScaling(8).dp.toPx()
+                            }
+
+                            SeriesCountdownConstrainedBox(
+                                initialDurationSeconds,
+                                currentDurationSecondsLeft,
+                                numberOfRepetitions,
+                                currentRepetitionsLeft,
+                                numberOfSeries,
+                                currentSeriesLeft,
+                                isPreparationMode,
+                                isTimerRunning,
+                                isTimerStopped,
+                                isDimmedDisplay(),
+                                TimerBorderColor,
+                                DimmedTimerBorderColor,
+                                TimerRestColor,
+                                ProgressBorderColor,
+                                DimmedProgressBorderColor,
+                                seriesStrokeWidthPx,
+                                localPaddingPx,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f - upperCellHeightRatio)
+                            )
+                        }
                     }
+                    else {
+                        //-- This is a not-that-high row, let's split it into two horizontally arranged cells
+                        val leftCellHeightRatio = 0.7f
 
-                    val localPaddingPx = with(LocalDensity.current) {
-                        deviceScaling(8).dp.toPx()
+                        //-- Left Cell (Big Timer Display) --
+                        TimerCountdownConstrainedBox(
+                            selectedDurationString,
+                            initialDurationSeconds,
+                            currentDurationSecondsLeft,
+                            numberOfRepetitions,
+                            currentRepetitionsLeft,
+                            currentRestTimeLeft,
+                            isPreparationMode,
+                            isTimerRunning,
+                            isTimerStopped,
+                            isDimmedDisplay(),
+                            isRestMode,
+                            restModeText,
+                            resPreparationText,
+                            mainTimerStrokeWidthDp,
+                            TimerBorderColor,
+                            DimmedTimerBorderColor,
+                            TimerRestColor,
+                            ProgressBorderColor,
+                            DimmedProgressBorderColor,
+                            TimerPreparationColor,
+                            heightScalingFactor,
+                            widthScalingFactor,
+                            modifier = Modifier
+                                .weight(leftCellHeightRatio)
+                                .fillMaxWidth()
+                                .fillMaxHeight(),
+                            boxContentAlignment = Alignment.Center
+                        )
+
+                        //-- Right Control Cell (Small Series Countdown Display) --
+                        val seriesStrokeWidthPx = with(LocalDensity.current) {
+                            deviceScaling(7).dp.toPx()
+                        }
+
+                        val localPaddingPx = with(LocalDensity.current) {
+                            deviceScaling(8).dp.toPx()
+                        }
+
+                        SeriesCountdownConstrainedBox(
+                            initialDurationSeconds,
+                            currentDurationSecondsLeft,
+                            numberOfRepetitions,
+                            currentRepetitionsLeft,
+                            numberOfSeries,
+                            currentSeriesLeft,
+                            isPreparationMode,
+                            isTimerRunning,
+                            isTimerStopped,
+                            isDimmedDisplay(),
+                            TimerBorderColor,
+                            DimmedTimerBorderColor,
+                            TimerRestColor,
+                            ProgressBorderColor,
+                            DimmedProgressBorderColor,
+                            seriesStrokeWidthPx,
+                            localPaddingPx,
+                            modifier = Modifier.weight(1f - leftCellHeightRatio),
+                            boxContentAlignment = Alignment.Center
+                        )
                     }
-
-                    SeriesCountdownConstrainedBox(
-                        initialDurationSeconds,
-                        currentDurationSecondsLeft,
-                        numberOfRepetitions,
-                        currentRepetitionsLeft,
-                        numberOfSeries,
-                        currentSeriesLeft,
-                        isPreparationMode,
-                        isTimerRunning,
-                        isTimerStopped,
-                        isDimmedDisplay(),
-                        TimerBorderColor,
-                        DimmedTimerBorderColor,
-                        TimerRestColor,
-                        ProgressBorderColor,
-                        DimmedProgressBorderColor,
-                        seriesStrokeWidthPx,
-                        localPaddingPx,
-                        modifier = Modifier.weight(0.3f), // 30% of this Row's width,
-                        boxContentAlignment = Alignment.Center
-                    )
                 }
             }
 
@@ -1289,7 +1373,7 @@ fun NoArrowsTimerScreen(
                 }
 
                 else -> {
-                    // Unknwon folded posture, should act as being not folded
+                    // Unknown folded posture, should act as being not folded
                     if (isPortraitPosition)
                         OneColumn()
                     else
