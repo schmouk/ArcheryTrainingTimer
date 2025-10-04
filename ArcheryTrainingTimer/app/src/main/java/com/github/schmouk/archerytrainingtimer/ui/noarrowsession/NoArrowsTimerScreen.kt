@@ -168,20 +168,6 @@ fun NoArrowsTimerScreen(
                 return scaleFactor * dim
             }
 
-            /*
-            // scales horizontal dimension (width) according to the running device horizontalScaleFactor factor
-            fun horizontalDeviceScaling(dim: Int): Float {
-                return horizontalScaleFactor * dim
-            }
-            */
-
-            /*
-            // scales vertical dimension (height) according to the running device verticalScaleFactor factor
-            fun verticalDeviceScaling(dim: Int): Float {
-                return verticalScaleFactor * dim
-            }
-            */
-
             val heightScalingFactor =
                 this.maxHeight.value / availableHeightForContentDp.value  //currentScreenHeightDp.value
             val widthScalingFactor =
@@ -270,6 +256,8 @@ fun NoArrowsTimerScreen(
 
             val preparationTime = 7 // seconds for preparation time before start
             val resPreparationText = stringResource(R.string.preparation)
+            var currentPreparationSecondsLeft by rememberSaveable { mutableStateOf<Int?>(null) }
+
 
             var beepSoundId by remember { mutableStateOf<Int?>(null) }
             var endBeepSoundId by remember { mutableStateOf<Int?>(null) }
@@ -363,9 +351,8 @@ fun NoArrowsTimerScreen(
              */
             fun startPreparationMode() {
                 noArrowsViewModel.action(ESignal.SIG_PREPARE)
-                currentDurationSecondsLeft = preparationTime
+                currentPreparationSecondsLeft = preparationTime
             }
-
 
             /**
              * Starts or Restarts a new session
@@ -379,6 +366,7 @@ fun NoArrowsTimerScreen(
                         currentSeriesLeft = numberOfSeries
                         currentRepetitionsLeft = numberOfRepetitions
                         currentDurationSecondsLeft = initialDurationSeconds
+                        currentPreparationSecondsLeft = preparationTime
                     } else {
                         // Handle cases where selections might have been cleared or timer never run
                         if (currentDurationSecondsLeft == null || currentDurationSecondsLeft == 0) {
@@ -542,7 +530,7 @@ fun NoArrowsTimerScreen(
             }
 
             /**
-             * Updates initial/current countdown values when selections change AND timer is NOT running
+             * Updates initial/current countdown values when selections change
              */
             LaunchedEffect(
                 selectedDurationString,
@@ -659,12 +647,10 @@ fun NoArrowsTimerScreen(
                             currentSeriesLeft = currentSeriesLeft!! - 1
                         } else { // Normal start or resume
                             if (currentDurationSecondsLeft == null || currentDurationSecondsLeft == 0) {
-                                currentDurationSecondsLeft =
-                                    initialDurationSeconds  //initialDurationSeconds
+                                currentDurationSecondsLeft = initialDurationSeconds
                             }
                             if (currentRepetitionsLeft == null) {
-                                currentRepetitionsLeft =
-                                    numberOfRepetitions  //numberOfRepetitions
+                                currentRepetitionsLeft = numberOfRepetitions
                             }
                             if (currentSeriesLeft == null) {
                                 currentSeriesLeft = numberOfSeries  //numberOfSeries
@@ -673,8 +659,8 @@ fun NoArrowsTimerScreen(
 
                         if (isPreparationMode) {
                             delay(countDownDelay)
-                            currentDurationSecondsLeft = currentDurationSecondsLeft!! - 1
-                            if (currentDurationSecondsLeft == 0)
+                            currentPreparationSecondsLeft = currentPreparationSecondsLeft!! - 1
+                            if (currentPreparationSecondsLeft == 0)
                                 startCountdowns()
                         }
                         else {
@@ -903,6 +889,7 @@ fun NoArrowsTimerScreen(
                                 numberOfRepetitions,
                                 currentRepetitionsLeft,
                                 currentRestTimeLeft,
+                                currentPreparationSecondsLeft,
                                 isPreparationMode,
                                 isTimerRunning,
                                 isTimerStopped,
@@ -970,6 +957,7 @@ fun NoArrowsTimerScreen(
                             numberOfRepetitions,
                             currentRepetitionsLeft,
                             currentRestTimeLeft,
+                            currentPreparationSecondsLeft,
                             isPreparationMode,
                             isTimerRunning,
                             isTimerStopped,

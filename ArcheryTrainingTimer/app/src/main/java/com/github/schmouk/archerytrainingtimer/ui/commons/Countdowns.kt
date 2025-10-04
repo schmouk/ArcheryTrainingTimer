@@ -309,6 +309,7 @@ fun SeriesCountdownConstrainedBox(
  * @param numberOfRepetitions: Int?, the currently selected number of repetitions in series
  * @param currentRepetitionsLeft: Int?, the actual left number of repetitions before end of current series
  * @param currentRestTimeLeft: Int?, the actual number of seconds left before enf of resting time
+ * @param currentPreparationSecondsLeft: Int?, the actual number of seconds left before end of preparation time
  * @param isPreparationMode: Boolean, true if timer is currently in preparation mode, or false otherwise
  * @param isTimerRunning: Boolean, true if timer is currently running, or false otherwise
  * @param isTimerStopped: Boolean, true if timer is currently stopped, or false otherwise
@@ -334,6 +335,7 @@ fun TimerCountdown(
     numberOfRepetitions: Int?,
     currentRepetitionsLeft: Int?,
     currentRestTimeLeft: Int?,
+    currentPreparationSecondsLeft: Int?,
     isPreparationMode: Boolean,
     isTimerRunning: Boolean,
     isTimerStopped: Boolean,
@@ -416,6 +418,7 @@ fun TimerCountdown(
         val durationToDisplayValue =
             if (showDimmedTimers) 0
             else if (isRestMode) currentRestTimeLeft
+            else if (isPreparationMode) currentPreparationSecondsLeft
             else currentDurationSecondsLeft
 
         val durationToDisplayString = durationToDisplayValue?.toString()
@@ -487,6 +490,7 @@ fun TimerCountdown(
  * @param numberOfRepetitions: Int?, the currently selected number of repetitions in series
  * @param currentRepetitionsLeft: Int?, the actual left number of repetitions before end of current series
  * @param currentRestTimeLeft: Int?, the actual number of seconds left before enf of resting time
+ * @param currentPreparationSecondsLeft: Int?, the actual number of seconds left before end of preparation time
  * @param isPreparationMode: Boolean, true if timer is currently in preparation mode, or false otherwise
  * @param isTimerRunning: Boolean, true if timer is currently running, or false otherwise
  * @param isTimerStopped: Boolean, true if timer is currently stopped, or false otherwise
@@ -514,6 +518,7 @@ fun TimerCountdownConstrainedBox(
     numberOfRepetitions: Int?,
     currentRepetitionsLeft: Int?,
     currentRestTimeLeft: Int?,
+    currentPreparationSecondsLeft: Int?,
     isPreparationMode: Boolean,
     isTimerRunning: Boolean,
     isTimerStopped: Boolean,
@@ -553,6 +558,7 @@ fun TimerCountdownConstrainedBox(
             numberOfRepetitions,
             currentRepetitionsLeft,
             currentRestTimeLeft,
+            currentPreparationSecondsLeft,
             isPreparationMode,
             isTimerRunning,
             isTimerStopped,
