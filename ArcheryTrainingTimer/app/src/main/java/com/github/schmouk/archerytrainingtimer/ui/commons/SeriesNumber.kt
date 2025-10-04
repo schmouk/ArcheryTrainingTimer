@@ -50,7 +50,6 @@ import androidx.compose.ui.unit.dp
 import com.github.schmouk.archerytrainingtimer.R
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppButtonDarkerColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppButtonTextColor
-import com.github.schmouk.archerytrainingtimer.ui.theme.AppDimmedButtonColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppTextColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppTitleColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.SelectedButtonBorderColor
@@ -86,10 +85,10 @@ fun SeriesNumbersButtons(
     textStyle : TextStyle,
     horizontalSpacing : Dp,
     horizontalArrangement : Arrangement.Horizontal,
-    rowModifier : Modifier
+    modifier : Modifier
 ) {
     Row(
-        modifier = rowModifier,
+        modifier = modifier,
         horizontalArrangement = horizontalArrangement
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(horizontalSpacing)) {
@@ -111,8 +110,7 @@ fun SeriesNumbersButtons(
                         .clip(CircleShape)
                         .background(
                             color = if (isSeriesSelected) AppTitleColor
-                            else if (isClickable) AppButtonDarkerColor
-                            else AppDimmedButtonColor
+                                    else AppButtonDarkerColor
                         )
                         .clickable {
                             if (isClickable)

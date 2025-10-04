@@ -37,7 +37,7 @@ import com.github.schmouk.archerytrainingtimer.ui.theme.AppTitleColor
  * The header title to be displayed at top of views
  *
  * @param viewTitleText: String, the text of this title
- * @param scaleFactor: Float, the scaling factor to be applied to the text size - depends on the device resolution
+ * @param modifier: Modifier, the modifier to be applied to the Text composable
  */
 @Composable
 fun ViewHeader(

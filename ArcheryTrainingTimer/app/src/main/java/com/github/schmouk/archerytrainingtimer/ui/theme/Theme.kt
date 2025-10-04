@@ -38,7 +38,7 @@ private val FixedDarkColorScheme = ColorScheme(
     primaryContainer = AppButtonColor,
     onPrimaryContainer = AppButtonTextColor,
 
-    inversePrimary = AppBackgroundColor, // Kept from original, adjust if needed
+    inversePrimary = AppBackgroundColor,
 
     secondary = AppTextColor,
     onSecondary = AppBackgroundColor,
@@ -53,8 +53,8 @@ private val FixedDarkColorScheme = ColorScheme(
     background = AppBackgroundColor,
     onBackground = AppTextColor,
 
-    surface = AppBackgroundColor, // Existing surface
-    onSurface = AppTextColor,     // Existing onSurface
+    surface = AppBackgroundColor,
+    onSurface = AppTextColor,
 
     surfaceVariant = AppButtonColor,
     onSurfaceVariant = AppTextColor,
@@ -85,7 +85,21 @@ private val FixedDarkColorScheme = ColorScheme(
     surfaceContainerLow = AppSurfaceContainerLow,     // Slightly more emphasis than Lowest
     surfaceContainer = AppBackgroundColor,            // Default container background (maps to old 'surface')
     surfaceContainerHigh = AppSurfaceContainerHigh,   // More emphasis than default
-    surfaceContainerHighest = AppSurfaceContainerHigh // Highest emphasis before primary
+    surfaceContainerHighest = AppSurfaceContainerHigh, // Highest emphasis before primary
+
+    // New material 3 fixed parameters
+    primaryFixed = AppTextColor,
+    primaryFixedDim = AppDimmedTextColor,
+    onPrimaryFixed = AppBackgroundColor,
+    onPrimaryFixedVariant = AppButtonTextColor,
+    secondaryFixed = AppTextColor,
+    secondaryFixedDim = AppDimmedTextColor,
+    onSecondaryFixed = AppTextColor,
+    onSecondaryFixedVariant = AppButtonTextColor,
+    tertiaryFixed = AppTextColor,
+    tertiaryFixedDim = AppDimmedTextColor,
+    onTertiaryFixed = AppBackgroundColor,
+    onTertiaryFixedVariant = AppButtonTextColor
 )
 
 @Composable

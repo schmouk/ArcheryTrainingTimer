@@ -66,7 +66,7 @@ fun Modifier.verticallyCenterOnBaseline(
     val firstBaseline = placeable[FirstBaseline]
     val lastBaseline = placeable[LastBaseline]
 
-    if (firstBaseline != null && lastBaseline != null) {
+    /*if (firstBaseline != null && lastBaseline != null) {*/
         // The visual center of the text is the midpoint between its top-most
         // baseline and its bottom-most baseline.
         val textVisualCenter = (firstBaseline + lastBaseline) / 2
@@ -84,7 +84,7 @@ fun Modifier.verticallyCenterOnBaseline(
         layout(placeable.width, constraints.maxHeight) {
             placeable.placeRelative(x = 0, y = yPosition + yFinalOffset)
         }
-    } else {
+    /*} else {
         // Fallback for composables without a baseline or single-line text where
         // lastBaseline might be the same as firstBaseline.
         // The default centering is a reasonable fallback.
@@ -92,7 +92,7 @@ fun Modifier.verticallyCenterOnBaseline(
             val yPosition = (constraints.maxHeight - placeable.height) / 2
             placeable.placeRelative(x = 0, y = yPosition)
         }
-    }
+    }*/
 }
 
 
@@ -102,9 +102,42 @@ fun Modifier.verticallyCenterOnBaseline(
  * width of the button finally adapts itself to the width of the
  * text.
  *
+ * @param onClick The callback to be invoked when the button is clicked.
+ * @param buttonModifier The modifier to be applied to the button.
+ * @param enabled Controls the enabled state of the button. When `false`,
+ * the button will not be clickable and will appear visually disabled.
+ * Defaults to `true`.
+ * @param shape The shape of the button's container.
+ * @param buttonContainerColor The background color of the button when enabled.
+ * @param buttonDisabledContainerColor The background color of the button when disabled.
+ * @param elevation The elevation of the button.
+ * @param border The border to draw around the button.
+ * @param contentPadding The padding values to apply internally between the
+ * container and the content.
+ * @param interactionSource the [MutableInteractionSource] representing the
+ * stream of interactions for this Button. We can create and pass in your own
+ * remembered [MutableInteractionSource] if we want to observe interactions
+ * and customize the appearance / behavior of this Button in different
+ * interactions.
+ * @param forcedButtonHeightDp The forced height of the button in Dp.
  * @param text The text to display.
- * @param modifier The modifier to be applied to the layout.
- * @param style The text style to be applied to the text.
+ * @param textColor The color of the text when the button is enabled.
+ * @param textDisabledColor The color of the text when the button is disabled.
+ * @param textStyle The style to be applied to the text.
+ * @param fontStyle The font style to be applied to the text.
+ * @param fontWeight The font weight to be applied to the text.
+ * @param textAlign The alignment of the text within the button.
+ * @param textProportionalHeight The proportion of the button's height
+ * that the text should occupy. Value between 0.15 and 0.90.
+ * @param softWrap Whether the text should break at soft line breaks.
+ * Note that this is different from wrapping due to width constraints,
+ * which is controlled by the [maxLines] parameter.
+ * @param maxLines An optional maximum number of lines for the text to span,
+ * wrapping if necessary. By default it is set to 1, meaning the text will
+ * not wrap and will be truncated with an ellipsis if it exceeds the button's width.
+ * If we want the text to be able to wrap to multiple lines, set this to
+ * a value greater than 1.
+ * @param textModifier The modifier to be applied to the text layout.
  */
 @Composable
 fun VerticalAdaptiveTextButton(

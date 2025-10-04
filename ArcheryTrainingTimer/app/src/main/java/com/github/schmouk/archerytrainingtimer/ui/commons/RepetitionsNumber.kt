@@ -67,7 +67,6 @@ import androidx.compose.ui.unit.dp
 import com.github.schmouk.archerytrainingtimer.R
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppButtonDarkerColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppButtonTextColor
-import com.github.schmouk.archerytrainingtimer.ui.theme.AppDimmedButtonColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppTextColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppTitleColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.SelectedButtonBorderColor
@@ -198,7 +197,7 @@ fun RepetitionsSelectorWithScrollIndicators(
                 ) { index ->
                     val repetitionNum = repetitionsRange[index]
                     val isNumberSelected = repetitionNum == numberOfRepetitions
-                    val isClickable = !isNumberSelected  // true
+                    val isClickable = !isNumberSelected
 
                     Box(
                         modifier = Modifier
@@ -215,8 +214,7 @@ fun RepetitionsSelectorWithScrollIndicators(
                             .clip(CircleShape)
                             .background(
                                 color = if (isNumberSelected) AppTitleColor
-                                else if (isClickable) AppButtonDarkerColor
-                                else AppDimmedButtonColor
+                                        else AppButtonDarkerColor
                             )
                             .clickable {
                                 if (isClickable)

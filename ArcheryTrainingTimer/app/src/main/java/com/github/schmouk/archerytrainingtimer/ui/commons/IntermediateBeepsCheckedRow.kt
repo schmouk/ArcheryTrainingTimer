@@ -56,7 +56,7 @@ import com.github.schmouk.archerytrainingtimer.ui.theme.AppTitleColor
  * @param horizontalSpacer: Dp, the horizontal space between the checkbox and the text
  * @param textStyle: TextStyle, the style to apply to the text
  * @param verticalAlignment: Alignment.Vertical, the vertical alignment of the row content
- * @param rowModifier: Modifier, the modifier to be applied to the Row composable
+ * @param modifier: Modifier, the modifier to be applied to the Row composable
  */
 @Composable
 fun IntermediateBeepsCheckedRow(

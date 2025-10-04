@@ -182,7 +182,7 @@ open class SessionStateAutomaton {
     fun isTimerStopped(): Boolean = currentState == EState.STATE_TIMER_STOPPED ||
                                     currentState == EState.STATE_WILL_REST
 
-    fun isTimerActivated(): Boolean = isTimerRunning() || isTimerStopped()
+    //fun isTimerActivated(): Boolean = isTimerRunning() || isTimerStopped()
 
     fun isRestMode(): Boolean = currentState == EState.STATE_REST_MODE
 
@@ -192,9 +192,11 @@ open class SessionStateAutomaton {
      * Resets the automaton to its initial idle state.
      * Useful for when the entire timer sequence is reset.
      */
+    /*
     fun reset() {
         currentState = EState.STATE_IDLE
     }
+     */
 
     /**
      * Provides a string representation of the current internal state.

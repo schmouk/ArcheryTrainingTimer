@@ -1169,7 +1169,7 @@ fun NoArrowsTimerScreen(
                         textStyle = customInteractiveTextStyle,
                         horizontalSpacing = deviceScaling(10).dp,
                         horizontalArrangement = Arrangement.Center,
-                        rowModifier = Modifier
+                        modifier = Modifier
                             .fillMaxWidth()
                             .wrapContentHeight()
                     )

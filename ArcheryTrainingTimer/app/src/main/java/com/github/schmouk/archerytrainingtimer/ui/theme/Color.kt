@@ -31,7 +31,7 @@ import androidx.compose.ui.graphics.Color
 val WAYellowColor = Color(0xFFFFE552) // Yellow color used in the app
 val WARedColor = Color(0xFFF65058) // Red color used in the app
 val WABlueColor = Color(0xFF00B4E4) // Blue color used in the app
-val WABlackColor = Color(0xFF000000)
+//val WABlackColor = Color(0xFF000000)  // Notice: actually not used
 val WAWhiteColor = Color(0xFFFFFFFF)
 
 val AppBackgroundColor = Color(0xFF2F3133)
@@ -41,7 +41,7 @@ val AppDimmedTextColor = Color(0xFF313233) // Dimmed text color for less emphasi
 val AppTitleColor = WAYellowColor
 val AppButtonColor = Color(0xFF00B4E4)
 val AppButtonDarkerColor = Color(0xFF17728B)  //AppButtonColor.copy(alpha = 0.38f)
-val AppDimmedButtonColor = Color(0xFF484A4C)
+//val AppDimmedButtonColor = Color(0xFF484A4C)  // Notice: actually not used
 val AppButtonTextColor = Color(0xFF33373F)
 
 val SelectedButtonBackgroundColor = AppTitleColor // Background for selected button

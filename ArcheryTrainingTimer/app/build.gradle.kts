@@ -69,13 +69,13 @@ android {
         applicationId = namespace  // i.e. "com.github.schmouk.archerytrainingtimer"
         minSdk = 24 // Or our current minSdk
         targetSdk = 36 // Or our current targetSdk
-        versionCode = 10 // To be incremented with each release
+        versionCode = 11 // To be incremented with each release
         // Using a property for versionName is common, but we can also hardcode it
         // If we want to use a property, we can define it in gradle.properties or
         // pass it as a command line argument, e.g., -PversionName=0.1.0
         // Here, we use a hardcoded value for simplicity, but we can replace it with a property if needed.
         // versionName = project.findProperty("versionName")?.toString() ?: "0.1.0"
-        versionName = "0.2.2a" // REPLACE with the actual version or use a property as commented above
+        versionName = "0.2.3" // REPLACE with the actual version or use a property as commented above
     }
 
     signingConfigs {
@@ -130,7 +130,7 @@ android {
         // Ensure we have a valid Compose Compiler version.
         // If using BOM, this is often managed by it.
         // If not using BOM or using a version catalog, it might look like:
-        kotlinCompilerExtensionVersion = "1.5.3" // REPLACE with the actual/compatible version or libs.versions.compose.compiler.get()
+        kotlinCompilerExtensionVersion = "1.5.15" // REPLACE with the actual/compatible version or libs.versions.compose.compiler.get()
     }
     packaging { // Added from your original, good for excluding duplicate metadata
         resources {
@@ -168,9 +168,9 @@ androidComponents {
 
 // Minimal dependencies block
 dependencies {
-    implementation("androidx.activity:activity-compose:1.10.1") // Or the latest stable version
+    implementation("androidx.activity:activity-compose:1.11.0") // Or the latest stable version
 
-    implementation("androidx.core:core-ktx:1.16.0") // Example minimal dependency
+    implementation("androidx.core:core-ktx:1.17.0") // Example minimal dependency
 
     implementation("androidx.compose.material:material-icons-core:1.7.8") // Or the version from your BOM
     implementation("androidx.compose.material:material-icons-extended:1.7.8") // Or the version from your BOM
@@ -182,16 +182,16 @@ dependencies {
     //implementation("androidx.compose.material3.adaptive:adaptive:1.0.0-beta01")
 
     // Essential Compose UI libraries (versions managed by BOM if used)
-    implementation("androidx.compose.material3:material3:1.3.2")  // 1.4.0-beta03 and 1.5.0-alpha03 are available also
+    implementation("androidx.compose.material3:material3:1.4.0")  // 1.4.0-beta03 and 1.5.0-alpha03 are available also
     //implementation("androidx.compose.material3.adaptive:adaptive:1.1.0") // Or the latest version shown in the docs (e.g., 1.2.0-beta01 if that's current)
     implementation("androidx.compose.material3.adaptive:adaptive-layout:1.1.0")  // 1.2.0-beta01 is available also
     //implementation("androidx.compose.material3.adaptive:adaptive-navigation:1.1.0")  // 1.2.0-beta01 is available also
-    implementation("androidx.compose.ui:ui:1.9.1")
+    implementation("androidx.compose.ui:ui:1.9.2")
     //implementation("androidx.compose.ui:ui-graphics:1.9.1")
     //implementation("androidx.compose.ui:ui-unit:1.9.1")
 
 
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.3")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.4")
     /*
     val lifecycleVersion = "2.9.3"
     val archVersion = "2.2.0"
@@ -236,7 +236,7 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.1.7") // Or the latest stable version
 
     // Lifecycle KTX (often useful with Compose)
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.2") // Or our version
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.4") // Or our version
 
     implementation("com.google.accompanist:accompanist-flowlayout:0.36.0")
 }

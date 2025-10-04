@@ -64,7 +64,6 @@ class UserPreferencesRepository(context: Context) {
         val SELECTED_DURATION = stringPreferencesKey("selected_duration")
         val NUMBER_OF_REPETITIONS = intPreferencesKey("number_of_repetitions")
         val NUMBER_OF_SERIES = intPreferencesKey("number_of_series")
-        val SAVE_SELECTION = booleanPreferencesKey("save_selection")
         val INTERMEDIATE_BEEPS = booleanPreferencesKey("intermediate_beeps")
     }
 
@@ -83,52 +82,12 @@ class UserPreferencesRepository(context: Context) {
             val selectedDuration = preferences[PreferencesKeys.SELECTED_DURATION]
             val numberOfRepetitions = preferences[PreferencesKeys.NUMBER_OF_REPETITIONS]
             val numberOfSeries = preferences[PreferencesKeys.NUMBER_OF_SERIES]
-            val loadedSaveFlag = preferences[PreferencesKeys.SAVE_SELECTION]
             val intermediateBeepsFlag = preferences[PreferencesKeys.INTERMEDIATE_BEEPS]
-            val saveSelection = loadedSaveFlag ?: false
             val intermediateBeeps = intermediateBeepsFlag ?: false
 
             UserPreferences(selectedDuration, numberOfRepetitions, numberOfSeries, intermediateBeeps)  //saveSelection)
         }
 
-    // Combined function to save all preferences if needed,
-    // especially useful if "saveSelection" is true
-    suspend fun saveAllPreferences(
-        duration: String?,
-        repetitions: Int?,
-        series: Int?,
-        intermediateBeepsFlag: Boolean
-        //saveSelectionFlag: Boolean
-    ) {
-        dataStore.edit { preferences ->
-            if (duration == null) preferences.remove(PreferencesKeys.SELECTED_DURATION)
-            else preferences[PreferencesKeys.SELECTED_DURATION] = duration
-
-            if (repetitions == null) preferences.remove(PreferencesKeys.NUMBER_OF_REPETITIONS)
-            else preferences[PreferencesKeys.NUMBER_OF_REPETITIONS] = repetitions
-
-            if (series == null) preferences.remove(PreferencesKeys.NUMBER_OF_SERIES)
-            else preferences[PreferencesKeys.NUMBER_OF_SERIES] = series
-
-            //preferences[PreferencesKeys.SAVE_SELECTION] = saveSelectionFlag
-
-            preferences[PreferencesKeys.INTERMEDIATE_BEEPS] = intermediateBeepsFlag
-        }
-    }
-
-    // Function to clear preferences if the user unchecks "saveSelection"
-    // and we decide not to keep the values-rFR-en-rEN.
-    suspend fun clearAllPreferencesIfSaveIsUnchecked() {
-        dataStore.edit { preferences ->
-            preferences.clear() // Clears all preferences
-            // Or could selectively remove them:
-            // preferences.remove(PreferencesKeys.SELECTED_DURATION)
-            // preferences.remove(PreferencesKeys.NUMBER_OF_REPETITIONS)
-            // preferences.remove(PreferencesKeys.NUMBER_OF_SERIES)
-            // preferences[PreferencesKeys.SAVE_SELECTION] = false
-            // preferences[PreferencesKeys.INTERMEDIATE_BEEPS] = false
-        }
-    }
 
     // Function to save only the duration preference
     suspend fun saveDurationPreference(duration: String?) {
@@ -151,13 +110,6 @@ class UserPreferencesRepository(context: Context) {
         dataStore.edit { preferences ->
             if (series == null) preferences.remove(PreferencesKeys.NUMBER_OF_SERIES)
             else preferences[PreferencesKeys.NUMBER_OF_SERIES] = series
-        }
-    }
-
-    // Function to save only the saveSelection preference
-    suspend fun saveSaveSelectionPreference(saveSelection: Boolean) {
-        dataStore.edit { preferences ->
-            preferences[PreferencesKeys.SAVE_SELECTION] = saveSelection
         }
     }
 
