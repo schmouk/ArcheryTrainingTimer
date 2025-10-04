@@ -24,37 +24,26 @@ OUT  OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-package com.github.schmouk.archerytrainingtimer.ui.theme
+package com.github.schmouk.archerytrainingtimer.ui.commons
 
-// Notice: commented imports might be useful later, so we keep them here
+import androidx.compose.foundation.Image
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 
-//import androidx.compose.foundation.layout.padding
-//import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Typography
-//import androidx.compose.ui.Alignment
-//import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
-//import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.github.schmouk.archerytrainingtimer.R
 
-val AppTypography = Typography(
-    bodyLarge = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.5.sp
-    ),
-    titleLarge = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Normal, // Notice: Title text is often bold
-        fontSize = 36.sp,
-        lineHeight = 40.sp,
-        letterSpacing = 0.sp
+/**
+ * Composable to display the application logo.
+ *
+ * @param modifier: Modifier, the modifier to be applied to the Image composable
+ */
+@Composable
+fun LogoImage(modifier : Modifier) {
+    Image(
+        painter = painterResource(id = R.drawable.ps_logo),
+        contentDescription = stringResource(id = R.string.editor_logo),
+        modifier = modifier
     )
-
-    // Add other styles if needed, e.g. for button text if different
-
-)
+}

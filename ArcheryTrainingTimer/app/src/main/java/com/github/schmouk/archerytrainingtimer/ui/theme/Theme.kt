@@ -1,3 +1,29 @@
+/*
+MIT License
+
+Copyright (c) 2025 Philippe Schmouker, ph (dot) schmouker (at) gmail (dot) com
+
+This file is part of Android application ArcheryTrainingTimer.
+
+Permission is hereby granted,  free of charge,  to any person obtaining a copy
+of this software and associated documentation files (the "Software"),  to deal
+in the Software without restriction,  including without limitation the  rights
+to use,  copy,  modify,  merge,  publish,  distribute, sublicense, and/or sell
+copies of the Software,  and  to  permit  persons  to  whom  the  Software  is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS",  WITHOUT WARRANTY OF ANY  KIND,  EXPRESS  OR
+IMPLIED,  INCLUDING  BUT  NOT  LIMITED  TO  THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT  SHALL  THE
+AUTHORS  OR  COPYRIGHT  HOLDERS  BE  LIABLE  FOR  ANY CLAIM,  DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,  ARISING FROM,
+OUT  OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 package com.github.schmouk.archerytrainingtimer.ui.theme // Ensure this package is correct
 
 import androidx.compose.material3.ColorScheme
@@ -12,7 +38,7 @@ private val FixedDarkColorScheme = ColorScheme(
     primaryContainer = AppButtonColor,
     onPrimaryContainer = AppButtonTextColor,
 
-    inversePrimary = AppBackgroundColor, // Kept from original, adjust if needed
+    inversePrimary = AppBackgroundColor,
 
     secondary = AppTextColor,
     onSecondary = AppBackgroundColor,
@@ -27,8 +53,8 @@ private val FixedDarkColorScheme = ColorScheme(
     background = AppBackgroundColor,
     onBackground = AppTextColor,
 
-    surface = AppBackgroundColor, // Existing surface
-    onSurface = AppTextColor,     // Existing onSurface
+    surface = AppBackgroundColor,
+    onSurface = AppTextColor,
 
     surfaceVariant = AppButtonColor,
     onSurfaceVariant = AppTextColor,
@@ -59,7 +85,21 @@ private val FixedDarkColorScheme = ColorScheme(
     surfaceContainerLow = AppSurfaceContainerLow,     // Slightly more emphasis than Lowest
     surfaceContainer = AppBackgroundColor,            // Default container background (maps to old 'surface')
     surfaceContainerHigh = AppSurfaceContainerHigh,   // More emphasis than default
-    surfaceContainerHighest = AppSurfaceContainerHigh // Highest emphasis before primary
+    surfaceContainerHighest = AppSurfaceContainerHigh, // Highest emphasis before primary
+
+    // New material 3 fixed parameters
+    primaryFixed = AppTextColor,
+    primaryFixedDim = AppDimmedTextColor,
+    onPrimaryFixed = AppBackgroundColor,
+    onPrimaryFixedVariant = AppButtonTextColor,
+    secondaryFixed = AppTextColor,
+    secondaryFixedDim = AppDimmedTextColor,
+    onSecondaryFixed = AppTextColor,
+    onSecondaryFixedVariant = AppButtonTextColor,
+    tertiaryFixed = AppTextColor,
+    tertiaryFixedDim = AppDimmedTextColor,
+    onTertiaryFixed = AppBackgroundColor,
+    onTertiaryFixedVariant = AppButtonTextColor
 )
 
 @Composable
