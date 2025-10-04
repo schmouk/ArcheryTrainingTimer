@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -78,7 +79,6 @@ fun RepetitionsDurationButtons(
     durationOptions : List<String>,
     borderStrokeWidth : Dp,
     durationButtonHeight : Dp,
-    durationsTextStyle : TextStyle,
     horizontalArrangement : Arrangement.Horizontal,
     modifier : Modifier = Modifier
 ) {
@@ -86,7 +86,7 @@ fun RepetitionsDurationButtons(
         horizontalArrangement = horizontalArrangement,
         modifier = modifier
     ) {
-        var selectedDurationString = selectedDurationString
+        //var selectedDurationString = selectedDurationString
 
         durationOptions.forEach { durationString ->
             val isSelected = selectedDurationString == durationString
@@ -103,7 +103,7 @@ fun RepetitionsDurationButtons(
                     else AppButtonDarkerColor,
                 border = BorderStroke(
                     borderStrokeWidth,
-                    if (isSelected) SelectedButtonBorderColor else AppButtonDarkerColor //AppBackgroundColor
+                    if (isSelected) SelectedButtonBorderColor else AppButtonDarkerColor
                 ),
                 contentPadding = PaddingValues(horizontal = 24.dp, vertical = 0.dp),
                 forcedButtonHeightDp = durationButtonHeight,
@@ -113,7 +113,7 @@ fun RepetitionsDurationButtons(
                 textProportionalHeight = 0.33f,
                 softWrap = false, // Prevents the text from wrapping to the next line
                 maxLines = 1,     // Explicitly sets the maximum lines to 1
-                textModifier = Modifier.wrapContentWidth() // Adapts width to text content
+                textModifier = Modifier.wrapContentWidth(Alignment.CenterHorizontally) // Adapts width to text content
             )
         }
     }

@@ -1091,7 +1091,6 @@ fun NoArrowsTimerScreen(
                         durationOptions = durationOptions,
                         borderStrokeWidth = deviceScaling(5).dp,
                         durationButtonHeight = selectionItemsBaseSizeDp,
-                        durationsTextStyle = customInteractiveTextStyle,
                         horizontalArrangement = Arrangement.Center,
                         modifier = Modifier
                             .fillMaxWidth()

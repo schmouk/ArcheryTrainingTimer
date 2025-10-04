@@ -40,11 +40,6 @@ import com.github.schmouk.archerytrainingtimer.noarrowsession.NoArrowsTrainingTi
 import com.github.schmouk.archerytrainingtimer.ui.theme.*
 
 
-// --- Global DEBUG MODE flag ---
-const val DEBUG_MODE = true  // i.e. DEBUG MODE (tests)
-//const val DEBUG_MODE = false  // i.e. RELEASE MODE (production)
-
-
 // --- MainActivity class definition ---
 class MainActivity : ComponentActivity() {
 
