@@ -24,37 +24,38 @@ OUT  OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-package com.github.schmouk.archerytrainingtimer.ui.theme
+package com.github.schmouk.archerytrainingtimer.ui.commons
 
-// Notice: commented imports might be useful later, so we keep them here
-
-//import androidx.compose.foundation.layout.padding
-//import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Typography
-//import androidx.compose.ui.Alignment
-//import androidx.compose.ui.Modifier
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
-//import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.font.FontStyle
+import com.github.schmouk.archerytrainingtimer.R
+import com.github.schmouk.archerytrainingtimer.ui.theme.TimerPreparationColor
 
-val AppTypography = Typography(
-    bodyLarge = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.5.sp
-    ),
-    titleLarge = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Normal, // Notice: Title text is often bold
-        fontSize = 36.sp,
-        lineHeight = 40.sp,
-        letterSpacing = 0.sp
+
+/**
+ * A small text displayed to inform that session will start in n seconds
+ *
+ * @param textStyle: TextStyle, the style to apply to the text
+ * @param modifier: Modifier = Modifier, optional modifier for the Text composable
+ */
+@Composable
+fun SessionPreparationText(
+    preparationTime: Int,
+    textStyle: TextStyle,
+    modifier: Modifier = Modifier
+) {
+    Text(
+        text = String.format("%s %d s",
+            stringResource(id = R.string.preparation_label),
+            preparationTime
+        ),
+        style = textStyle,
+        fontStyle = FontStyle.Italic,
+        color = TimerPreparationColor,
+        modifier = modifier
     )
-
-    // Add other styles if needed, e.g. for button text if different
-
-)
+}

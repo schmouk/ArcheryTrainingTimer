@@ -1,4 +1,30 @@
-package com.github.schmouk.archerytrainingtimer
+/*
+MIT License
+
+Copyright (c) 2025 Philippe Schmouker, ph (dot) schmouker (at) gmail (dot) com
+
+This file is part of Android application ArcheryTrainingTimer.
+
+Permission is hereby granted,  free of charge,  to any person obtaining a copy
+of this software and associated documentation files (the "Software"),  to deal
+in the Software without restriction,  including without limitation the  rights
+to use,  copy,  modify,  merge,  publish,  distribute, sublicense, and/or sell
+copies of the Software,  and  to  permit  persons  to  whom  the  Software  is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS",  WITHOUT WARRANTY OF ANY  KIND,  EXPRESS  OR
+IMPLIED,  INCLUDING  BUT  NOT  LIMITED  TO  THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT  SHALL  THE
+AUTHORS  OR  COPYRIGHT  HOLDERS  BE  LIABLE  FOR  ANY CLAIM,  DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,  ARISING FROM,
+OUT  OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
+package com.github.schmouk.archerytrainingtimer.noarrowsession
 
 import android.content.Context
 import android.util.Log
@@ -38,7 +64,6 @@ class UserPreferencesRepository(context: Context) {
         val SELECTED_DURATION = stringPreferencesKey("selected_duration")
         val NUMBER_OF_REPETITIONS = intPreferencesKey("number_of_repetitions")
         val NUMBER_OF_SERIES = intPreferencesKey("number_of_series")
-        val SAVE_SELECTION = booleanPreferencesKey("save_selection")
         val INTERMEDIATE_BEEPS = booleanPreferencesKey("intermediate_beeps")
     }
 
@@ -57,52 +82,12 @@ class UserPreferencesRepository(context: Context) {
             val selectedDuration = preferences[PreferencesKeys.SELECTED_DURATION]
             val numberOfRepetitions = preferences[PreferencesKeys.NUMBER_OF_REPETITIONS]
             val numberOfSeries = preferences[PreferencesKeys.NUMBER_OF_SERIES]
-            val loadedSaveFlag = preferences[PreferencesKeys.SAVE_SELECTION]
             val intermediateBeepsFlag = preferences[PreferencesKeys.INTERMEDIATE_BEEPS]
-            val saveSelection = loadedSaveFlag ?: false
             val intermediateBeeps = intermediateBeepsFlag ?: false
 
             UserPreferences(selectedDuration, numberOfRepetitions, numberOfSeries, intermediateBeeps)  //saveSelection)
         }
 
-    // Combined function to save all preferences if needed,
-    // especially useful if "saveSelection" is true
-    suspend fun saveAllPreferences(
-        duration: String?,
-        repetitions: Int?,
-        series: Int?,
-        intermediateBeepsFlag: Boolean
-        //saveSelectionFlag: Boolean
-    ) {
-        dataStore.edit { preferences ->
-            if (duration == null) preferences.remove(PreferencesKeys.SELECTED_DURATION)
-            else preferences[PreferencesKeys.SELECTED_DURATION] = duration
-
-            if (repetitions == null) preferences.remove(PreferencesKeys.NUMBER_OF_REPETITIONS)
-            else preferences[PreferencesKeys.NUMBER_OF_REPETITIONS] = repetitions
-
-            if (series == null) preferences.remove(PreferencesKeys.NUMBER_OF_SERIES)
-            else preferences[PreferencesKeys.NUMBER_OF_SERIES] = series
-
-            //preferences[PreferencesKeys.SAVE_SELECTION] = saveSelectionFlag
-
-            preferences[PreferencesKeys.INTERMEDIATE_BEEPS] = intermediateBeepsFlag
-        }
-    }
-
-    // Function to clear preferences if the user unchecks "saveSelection"
-    // and we decide not to keep the values-rFR-en-rEN.
-    suspend fun clearAllPreferencesIfSaveIsUnchecked() {
-        dataStore.edit { preferences ->
-            preferences.clear() // Clears all preferences
-            // Or could selectively remove them:
-            // preferences.remove(PreferencesKeys.SELECTED_DURATION)
-            // preferences.remove(PreferencesKeys.NUMBER_OF_REPETITIONS)
-            // preferences.remove(PreferencesKeys.NUMBER_OF_SERIES)
-            // preferences[PreferencesKeys.SAVE_SELECTION] = false
-            // preferences[PreferencesKeys.INTERMEDIATE_BEEPS] = false
-        }
-    }
 
     // Function to save only the duration preference
     suspend fun saveDurationPreference(duration: String?) {
@@ -125,13 +110,6 @@ class UserPreferencesRepository(context: Context) {
         dataStore.edit { preferences ->
             if (series == null) preferences.remove(PreferencesKeys.NUMBER_OF_SERIES)
             else preferences[PreferencesKeys.NUMBER_OF_SERIES] = series
-        }
-    }
-
-    // Function to save only the saveSelection preference
-    suspend fun saveSaveSelectionPreference(saveSelection: Boolean) {
-        dataStore.edit { preferences ->
-            preferences[PreferencesKeys.SAVE_SELECTION] = saveSelection
         }
     }
 

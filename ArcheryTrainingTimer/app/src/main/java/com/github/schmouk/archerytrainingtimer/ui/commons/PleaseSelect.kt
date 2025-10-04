@@ -24,37 +24,37 @@ OUT  OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-package com.github.schmouk.archerytrainingtimer.ui.theme
+package com.github.schmouk.archerytrainingtimer.ui.commons
 
-// Notice: commented imports might be useful later, so we keep them here
-
-//import androidx.compose.foundation.layout.padding
-//import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Typography
-//import androidx.compose.ui.Alignment
-//import androidx.compose.ui.Modifier
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
-//import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.font.FontStyle
 
-val AppTypography = Typography(
-    bodyLarge = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.5.sp
-    ),
-    titleLarge = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Normal, // Notice: Title text is often bold
-        fontSize = 36.sp,
-        lineHeight = 40.sp,
-        letterSpacing = 0.sp
+import com.github.schmouk.archerytrainingtimer.R
+import com.github.schmouk.archerytrainingtimer.ui.theme.AppTitleColor
+
+
+/**
+ * A small text displayed for asking to select parameters for a session,
+ * when not all selections have been made yet. Not shown when all selections
+ * have been made.
+ *
+ * @param textStyle: TextStyle, the style to apply to the text
+ * @param modifier: Modifier = Modifier, optional modifier for the Text composable
+ */
+@Composable
+fun PleaseSelectText(
+    textStyle: TextStyle,
+    modifier: Modifier = Modifier,
+) {
+    Text( // Select Session parameters Row
+        text = stringResource(id = R.string.please_select),
+        style = textStyle,
+        fontStyle = FontStyle.Italic,
+        color = AppTitleColor,
+        modifier = modifier
     )
-
-    // Add other styles if needed, e.g. for button text if different
-
-)
+}
