@@ -31,7 +31,7 @@ import androidx.compose.runtime.State
 import androidx.lifecycle.ViewModel
 
 import com.github.schmouk.archerytrainingtimer.commons.ESignal
-import com.github.schmouk.archerytrainingtimer.noarrowsession.SessionStateAutomaton
+import com.github.schmouk.archerytrainingtimer.commons.BaseSessionStateAutomaton
 
 
 /**
@@ -42,7 +42,7 @@ import com.github.schmouk.archerytrainingtimer.noarrowsession.SessionStateAutoma
 class NoArrowsTimerViewModel : ViewModel() {
 
     // Internal state automaton to manage timer states
-    protected val stateAutomaton = SessionStateAutomaton()
+    protected val stateAutomaton = BaseSessionStateAutomaton()
 
     // Mutable checking of the internal state - idle mode
     private val _isIdleMode = mutableStateOf(stateAutomaton.isIdleMode())
