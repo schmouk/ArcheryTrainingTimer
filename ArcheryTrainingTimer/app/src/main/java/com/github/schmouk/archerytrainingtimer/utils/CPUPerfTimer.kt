@@ -24,12 +24,56 @@ OUT  OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-package com.github.schmouk.archerytrainingtimer
+package com.github.schmouk.archerytrainingtimer.utils
 
 /**
- * When set to true, the DEBUG MODE speeds-up testing
- * as well as does it allow for logging.
- * Set it to false to get a release version of the app.
+ * Time performance measurement utility.
  */
-const val DEBUG_MODE = true  // i.e. DEBUG MODE (tests)
-//const val DEBUG_MODE = false  // i.e. RELEASE MODE (production)
+class CPUPerfTimer {
+
+    private var startTime: Long = 0
+    private var endTime: Long = 0
+    private var running: Boolean = false
+
+    /**
+     * Starts the timer.
+     */
+    fun start() {
+        startTime = System.nanoTime()
+        running = true
+    }
+
+    /**
+     * Stops the timer.
+     */
+    fun stop() {
+        endTime = System.nanoTime()
+        running = false
+    }
+
+    /**
+     * Gets the elapsed time in nanoseconds.
+     * If the timer is still running, it calculates the time until now.
+     *
+     * @return Elapsed time in nanoseconds.
+     */
+    fun getElapsedTime(): Long {
+        val elapsedTime = if (running) {
+            System.nanoTime() - startTime
+        } else {
+            endTime - startTime
+        }
+        return elapsedTime // in nanoseconds
+    }
+
+    /**
+     * Gets the elapsed time in milliseconds.
+     * If the timer is still running, it calculates the time until now.
+     *
+     * @return Elapsed time in milliseconds.
+     */
+    fun getElapsedTimeMillis(): Long {
+        return getElapsedTime() / 1_000_000L // Convert nanoseconds to milliseconds
+    }
+
+}
