@@ -30,6 +30,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.State
 import androidx.lifecycle.ViewModel
 
+import com.github.schmouk.archerytrainingtimer.commons.ESignal
 
 /**
  * ViewModel for managing the state of the No Arrows Training Timer.

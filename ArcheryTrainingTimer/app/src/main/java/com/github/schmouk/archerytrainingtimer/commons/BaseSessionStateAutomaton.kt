@@ -27,7 +27,7 @@ SOFTWARE.
 package com.github.schmouk.archerytrainingtimer.commons
 
 /**
- * Defines the signals that can be sent to the TimerStateAutomaton
+ * Defines the signals that can be sent to the SessionStateAutomaton-s
  * to trigger state transitions.
  */
 enum class ESignal {
@@ -41,23 +41,24 @@ enum class ESignal {
 }
 
 /**
+ * Defines the internal states of the automaton.
+ * This is private as its direct manipulation should be controlled by the automaton.
+ */
+enum class EState {
+    STATE_IDLE,             // Timer is not active, ready to be configured or started
+    STATE_PREPARATION,      // Preparation countdown before the main timer starts
+    STATE_TIMER_RUNNING,    // Main timer is actively counting down
+    STATE_TIMER_STOPPED,    // Main timer was running but is now paused
+    STATE_REST_MODE,        // Rest timer is actively counting down
+    STATE_WILL_REST,        // Main timer is stopped, and a rest period is pending
+    STATE_COMPLETED         // The entire session has completed
+}
+
+
+/**
  * Manages the state of the timer based on input signals.
  */
 abstract class BaseSessionStateAutomaton {
-
-    /**
-     * Defines the internal states of the automaton.
-     * This is private as its direct manipulation should be controlled by the automaton.
-     */
-    protected enum class EState {
-        STATE_IDLE,             // Timer is not active, ready to be configured or started
-        STATE_PREPARATION,      // Preparation countdown before the main timer starts
-        STATE_TIMER_RUNNING,    // Main timer is actively counting down
-        STATE_TIMER_STOPPED,    // Main timer was running but is now paused
-        STATE_REST_MODE,        // Rest timer is actively counting down
-        STATE_WILL_REST,        // Main timer is stopped, and a rest period is pending
-        STATE_COMPLETED         // The entire session has completed
-    }
 
     // Initialize the internal state to IDLE
     protected var currentState: EState = EState.STATE_IDLE

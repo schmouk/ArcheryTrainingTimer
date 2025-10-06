@@ -77,7 +77,7 @@ import androidx.compose.ui.unit.sp
 
 import com.github.schmouk.archerytrainingtimer.DEBUG_MODE
 import com.github.schmouk.archerytrainingtimer.R
-import com.github.schmouk.archerytrainingtimer.noarrowsession.ESignal
+import com.github.schmouk.archerytrainingtimer.commons.ESignal
 import com.github.schmouk.archerytrainingtimer.noarrowsession.NoArrowsTimerViewModel
 import com.github.schmouk.archerytrainingtimer.noarrowsession.UserPreferencesRepository
 import com.github.schmouk.archerytrainingtimer.ui.commons.IntermediateBeepsCheckedRow
