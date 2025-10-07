@@ -27,7 +27,7 @@ SOFTWARE.
 package com.github.schmouk.archerytrainingtimer.commons
 
 /**
- * Defines the signals that can be sent to the SessionStateAutomaton-s
+ * Defines the signals that can be sent to the NoArrowStateAutomaton-s
  * to trigger state transitions.
  */
 enum class ESignal {

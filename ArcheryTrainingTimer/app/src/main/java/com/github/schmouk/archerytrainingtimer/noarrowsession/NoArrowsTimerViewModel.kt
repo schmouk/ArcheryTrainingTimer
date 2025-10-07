@@ -26,59 +26,17 @@ SOFTWARE.
 
 package com.github.schmouk.archerytrainingtimer.noarrowsession
 
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.State
-import androidx.lifecycle.ViewModel
 
-import com.github.schmouk.archerytrainingtimer.commons.ESignal
+import com.github.schmouk.archerytrainingtimer.commons.BaseCountdownViewModel
+//import com.github.schmouk.archerytrainingtimer.noarrowsession.NoArrowStateAutomaton
 
 /**
  * ViewModel for managing the state of the No Arrows Training Timer.
- * This ViewModel uses a SessionStateAutomaton to handle state transitions
+ * This ViewModel uses a NoArrowStateAutomaton to handle state transitions
  * based on user actions and timer events.
  */
-class NoArrowsTimerViewModel : ViewModel() {
-
-    // Internal state automaton to manage timer states
-    private val stateAutomaton = SessionStateAutomaton()
-
-    // Mutable checking of the internal state - idle mode
-    private val _isIdleMode = mutableStateOf(stateAutomaton.isIdleMode())
-    val isIdleMode: State<Boolean> = _isIdleMode
-
-    // Mutable checking of the internal state - preparation mode
-    private val _isPreparationMode = mutableStateOf(stateAutomaton.isPreparationMode())
-    val isPreparationMode: State<Boolean> = _isPreparationMode
-
-    // Mutable checking of the internal state - rest mode
-    private val _isRestMode = mutableStateOf(stateAutomaton.isRestMode())
-    val isRestMode: State<Boolean> = _isRestMode
-
-    // Mutable checking of the internal state - completed session
-    private val _isSessionCompleted = mutableStateOf(stateAutomaton.isSessionCompleted())
-    val isSessionCompleted: State<Boolean> = _isSessionCompleted
-
-    // Mutable checking of the internal state - running timer
-    private val _isTimerRunning = mutableStateOf(stateAutomaton.isTimerRunning())
-    var isTimerRunning: State<Boolean> = _isTimerRunning
-
-    // Mutable checking of the internal state - stopped timer
-    private val _isTimerStopped = mutableStateOf(stateAutomaton.isTimerStopped())
-    val isTimerStopped: State<Boolean> = _isTimerStopped
-
-    // actuates the finite state machine according to the received signal
-    // and updates the mutable states accordingly
-    @Suppress("MemberVisibilityCanBePrivate")
-    fun action(signal: ESignal) {
-        stateAutomaton.action(signal)
-
-        // sets accordingly the local delegates
-        _isIdleMode.value = stateAutomaton.isIdleMode()
-        _isPreparationMode.value = stateAutomaton.isPreparationMode()
-        _isRestMode.value = stateAutomaton.isRestMode()
-        _isSessionCompleted.value = stateAutomaton.isSessionCompleted()
-        _isTimerRunning.value = stateAutomaton.isTimerRunning()
-        _isTimerStopped.value = stateAutomaton.isTimerStopped()
-    }
-
+class NoArrowsTimerViewModel : BaseCountdownViewModel(NoArrowStateAutomaton()) {
+    // Notice: nothing to implement here
+    // all is managed by the BaseCountdownViewModel and the NoArrowStateAutomaton
+    // which is a specialization of BaseSessionStateAutomaton
 }

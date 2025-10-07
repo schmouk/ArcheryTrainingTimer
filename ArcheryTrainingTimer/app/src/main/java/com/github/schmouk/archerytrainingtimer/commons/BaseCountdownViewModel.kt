@@ -30,19 +30,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.State
 import androidx.lifecycle.ViewModel
 
-import com.github.schmouk.archerytrainingtimer.commons.ESignal
-import com.github.schmouk.archerytrainingtimer.commons.BaseSessionStateAutomaton
-
 
 /**
  * ViewModel for managing the state of the No Arrows Training Timer.
- * This ViewModel uses a SessionStateAutomaton to handle state transitions
+ * This ViewModel uses a NoArrowStateAutomaton to handle state transitions
  * based on user actions and timer events.
  */
-class NoArrowsTimerViewModel : ViewModel() {
+open class BaseCountdownViewModel(stateAutomaton: BaseSessionStateAutomaton) : ViewModel() {
 
     // Internal state automaton to manage timer states
-    protected val stateAutomaton = BaseSessionStateAutomaton()
+    protected val stateAutomaton = stateAutomaton
 
     // Mutable checking of the internal state - idle mode
     private val _isIdleMode = mutableStateOf(stateAutomaton.isIdleMode())
@@ -71,7 +68,7 @@ class NoArrowsTimerViewModel : ViewModel() {
     // actuates the finite state machine according to the received signal
     // and updates the mutable states accordingly
     @Suppress("MemberVisibilityCanBePrivate")
-    fun action(signal: ESignal) {
+    open fun action(signal: ESignal) {
         stateAutomaton.action(signal)
 
         // sets accordingly the local delegates
