@@ -80,6 +80,7 @@ import com.github.schmouk.archerytrainingtimer.R
 import com.github.schmouk.archerytrainingtimer.commons.ESignal
 import com.github.schmouk.archerytrainingtimer.noarrowsession.NoArrowsTimerViewModel
 import com.github.schmouk.archerytrainingtimer.noarrowsession.UserPreferencesRepository
+import com.github.schmouk.archerytrainingtimer.services.AudioService
 import com.github.schmouk.archerytrainingtimer.ui.commons.IntermediateBeepsCheckedRow
 import com.github.schmouk.archerytrainingtimer.ui.commons.LogoImage
 import com.github.schmouk.archerytrainingtimer.ui.commons.PleaseSelectText
@@ -147,6 +148,7 @@ fun NoArrowsTimerScreen(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
         ) {
+            // --- Scaling factor ---
             // Available size for the content
             val availableHeightForContentDp = this.maxHeight
             val availableWidthForContentDp = this.maxWidth
@@ -173,23 +175,26 @@ fun NoArrowsTimerScreen(
             val widthScalingFactor =
                 this.maxWidth.value / availableWidthForContentDp.value  //currentScreenWidthDp.value
 
+
+            // --- Text styles ---
             val selectionTextFontSize = deviceScaling(18)  // Notice; to be used with .sp for specifying font size
             val customInteractiveTextStyle = TextStyle(fontSize = selectionTextFontSize.sp)
             val smallerTextStyle = TextStyle(fontSize = deviceScaling(16).sp)
+
+
+            // --- Repetitions selector state ---
             val repetitionsLazyListState = rememberLazyListState()
 
-            // Playing sound
+
+            // --- Playing sound ---
             val context = LocalContext.current
+
+            val audioManager = AudioService(context)
 
             var playBeepEvent by remember { mutableStateOf(false) }
             var playEndBeepEvent by remember { mutableStateOf(false) }
             var playRestBeepEvent by remember { mutableStateOf(false) }
             var playIntermediateBeep by remember { mutableStateOf(false) }
-
-            val audioManager =
-                remember { // Remember to avoid re-creating it on every recomposition
-                    context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-                }
 
             // SoundPool setup
             val soundPool = remember {
@@ -204,19 +209,15 @@ fun NoArrowsTimerScreen(
                     .build()
             }
 
-            fun audioIsNotMuted(): Boolean {
-                return audioManager.ringerMode != AudioManager.RINGER_MODE_SILENT &&
-                        audioManager.ringerMode != AudioManager.RINGER_MODE_VIBRATE
-            }
+            var beepSoundId by remember { mutableStateOf<Int?>(null) }
+            var endBeepSoundId by remember { mutableStateOf<Int?>(null) }
+            var intermediateBeepSoundId by remember { mutableStateOf<Int?>(null) }
+            var soundPoolLoaded by remember { mutableStateOf(false) }
 
-            fun audioVolumeLevel(): Float {
-                val currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_RING)
-                val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_RING)
-                return 1f * currentVolume / maxVolume
-            }
 
             // --- Debug / Testing ---
             val countDownDelay = if (DEBUG_MODE) 600L else 1000L
+
 
             // --- Dynamic Sizes & SPs ---
             val mainTimerStrokeWidthDp = deviceScaling(14).dp
@@ -244,7 +245,7 @@ fun NoArrowsTimerScreen(
             val maxRepetitions = 15
             val repetitionRange = (minRepetitions..maxRepetitions).toList()
 
-            // Rest Mode & Series Tracking
+            // --- Rest Mode & Series Tracking ---
             var currentRestTimeLeft by rememberSaveable { mutableStateOf<Int?>(null) }
             val endOfRestBeepTime = 7 // seconds before end of rest to play beep
 
@@ -258,11 +259,6 @@ fun NoArrowsTimerScreen(
             val resPreparationText = stringResource(R.string.preparation)
             var currentPreparationSecondsLeft by rememberSaveable { mutableStateOf<Int?>(null) }
 
-
-            var beepSoundId by remember { mutableStateOf<Int?>(null) }
-            var endBeepSoundId by remember { mutableStateOf<Int?>(null) }
-            var intermediateBeepSoundId by remember { mutableStateOf<Int?>(null) }
-            var soundPoolLoaded by remember { mutableStateOf(false) }
 
             /**
              *  Loads sound and releases SoundPool
@@ -446,8 +442,8 @@ fun NoArrowsTimerScreen(
              * Play sound effect - single beep
              */
             LaunchedEffect(playBeepEvent) {
-                if (playBeepEvent && soundPoolLoaded && beepSoundId != null) {  // && audioIsNotMuted()) {
-                    val actualVolume = audioVolumeLevel()
+                if (playBeepEvent && soundPoolLoaded && beepSoundId != null && audioManager.isAudioNotMuted()) {
+                    val actualVolume = audioManager.getAudioVolumeLevel()
                     soundPool.play(beepSoundId!!, actualVolume, actualVolume, 1, 0, 1f)
                 }
                 playBeepEvent = false // Reset trigger
@@ -457,8 +453,8 @@ fun NoArrowsTimerScreen(
              * Play sound effect - end beep
              */
             LaunchedEffect(playEndBeepEvent) {
-                if (playEndBeepEvent && soundPoolLoaded && endBeepSoundId != null && audioIsNotMuted()) {
-                    val actualVolume = audioVolumeLevel()
+                if (playEndBeepEvent && soundPoolLoaded && endBeepSoundId != null && audioManager.isAudioNotMuted()) {
+                    val actualVolume = audioManager.getAudioVolumeLevel()
                     soundPool.play(endBeepSoundId!!, actualVolume, actualVolume, 1, 0, 1f)
                     delay(380L)
                     soundPool.play(endBeepSoundId!!, actualVolume, actualVolume, 1, 0, 1f)
@@ -472,8 +468,8 @@ fun NoArrowsTimerScreen(
              * Play sound effect - intermediate beep
              */
             LaunchedEffect(playIntermediateBeep) {
-                if (playIntermediateBeep && soundPoolLoaded && intermediateBeepSoundId != null && audioIsNotMuted()) {
-                    val actualVolume = audioVolumeLevel()
+                if (playIntermediateBeep && soundPoolLoaded && intermediateBeepSoundId != null && audioManager.isAudioNotMuted()) {
+                    val actualVolume = audioManager.getAudioVolumeLevel()
                     soundPool.play(
                         intermediateBeepSoundId!!,
                         actualVolume,
@@ -491,7 +487,7 @@ fun NoArrowsTimerScreen(
              */
             LaunchedEffect(playRestBeepEvent) {
                 if (playRestBeepEvent && soundPoolLoaded && beepSoundId != null) {
-                    val actualVolume = audioVolumeLevel()
+                    val actualVolume = audioManager.getAudioVolumeLevel()
                     soundPool.play(beepSoundId!!, actualVolume, actualVolume, 1, 0, 1f)
                     delay(240L)
                     soundPool.play(beepSoundId!!, actualVolume, actualVolume, 1, 0, 1f)
