@@ -44,11 +44,13 @@ class CPUPerfTimer {
     }
 
     /**
-     * Stops the timer.
+     * Stops the timer. Only effective if timer is running.
      */
     fun stop() {
-        endTime = System.nanoTime()
-        running = false
+        if (running) {
+            endTime = System.nanoTime()
+            running = false
+        }
     }
 
     /**
@@ -73,7 +75,7 @@ class CPUPerfTimer {
      * @return Elapsed time in milliseconds.
      */
     fun getElapsedTimeMillis(): Long {
-        return getElapsedTime() / 1_000_000L // Convert nanoseconds to milliseconds
+        return getElapsedTime() / 1_000_000L // Converts nanoseconds to milliseconds
     }
 
 }
