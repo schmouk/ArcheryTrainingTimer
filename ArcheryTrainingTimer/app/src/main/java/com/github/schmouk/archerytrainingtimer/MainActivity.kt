@@ -46,16 +46,16 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Disable edge-to-edge display to NOT draw behind the system bars
+        // Disables edge-to-edge display to NOT draw behind the system bars
         WindowCompat.setDecorFitsSystemWindows(window, true)
 
+        // Sets the content of the main screen for the app
         setContent {
             ArcheryTrainingTimerTheme {
                 MainAppScreen()
             }
         }
     }
-
 }
 
 
@@ -107,7 +107,7 @@ fun MainAppScreen() {
 
 @Preview(showBackground = true)
 @Composable
-fun DefaultPreviewMainActivity() {
+fun DefaultPreviewMainActivity() {  // Notice: currently unused
     ArcheryTrainingTimerTheme {
         MainAppScreen()
     }

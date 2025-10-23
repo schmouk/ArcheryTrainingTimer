@@ -75,6 +75,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+import com.github.schmouk.archerytrainingtimer.ArcheryTrainingTimerApp
 import com.github.schmouk.archerytrainingtimer.DEBUG_MODE
 import com.github.schmouk.archerytrainingtimer.R
 import com.github.schmouk.archerytrainingtimer.commons.ESignal
@@ -187,9 +188,13 @@ fun NoArrowsTimerScreen(
 
 
             // --- Playing sound ---
-            val context = LocalContext.current
+            val currentLocalContext = LocalContext.current
 
-            val audioManager = AudioService(context)
+            val audioManager = AudioService(currentLocalContext)  //context)
+            /*val audioManager: AudioService by lazy {
+                (currentLocalContext as ArcheryTrainingTimerApp).audioService
+                //(/*currentLocalContext*/applicationContext as ArcheryTrainingTimerApp).audioService
+            }*/
 
             var playBeepEvent by remember { mutableStateOf(false) }
             var playEndBeepEvent by remember { mutableStateOf(false) }
@@ -264,9 +269,9 @@ fun NoArrowsTimerScreen(
              *  Loads sound and releases SoundPool
              */
             DisposableEffect(Unit) {
-                beepSoundId = soundPool.load(context, R.raw.beep_short, 1)
-                endBeepSoundId = soundPool.load(context, R.raw.beep_end, 1)
-                intermediateBeepSoundId = soundPool.load(context, R.raw.beep_intermediate_short, 1)
+                beepSoundId = soundPool.load(currentLocalContext, R.raw.beep_short, 1)
+                endBeepSoundId = soundPool.load(currentLocalContext, R.raw.beep_end, 1)
+                intermediateBeepSoundId = soundPool.load(currentLocalContext, R.raw.beep_intermediate_short, 1)
 
                 soundPool.setOnLoadCompleteListener { _, _, status ->
                     if (status == 0) {

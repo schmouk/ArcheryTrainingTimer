@@ -24,17 +24,32 @@ OUT  OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-package com.github.schmouk.archerytrainingtimer.noarrowsession
+package com.github.schmouk.archerytrainingtimer
 
-import com.github.schmouk.archerytrainingtimer.commons.BaseCountdownViewModel
+import android.app.Application
+import com.github.schmouk.archerytrainingtimer.services.AudioService
 
 /**
- * ViewModel for managing the state of the No Arrows Training Timer.
- * This ViewModel uses a NoArrowStateAutomaton to handle state transitions
- * based on user actions and timer events.
+ * Custom Application class for ArcheryTrainingTimer.
+ *
+ * This class is the first component to be instantiated when the application starts.
+ * It serves as a centralized place to initialize and hold application-wide singletons,
+ * such as the AudioService.
  */
-class NoArrowsTimerViewModel : BaseCountdownViewModel(NoArrowStateAutomaton()) {
-    // Notice: nothing to implement here
-    // all is managed by the BaseCountdownViewModel and the NoArrowStateAutomaton
-    // which is a specialization of BaseSessionStateAutomaton
+class ArcheryTrainingTimerApp : Application() {
+
+    // A single, lazily-initialized instance of AudioService for the entire app.
+    // "lazy" means the AudioService will only be created the very first time it's accessed.
+    val audioService: AudioService by lazy {
+        AudioService(applicationContext)
+    }
+
+    /*
+    override fun onCreate() {
+        super.onCreate()
+        // We can perform other one-time initializations here if needed.
+        // For example, priming the audio cache can be done here.
+        audioService.primeCache() // Let's add a priming method to AudioService
+    }
+    */
 }

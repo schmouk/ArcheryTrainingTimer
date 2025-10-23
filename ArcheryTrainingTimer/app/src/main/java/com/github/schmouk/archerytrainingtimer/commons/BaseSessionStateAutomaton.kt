@@ -40,6 +40,7 @@ enum class ESignal {
     SIG_COMPLETED,  // The session has completed
 }
 
+
 /**
  * Defines the internal states of the automaton.
  * This is private as its direct manipulation should be controlled by the automaton.

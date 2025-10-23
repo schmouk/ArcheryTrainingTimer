@@ -43,7 +43,8 @@ class AudioService(context: Context) {
 
     /**
      * Checks if the device's ringer mode is not set to silent or vibrate.
-     */
+     * @return true if sounds can be played, false otherwise.
+     * */
     fun isAudioNotMuted(): Boolean {
         return systemAudioManager.ringerMode != AudioManager.RINGER_MODE_SILENT &&
                 systemAudioManager.ringerMode != AudioManager.RINGER_MODE_VIBRATE
@@ -61,11 +62,7 @@ class AudioService(context: Context) {
         return if (maxVolume > 0) currentVolume.toFloat() / maxVolume else 0f
     }
 
-
-    // Use application context to prevent memory leaks by not holding onto an Activity
-    private val appContext = context.applicationContext
-
     private val systemAudioManager =
-        appContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
 }
