@@ -34,6 +34,9 @@ import android.util.Log
 import com.github.schmouk.archerytrainingtimer.R
 import com.github.schmouk.archerytrainingtimer.services.AudioService
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * Manages loading and playing sounds for a specific UI component (e.g., a timer screen).
@@ -91,24 +94,32 @@ class SoundPlayer(
     /**
      * Plays the beep sound for the start of a repetition.
      */
-    fun playBeep() = playSound(beepSoundId)
+    fun playBeep(scope: CoroutineScope) = scope.launch {
+        playSound(beepSoundId)
+    }
 
     /**
      * Plays the end beep sound for the end of the session.
      * The sound is played 3 times with a delay of 380 milliseconds between each play.
      */
-    fun playEndBeep() = playSound(endBeepSoundId, 3, 380L)
+    fun playEndBeep(scope: CoroutineScope) = scope.launch {
+        playSound(endBeepSoundId, 3, 380L)
+    }
 
     /**
      * Plays the intermediate beep sound.
      */
-    fun playIntermediateBeep() = playSound(intermediateBeepSoundId)
+    fun playIntermediateBeep(scope: CoroutineScope) = scope.launch {
+        playSound(intermediateBeepSoundId)
+    }
 
     /**
      * Plays the rest beep sound for the start of a rest period.
      * The sound is played 2 times with a delay of 240 milliseconds between each play.
      */
-    fun playRestBeep() = playSound(beepSoundId, 2, 240L)
+    fun playRestBeep(scope: CoroutineScope) = scope.launch {
+        playSound(beepSoundId, 2, 240L)
+    }
 
     /**
      * Plays the specified sound if audio is not muted.
@@ -117,26 +128,24 @@ class SoundPlayer(
      * @param repeatsCount The number of times to repeat the sound.
      * @param delayMillis The delay in milliseconds between repeats.
      */
-    private fun playSound(
+    private suspend fun playSound(
         soundId: Int,
         repeatsCount: Int = 1,
         delayMillis: Long = 0L
     ) {
         // Use the shared AudioService to check if we are allowed to play a sound
-        if (soundId != 0  && repeatsCount > 0 && audioService.isAudioNotMuted()) {
+        if (soundId != 0  && repeatsCount > 0 && audioService.isAudioNotMuted() && soundPoolLoaded) {
+
             val audioVolume = audioService.getAudioVolumeLevel()
             var repeats = repeatsCount
 
             while (repeats > 0) {
                 soundPool.play(soundId, audioVolume, audioVolume, 1, 0, 1f)
+                Log.i("SoundPlayer", "Playing soundId=$soundId, repeat #$repeats")
                 repeats--
 
                 if (repeats > 0 && delayMillis > 0) {
-                    try {
-                        Thread.sleep(delayMillis)
-                    } catch (e: InterruptedException) {
-                        Log.e("SoundPlayer", "Sleep interrupted: ${e.message}")
-                    }
+                    delay(delayMillis)
                 }
             }
         }

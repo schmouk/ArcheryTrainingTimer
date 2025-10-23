@@ -27,10 +27,6 @@ SOFTWARE.
 package com.github.schmouk.archerytrainingtimer.ui.noarrowsession
 
 import android.annotation.SuppressLint
-import android.content.Context
-import android.media.AudioAttributes
-import android.media.AudioManager
-import android.media.SoundPool
 import android.view.WindowManager
 
 import androidx.activity.ComponentActivity
@@ -54,7 +50,6 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -74,11 +69,12 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewModelScope
 
-import com.github.schmouk.archerytrainingtimer.ArcheryTrainingTimerApp
 import com.github.schmouk.archerytrainingtimer.DEBUG_MODE
 import com.github.schmouk.archerytrainingtimer.R
 import com.github.schmouk.archerytrainingtimer.commons.ESignal
+import com.github.schmouk.archerytrainingtimer.commons.SoundPlayer
 import com.github.schmouk.archerytrainingtimer.noarrowsession.NoArrowsTimerViewModel
 import com.github.schmouk.archerytrainingtimer.noarrowsession.UserPreferencesRepository
 import com.github.schmouk.archerytrainingtimer.services.AudioService
@@ -149,6 +145,9 @@ fun NoArrowsTimerScreen(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
         ) {
+            // --- Local Context ---
+            val currentLocalContext = LocalContext.current
+
             // --- Scaling factor ---
             // Available size for the content
             val availableHeightForContentDp = this.maxHeight
@@ -188,36 +187,11 @@ fun NoArrowsTimerScreen(
 
 
             // --- Playing sound ---
-            val currentLocalContext = LocalContext.current
-
-            val audioManager = AudioService(currentLocalContext)  //context)
-            /*val audioManager: AudioService by lazy {
-                (currentLocalContext as ArcheryTrainingTimerApp).audioService
-                //(/*currentLocalContext*/applicationContext as ArcheryTrainingTimerApp).audioService
-            }*/
-
-            var playBeepEvent by remember { mutableStateOf(false) }
-            var playEndBeepEvent by remember { mutableStateOf(false) }
-            var playRestBeepEvent by remember { mutableStateOf(false) }
-            var playIntermediateBeep by remember { mutableStateOf(false) }
-
-            // SoundPool setup
-            val soundPool = remember {
-                val audioAttributes = AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_MEDIA)  //USAGE_ASSISTANCE_SONIFICATION) // Or USAGE_GAME, USAGE_MEDIA
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .build()
-
-                SoundPool.Builder()
-                    .setMaxStreams(1) // Only need to play one beep at a time
-                    .setAudioAttributes(audioAttributes)
-                    .build()
-            }
-
-            var beepSoundId by remember { mutableStateOf<Int?>(null) }
-            var endBeepSoundId by remember { mutableStateOf<Int?>(null) }
-            var intermediateBeepSoundId by remember { mutableStateOf<Int?>(null) }
-            var soundPoolLoaded by remember { mutableStateOf(false) }
+            val audioManager = AudioService(currentLocalContext)
+            val soundPlayer = SoundPlayer(
+                currentLocalContext,
+                audioManager
+            )
 
 
             // --- Debug / Testing ---
@@ -266,25 +240,6 @@ fun NoArrowsTimerScreen(
 
 
             /**
-             *  Loads sound and releases SoundPool
-             */
-            DisposableEffect(Unit) {
-                beepSoundId = soundPool.load(currentLocalContext, R.raw.beep_short, 1)
-                endBeepSoundId = soundPool.load(currentLocalContext, R.raw.beep_end, 1)
-                intermediateBeepSoundId = soundPool.load(currentLocalContext, R.raw.beep_intermediate_short, 1)
-
-                soundPool.setOnLoadCompleteListener { _, _, status ->
-                    if (status == 0) {
-                        soundPoolLoaded = true
-                    }
-                }
-
-                onDispose {
-                    soundPool.release()
-                }
-            }
-
-            /**
              * Checks if all selections have been made
              */
             fun allSelectionsMade(): Boolean {
@@ -305,9 +260,7 @@ fun NoArrowsTimerScreen(
              */
             fun sessionHasCompleted() {
                 noArrowsViewModel.action(ESignal.SIG_COMPLETED)
-                playBeepEvent = false
-                playRestBeepEvent = false
-                playEndBeepEvent = true
+                soundPlayer.playEndBeep(noArrowsViewModel.viewModelScope)
                 currentDurationSecondsLeft = 0
                 currentRepetitionsLeft = 0
                 currentSeriesLeft = 0
@@ -440,63 +393,6 @@ fun NoArrowsTimerScreen(
                     setFutureRestMode()
                 } else {
                     setRestMode()
-                }
-            }
-
-            /**
-             * Play sound effect - single beep
-             */
-            LaunchedEffect(playBeepEvent) {
-                if (playBeepEvent && soundPoolLoaded && beepSoundId != null && audioManager.isAudioNotMuted()) {
-                    val actualVolume = audioManager.getAudioVolumeLevel()
-                    soundPool.play(beepSoundId!!, actualVolume, actualVolume, 1, 0, 1f)
-                }
-                playBeepEvent = false // Reset trigger
-            }
-
-            /**
-             * Play sound effect - end beep
-             */
-            LaunchedEffect(playEndBeepEvent) {
-                if (playEndBeepEvent && soundPoolLoaded && endBeepSoundId != null && audioManager.isAudioNotMuted()) {
-                    val actualVolume = audioManager.getAudioVolumeLevel()
-                    soundPool.play(endBeepSoundId!!, actualVolume, actualVolume, 1, 0, 1f)
-                    delay(380L)
-                    soundPool.play(endBeepSoundId!!, actualVolume, actualVolume, 1, 0, 1f)
-                    delay(380L)
-                    soundPool.play(endBeepSoundId!!, actualVolume, actualVolume, 1, 0, 1f)
-                }
-                playEndBeepEvent = false // Reset trigger
-            }
-
-            /**
-             * Play sound effect - intermediate beep
-             */
-            LaunchedEffect(playIntermediateBeep) {
-                if (playIntermediateBeep && soundPoolLoaded && intermediateBeepSoundId != null && audioManager.isAudioNotMuted()) {
-                    val actualVolume = audioManager.getAudioVolumeLevel()
-                    soundPool.play(
-                        intermediateBeepSoundId!!,
-                        actualVolume,
-                        actualVolume,
-                        1,
-                        0,
-                        1f
-                    )
-                }
-                playIntermediateBeep = false // Reset trigger
-            }
-
-            /**
-             * Play sound effect - rest beeps
-             */
-            LaunchedEffect(playRestBeepEvent) {
-                if (playRestBeepEvent && soundPoolLoaded && beepSoundId != null) {
-                    val actualVolume = audioManager.getAudioVolumeLevel()
-                    soundPool.play(beepSoundId!!, actualVolume, actualVolume, 1, 0, 1f)
-                    delay(240L)
-                    soundPool.play(beepSoundId!!, actualVolume, actualVolume, 1, 0, 1f)
-                    playRestBeepEvent = false // Reset trigger
                 }
             }
 
@@ -667,10 +563,7 @@ fun NoArrowsTimerScreen(
                         else {
                             while (isActive && currentSeriesLeft!! > 0) {
                                 if (currentDurationSecondsLeft!! == initialDurationSeconds!!) {
-                                    playBeepEvent = true
-                                } else if (currentDurationSecondsLeft!! == initialDurationSeconds!! - 1) {
-                                    // in some dark circumstances, the cancelling of the first beep may be missed
-                                    playBeepEvent = false
+                                    soundPlayer.playBeep(noArrowsViewModel.viewModelScope)
                                 }
 
                                 if (currentDurationSecondsLeft!! > 0) {
@@ -687,7 +580,8 @@ fun NoArrowsTimerScreen(
                                         currentDurationSecondsLeft!! > 0 &&
                                         (initialDurationSeconds!! - currentDurationSecondsLeft!!) % intermediateBeepsDuration == 0
                                     ) {
-                                        playIntermediateBeep = true
+                                        //playIntermediateBeep = true
+                                        soundPlayer.playIntermediateBeep(noArrowsViewModel.viewModelScope)
                                     }
                                 } else if (currentDurationSecondsLeft!! == 0) {
                                     // end of current repetition duration
@@ -739,16 +633,17 @@ fun NoArrowsTimerScreen(
                         sessionHasCompleted()
                     } else if (isRestMode) {
                         // --- Rest Mode Countdown ---
-                        if ((currentRestTimeLeft ?: 0) == evaluateRestTime())
-                            playRestBeepEvent = true
+                        if ((currentRestTimeLeft ?: 0) == evaluateRestTime()) {
+                            //playRestBeepEvent = true
+                            soundPlayer.playRestBeep(noArrowsViewModel.viewModelScope)
+                        }
 
                         // Check isRestMode again, as it could have been modified in the block above
                         while (isActive) {  // Notice: isRestMode is always true here
                             if (currentRestTimeLeft != null && currentRestTimeLeft!! > 0) {
                                 // Check for some seconds left --> to play rest-beeps
                                 if (currentRestTimeLeft == endOfRestBeepTime) {
-                                    playRestBeepEvent = true
-                                    playBeepEvent = false
+                                    soundPlayer.playRestBeep(noArrowsViewModel.viewModelScope)
                                 }
                                 delay(countDownDelay)
                                 currentRestTimeLeft = currentRestTimeLeft!! - 1
