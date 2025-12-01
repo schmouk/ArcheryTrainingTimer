@@ -156,8 +156,8 @@ fun SeriesCountdown(
                     0f
                 }
 
-            if ((isTimerRunning || isTimerStopped) && sweepAngle > 0f) {
-                // Notice, reminder:
+            if (/*(isTimerRunning || isTimerStopped) &&*/ sweepAngle > 0f) {
+                // Notice, reminder (CAUTION: not that sure...):
                 //  (isTimerRunning || isTimerStopped) avoids red-ghost display
                 //  in big timer border when selecting number of repetitions
                 val arcDiameter =
@@ -382,7 +382,7 @@ fun TimerCountdown(
                 } else {
                     0f
                 }
-    
+
             if (!isRestMode && (isTimerRunning || isTimerStopped) && sweepAngle > 0f) {
                 // Notice, reminder:
                 //  (isTimerRunning || isTimerStopped) avoids red-ghost display
@@ -391,9 +391,9 @@ fun TimerCountdown(
                     (circleRadius - strokeWidthPx / 2f) * 2f
                 val arcTopLeftX = canvasCenterX - arcDiameter / 2f
                 val arcTopLeftY = canvasCenterY - arcDiameter / 2f
-    
+
                 val progressStrokeWidth = (0.72f * strokeWidthPx)  //* mainTimerStrokeWidth.value).dp.toPx()
-    
+
                 drawArc(
                     color = if (isDimmedDisplay) dimmedProgressBorderColor else progressBorderColor,
                     startAngle = -90f,

@@ -34,11 +34,19 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.core.view.WindowCompat
 
+import com.github.schmouk.archerytrainingtimer.ArcheryTrainingTimerApp
+import com.github.schmouk.archerytrainingtimer.commons.UserPreferencesRepository
+import com.github.schmouk.archerytrainingtimer.services.AudioService
 import com.github.schmouk.archerytrainingtimer.ui.noarrowsession.NoArrowsTimerScreen
 import com.github.schmouk.archerytrainingtimer.ui.theme.*
 
 
 class NoArrowsTrainingTimerActivity : ComponentActivity() {
+
+    // Get the single, shared instance of AudioService from the Application class.
+    val audioService: AudioService by lazy {
+        (applicationContext as ArcheryTrainingTimerApp).audioService
+    }
 
     private lateinit var userPreferencesRepository: UserPreferencesRepository
     private var initialRingtoneVolume: Int = 0

@@ -31,5 +31,5 @@ package com.github.schmouk.archerytrainingtimer
  * as well as does it allow for logging.
  * Set it to false to get a release version of the app.
  */
-//const val DEBUG_MODE = true  // i.e. DEBUG MODE (tests)
-const val DEBUG_MODE = false  // i.e. RELEASE MODE (production)
+const val DEBUG_MODE = true  // i.e. DEBUG MODE (tests)
+//const val DEBUG_MODE = false  // i.e. RELEASE MODE (production)
