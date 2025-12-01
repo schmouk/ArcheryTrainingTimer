@@ -78,6 +78,7 @@ import com.github.schmouk.archerytrainingtimer.commons.UserPreferencesRepository
 import com.github.schmouk.archerytrainingtimer.commons.SoundPlayer
 import com.github.schmouk.archerytrainingtimer.noarrowsession.NoArrowsTimerViewModel
 import com.github.schmouk.archerytrainingtimer.services.AudioService
+import com.github.schmouk.archerytrainingtimer.ui.commons.ClockDisplay
 import com.github.schmouk.archerytrainingtimer.ui.commons.IntermediateBeepsCheckedRow
 import com.github.schmouk.archerytrainingtimer.ui.commons.LogoImage
 import com.github.schmouk.archerytrainingtimer.ui.commons.PleaseSelectText
@@ -180,6 +181,7 @@ fun NoArrowsTimerScreen(
             val selectionTextFontSize = deviceScaling(18)  // Notice; to be used with .sp for specifying font size
             val customInteractiveTextStyle = TextStyle(fontSize = selectionTextFontSize.sp)
             val smallerTextStyle = TextStyle(fontSize = deviceScaling(16).sp)
+            val clockFontSize : Int = 18
 
 
             // --- Repetitions selector state ---
@@ -840,8 +842,7 @@ fun NoArrowsTimerScreen(
                                     .weight(1f - upperCellHeightRatio)
                             )
                         }
-                    }
-                    else {
+                    } else {
                         //-- This is a not-that-high row, let's split it into two horizontally arranged cells
                         val leftCellHeightRatio = 0.7f
 
@@ -1114,8 +1115,21 @@ fun NoArrowsTimerScreen(
                     // Title of Series View
                     ViewTitleBlock()
 
-                    // The block of countdowns
-                    CountdownsBlock(Modifier.weight(1f))
+                    BoxWithConstraints(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(0.dp)
+                            .weight(1f)
+                    ) {
+                        // The block of countdowns
+                        CountdownsBlock(Modifier)
+
+                        // And the clock value
+                        ClockDisplay(
+                            deviceScaling(clockFontSize),
+                            Modifier.align(Alignment.BottomStart)
+                        )
+                    }
 
                     // The block of selection items & related texts
                     // This block takes the remaining height
@@ -1155,7 +1169,23 @@ fun NoArrowsTimerScreen(
                                 .padding(end = mainHorizontalSpacingDp),
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
-                            CountdownsBlock(Modifier.weight(1f))
+                            //CountdownsBlock(Modifier.weight(1f))
+                            BoxWithConstraints(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(0.dp)
+                                    .weight(1f)
+                            ) {
+                                // The block of countdowns
+                                CountdownsBlock(Modifier)
+
+                                // And the clock value
+                                ClockDisplay(
+                                    deviceScaling(clockFontSize),
+                                    Modifier.align(Alignment.BottomStart)
+                                )
+                            }
+
                         }
 
                         // Right column with the selection items
@@ -1204,7 +1234,22 @@ fun NoArrowsTimerScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             // Add verticalArrangement as needed, e.g., Arrangement.SpaceAround
                         ) {
-                            CountdownsBlock(Modifier.weight(1f))
+                            //CountdownsBlock(Modifier.weight(1f))
+                            BoxWithConstraints(
+                                modifier = Modifier
+                                    //.fillMaxWidth()
+                                    .padding(0.dp)
+                                    .weight(1f)
+                            ) {
+                                // The block of countdowns
+                                CountdownsBlock(Modifier)
+
+                                // And the clock value
+                                ClockDisplay(
+                                    deviceScaling(clockFontSize),
+                                    Modifier.align(Alignment.BottomStart)
+                                )
+                            }
                         }
                     }
 
