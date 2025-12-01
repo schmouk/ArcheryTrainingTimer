@@ -34,10 +34,11 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.core.view.WindowCompat
 
+import com.github.schmouk.archerytrainingtimer.ArcheryTrainingTimerApp
+import com.github.schmouk.archerytrainingtimer.commons.UserPreferencesRepository
 import com.github.schmouk.archerytrainingtimer.services.AudioService
 import com.github.schmouk.archerytrainingtimer.ui.noarrowsession.NoArrowsTimerScreen
 import com.github.schmouk.archerytrainingtimer.ui.theme.*
-import com.github.schmouk.archerytrainingtimer.ArcheryTrainingTimerApp
 
 
 class NoArrowsTrainingTimerActivity : ComponentActivity() {
