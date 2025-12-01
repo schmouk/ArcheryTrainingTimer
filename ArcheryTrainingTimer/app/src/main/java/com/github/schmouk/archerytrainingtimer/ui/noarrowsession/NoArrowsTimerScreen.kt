@@ -997,7 +997,7 @@ fun NoArrowsTimerScreen(
                     // Then the actual selector
                     RepetitionsSelectorWithScrollIndicators(
                         // Repetition lazy row with arrows
-                        numberOfRepetitions = numberOfRepetitions, //The state variable for the current selection
+                        selectedNumberOfRepetitions = numberOfRepetitions, //The state variable for the current selection
                         onRepetitionSelected = { selected -> numberOfRepetitions = selected },
                         repetitionsListState = repetitionsLazyListState, // Pass the state
                         repetitionsRange = repetitionRange,

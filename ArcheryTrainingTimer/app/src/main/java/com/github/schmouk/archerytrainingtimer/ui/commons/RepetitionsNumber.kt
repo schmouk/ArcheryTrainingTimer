@@ -52,6 +52,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -93,12 +94,14 @@ fun RepetitionsNumberTitle(
 }
 
 
+var firstUseWithSelection: Boolean = true
+
 /**
  * Repetitions selector with scroll indicators
  */
 @Composable
 fun RepetitionsSelectorWithScrollIndicators(
-    numberOfRepetitions: Int?,
+    selectedNumberOfRepetitions: Int?,
     onRepetitionSelected: (Int) -> Unit,
     repetitionsListState: LazyListState = rememberLazyListState(),
     repetitionsRange: List<Int>,
@@ -110,11 +113,28 @@ fun RepetitionsSelectorWithScrollIndicators(
 ) {
     val coroutineScope = rememberCoroutineScope()
 
+    // This LaunchedEffect will run exactly once when the composable first appears.
+    // Its job is to scroll the list to the initially selected item.
+    LaunchedEffect(selectedNumberOfRepetitions) {
+        // We only want to scroll when the value is first loaded, not on every selection.
+        // So, we add a check to ensure it's not null before proceeding.
+        if (selectedNumberOfRepetitions != null && firstUseWithSelection) {
+            val initialIndex = repetitionsRange.indexOf(selectedNumberOfRepetitions)
+
+            if (initialIndex != -1) {
+                // Instantly scroll to the item without animation for a seamless initial state.
+                repetitionsListState.scrollToItem(initialIndex)
+                firstUseWithSelection = false
+            }
+        }
+    }
+
     // Derived states to determine if arrows should be shown
     // canScrollBackward is true if the first item is not fully visible at the start
     val canScrollBackward by remember {
         derivedStateOf {
-            repetitionsListState.firstVisibleItemIndex > 0 || repetitionsListState.firstVisibleItemScrollOffset > 0
+            repetitionsListState.firstVisibleItemIndex > 0 ||
+                repetitionsListState.firstVisibleItemScrollOffset > 0
         }
     }
 
@@ -196,7 +216,7 @@ fun RepetitionsSelectorWithScrollIndicators(
                     key = { index -> repetitionsRange[index] }
                 ) { index ->
                     val repetitionNum = repetitionsRange[index]
-                    val isNumberSelected = repetitionNum == numberOfRepetitions
+                    val isNumberSelected = repetitionNum == selectedNumberOfRepetitions
                     val isClickable = !isNumberSelected
 
                     Box(
@@ -214,7 +234,7 @@ fun RepetitionsSelectorWithScrollIndicators(
                             .clip(CircleShape)
                             .background(
                                 color = if (isNumberSelected) AppTitleColor
-                                        else AppButtonDarkerColor
+                                else AppButtonDarkerColor
                             )
                             .clickable {
                                 if (isClickable)
