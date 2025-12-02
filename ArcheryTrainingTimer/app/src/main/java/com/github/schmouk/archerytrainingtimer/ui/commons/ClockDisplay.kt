@@ -48,10 +48,10 @@ import com.github.schmouk.archerytrainingtimer.ui.theme.AppTextColor
 fun ClockDisplay(fontSize: Float,
                  modifier: Modifier = Modifier
 ) {
-    var currentTime by remember { mutableStateOf(getCurrentTime()) }
+    var currentTime : String by remember { mutableStateOf(getCurrentTime()) }
 
     LaunchedEffect(Unit) {
-        updateTimeOnMinuteChange { newTime ->
+        updateTimeOnMinuteChange { newTime : String ->
             currentTime = newTime
         }
     }

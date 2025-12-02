@@ -71,7 +71,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
 
-import com.github.schmouk.archerytrainingtimer.DEBUG_MODE
+import com.github.schmouk.archerytrainingtimer.SECOND_DURATION_MS
 import com.github.schmouk.archerytrainingtimer.R
 import com.github.schmouk.archerytrainingtimer.commons.ESignal
 import com.github.schmouk.archerytrainingtimer.commons.UserPreferencesRepository
@@ -197,7 +197,7 @@ fun NoArrowsTimerScreen(
 
 
             // --- Debug / Testing ---
-            val countDownDelay = if (DEBUG_MODE) 600L else 1000L
+            val countDownDelay = SECOND_DURATION_MS
 
 
             // --- Dynamic Sizes & SPs ---
