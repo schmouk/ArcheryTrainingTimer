@@ -74,8 +74,8 @@ import androidx.lifecycle.viewModelScope
 import com.github.schmouk.archerytrainingtimer.SECOND_DURATION_MS
 import com.github.schmouk.archerytrainingtimer.R
 import com.github.schmouk.archerytrainingtimer.commons.ESignal
-import com.github.schmouk.archerytrainingtimer.commons.UserPreferencesRepository
 import com.github.schmouk.archerytrainingtimer.commons.SoundPlayer
+import com.github.schmouk.archerytrainingtimer.commons.UserPreferencesRepository
 import com.github.schmouk.archerytrainingtimer.noarrowsession.NoArrowsTimerViewModel
 import com.github.schmouk.archerytrainingtimer.services.AudioService
 import com.github.schmouk.archerytrainingtimer.ui.commons.ClockDisplay
@@ -90,9 +90,11 @@ import com.github.schmouk.archerytrainingtimer.ui.commons.RestingDurationText
 import com.github.schmouk.archerytrainingtimer.ui.commons.SeriesCountdownConstrainedBox
 import com.github.schmouk.archerytrainingtimer.ui.commons.SeriesNumbersButtons
 import com.github.schmouk.archerytrainingtimer.ui.commons.SeriesNumberTitle
+import com.github.schmouk.archerytrainingtimer.ui.commons.SessionDurationDisplay
 import com.github.schmouk.archerytrainingtimer.ui.commons.SessionPreparationText
 import com.github.schmouk.archerytrainingtimer.ui.commons.StartButtonRow
 import com.github.schmouk.archerytrainingtimer.ui.commons.TimerCountdownConstrainedBox
+import com.github.schmouk.archerytrainingtimer.ui.commons.DurationSessionController
 import com.github.schmouk.archerytrainingtimer.ui.commons.ViewHeader
 import com.github.schmouk.archerytrainingtimer.ui.theme.*
 import com.github.schmouk.archerytrainingtimer.ui.theme.ProgressBorderColor
@@ -106,6 +108,10 @@ import kotlinx.coroutines.isActive
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
+
+
+// --- Session Duration Management ---
+private val sessionDurationManager = DurationSessionController()
 
 
 // Props for NoArrowsTimerScreen
@@ -181,7 +187,7 @@ fun NoArrowsTimerScreen(
             val selectionTextFontSize = deviceScaling(18)  // Notice; to be used with .sp for specifying font size
             val customInteractiveTextStyle = TextStyle(fontSize = selectionTextFontSize.sp)
             val smallerTextStyle = TextStyle(fontSize = deviceScaling(16).sp)
-            val clockFontSize : Int = 18
+            val clockFontSize = 18
 
 
             // --- Repetitions selector state ---
@@ -266,6 +272,7 @@ fun NoArrowsTimerScreen(
                 currentDurationSecondsLeft = 0
                 currentRepetitionsLeft = 0
                 currentSeriesLeft = 0
+                sessionDurationManager.endSession()
             }
 
             /**
@@ -511,6 +518,16 @@ fun NoArrowsTimerScreen(
                         intermediateBeepsChecked ?: false
                     )
                     lastIntermediateBeepsChecked = intermediateBeepsChecked!!
+                }
+            }
+
+
+            /**
+             * Manages the session duration man ager in a coroutine
+             */
+            LaunchedEffect(isPreparationMode) {
+                if (isPreparationMode) {
+                    sessionDurationManager.beginSession()
                 }
             }
 
@@ -1131,11 +1148,16 @@ fun NoArrowsTimerScreen(
                         // The block of countdowns
                         CountdownsBlock(Modifier)
 
-                        // And the clock value
-                        ClockDisplay(
+                        // And the session duration value
+                        SessionDurationDisplay(
+                            sessionDurationManager,
                             deviceScaling(clockFontSize),
                             Modifier.align(Alignment.BottomStart)
                         )
+                        /*ClockDisplay(
+                            deviceScaling(clockFontSize),
+                            Modifier.align(Alignment.BottomStart)
+                        )*/
                     }
 
                     // The block of selection items & related texts
@@ -1185,11 +1207,16 @@ fun NoArrowsTimerScreen(
                                 // The block of countdowns
                                 CountdownsBlock(Modifier)
 
-                                // And the clock value
-                                ClockDisplay(
+                                // And the session duration value
+                                SessionDurationDisplay(
+                                    sessionDurationManager,
                                     deviceScaling(clockFontSize),
                                     Modifier.align(Alignment.BottomStart)
                                 )
+                                /*ClockDisplay(
+                                    deviceScaling(clockFontSize),
+                                    Modifier.align(Alignment.BottomStart)
+                                )*/
                             }
 
                         }
@@ -1249,11 +1276,16 @@ fun NoArrowsTimerScreen(
                                 // The block of countdowns
                                 CountdownsBlock(Modifier)
 
-                                // And the clock value
-                                ClockDisplay(
+                                // And the session duration value
+                                SessionDurationDisplay(
+                                    sessionDurationManager,
                                     deviceScaling(clockFontSize),
                                     Modifier.align(Alignment.BottomStart)
                                 )
+                                /*ClockDisplay(
+                                    deviceScaling(clockFontSize),
+                                    Modifier.align(Alignment.BottomStart)
+                                )*/
                             }
                         }
                     }
