@@ -97,8 +97,6 @@ fun RepetitionsNumberTitle(
 }
 
 
-var firstUseWithSelection: Boolean = true
-
 /**
  * Repetitions selector with scroll indicators
  */
@@ -124,7 +122,7 @@ fun RepetitionsSelectorWithScrollIndicators(
     LaunchedEffect(selectedNumberOfRepetitions) {
         // We only want to scroll when the value is first loaded, not on every selection.
         // So, we add a check to ensure it's not null before proceeding.
-        if (selectedNumberOfRepetitions != null && firstUseWithSelection) {
+        if (selectedNumberOfRepetitions != null) {
             // Small delay to ensure LazyRow has laid out its items
             // before we attempt to scroll to the selected item.
             // This helps avoid issues where the scroll might not work
@@ -150,7 +148,6 @@ fun RepetitionsSelectorWithScrollIndicators(
                     repetitionsListState.scrollToItem(initialIndex)
                 }
             }
-            firstUseWithSelection = false
         }
     }
 
