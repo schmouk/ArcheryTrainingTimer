@@ -156,7 +156,7 @@ fun SeriesCountdown(
                     0f
                 }
 
-            if (/*(isTimerRunning || isTimerStopped) &&*/ sweepAngle > 0f) {
+            if (sweepAngle > 0f) {
                 // Notice, reminder (CAUTION: not that sure...):
                 //  (isTimerRunning || isTimerStopped) avoids red-ghost display
                 //  in big timer border when selecting number of repetitions
@@ -182,7 +182,7 @@ fun SeriesCountdown(
             }
         }
 
-        // Series display will show 0 when dimmed
+        // Series display
         val seriesToDisplayValue = currentSeriesLeft
         val seriesToDisplayString =
             seriesToDisplayValue?.toString()
