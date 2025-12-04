@@ -29,6 +29,7 @@ package com.github.schmouk.archerytrainingtimer.ui.commons
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -38,9 +39,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 import com.github.schmouk.archerytrainingtimer.SECOND_DURATION_MS
+import com.github.schmouk.archerytrainingtimer.ui.theme.TimerDigitsColor
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -96,7 +100,7 @@ fun SessionDurationDisplay(
     fontSize: Float = 24f,
     modifier: Modifier = Modifier
 ) {
-    var displayTime by remember { mutableStateOf("00:00") }
+    var displayTime by remember { mutableStateOf(controller.getCurrentDuration()) }
 
     LaunchedEffect(controller.isActive()) {
         while (coroutineContext.isActive) {
@@ -115,13 +119,17 @@ fun SessionDurationDisplay(
     }
 
     Column(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .padding(start = 6.dp),
         verticalArrangement = Arrangement.Bottom,
         horizontalAlignment = Alignment.Start
     ) {
         Text(
             text = displayTime,
-            fontSize = fontSize.sp
+            color = TimerDigitsColor,
+            fontSize = fontSize.sp,
+            fontStyle = FontStyle.Italic
         )
     }
 }
@@ -132,10 +140,3 @@ fun SessionDurationDisplay(
     val minutes = totalMinutes % 60
     return String.format("%02d:%02d", hours, minutes)
 }*/
-
-// Example usage:
-// val sessionController = remember { TrainingSessionController() }
-// TrainingDurationDisplay(controller = sessionController, fontSize = 32.sp)
-//
-// Button(onClick = { sessionController.beginSession() }) { Text("Start") }
-// Button(onClick = { sessionController.endSession() }) { Text("Stop") }

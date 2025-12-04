@@ -78,7 +78,7 @@ import com.github.schmouk.archerytrainingtimer.commons.SoundPlayer
 import com.github.schmouk.archerytrainingtimer.commons.UserPreferencesRepository
 import com.github.schmouk.archerytrainingtimer.noarrowsession.NoArrowsTimerViewModel
 import com.github.schmouk.archerytrainingtimer.services.AudioService
-import com.github.schmouk.archerytrainingtimer.ui.commons.ClockDisplay
+//import com.github.schmouk.archerytrainingtimer.ui.commons.ClockDisplay
 import com.github.schmouk.archerytrainingtimer.ui.commons.IntermediateBeepsCheckedRow
 import com.github.schmouk.archerytrainingtimer.ui.commons.LogoImage
 import com.github.schmouk.archerytrainingtimer.ui.commons.PleaseSelectText
@@ -1149,9 +1149,10 @@ fun NoArrowsTimerScreen(
                         CountdownsBlock(Modifier)
 
                         // And the session duration value
+                        val heightOfTheBox = this.maxHeight
                         SessionDurationDisplay(
                             sessionDurationManager,
-                            deviceScaling(clockFontSize),
+                            heightOfTheBox.value * 0.08f,
                             Modifier.align(Alignment.BottomStart)
                         )
                         /*ClockDisplay(
@@ -1208,9 +1209,10 @@ fun NoArrowsTimerScreen(
                                 CountdownsBlock(Modifier)
 
                                 // And the session duration value
+                                val heightOfTheBox = this.maxHeight
                                 SessionDurationDisplay(
                                     sessionDurationManager,
-                                    deviceScaling(clockFontSize),
+                                    heightOfTheBox.value * 0.08f,
                                     Modifier.align(Alignment.BottomStart)
                                 )
                                 /*ClockDisplay(
@@ -1277,9 +1279,10 @@ fun NoArrowsTimerScreen(
                                 CountdownsBlock(Modifier)
 
                                 // And the session duration value
+                                val heightOfTheBox = this.maxHeight
                                 SessionDurationDisplay(
                                     sessionDurationManager,
-                                    deviceScaling(clockFontSize),
+                                    heightOfTheBox.value * 0.08f,
                                     Modifier.align(Alignment.BottomStart)
                                 )
                                 /*ClockDisplay(
