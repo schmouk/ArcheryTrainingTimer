@@ -65,12 +65,15 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+
 import com.github.schmouk.archerytrainingtimer.R
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppButtonDarkerColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppButtonTextColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppTextColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppTitleColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.SelectedButtonBorderColor
+import com.github.schmouk.archerytrainingtimer.ui.utils.rememberFullyVisibleItemIndices
+
 import kotlinx.coroutines.launch
 
 
@@ -113,19 +116,41 @@ fun RepetitionsSelectorWithScrollIndicators(
 ) {
     val coroutineScope = rememberCoroutineScope()
 
+    // Get the fully visible items indices using the utility function
+    val fullyVisibleItems by rememberFullyVisibleItemIndices(repetitionsListState)
+
     // This LaunchedEffect will run exactly once when the composable first appears.
     // Its job is to scroll the list to the initially selected item.
     LaunchedEffect(selectedNumberOfRepetitions) {
         // We only want to scroll when the value is first loaded, not on every selection.
         // So, we add a check to ensure it's not null before proceeding.
         if (selectedNumberOfRepetitions != null && firstUseWithSelection) {
+            // Small delay to ensure LazyRow has laid out its items
+            // before we attempt to scroll to the selected item.
+            // This helps avoid issues where the scroll might not work
+            // because the items aren't ready yet.
+            kotlinx.coroutines.delay(100)
+
             val initialIndex = repetitionsRange.indexOf(selectedNumberOfRepetitions)
 
             if (initialIndex != -1) {
-                // Instantly scroll to the item without animation for a seamless initial state.
-                repetitionsListState.scrollToItem(initialIndex)
-                firstUseWithSelection = false
+                // Evaluates the center of the visible items and scrolls to have the selected item in the center
+                val visibleItemsInfo = repetitionsListState.layoutInfo.visibleItemsInfo
+                if (visibleItemsInfo.isNotEmpty()) {
+                    val firstFullyVisibleIndex = fullyVisibleItems.first()  //visibleItemsInfo.first()
+                    val lastFullyVisibleIndex = fullyVisibleItems.last()    //visibleItemsInfo.last()
+                    if (initialIndex !in firstFullyVisibleIndex..lastFullyVisibleIndex) {
+                        // If the selected item is NOT already visible, scroll to center it.
+                        val numberOfVisibleItems = lastFullyVisibleIndex - firstFullyVisibleIndex + 1
+                        val targetIndex = (initialIndex - numberOfVisibleItems / 2).coerceAtLeast(0)
+                        repetitionsListState.scrollToItem(targetIndex)
+                    }
+                } else {
+                    // If no items are visible yet, just scroll to the item normally.
+                    repetitionsListState.scrollToItem(initialIndex)
+                }
             }
+            firstUseWithSelection = false
         }
     }
 
@@ -161,7 +186,6 @@ fun RepetitionsSelectorWithScrollIndicators(
         contentAlignment = Alignment.Center // Centers its child (the Row) if the child is smaller
     ) {
         Row(
-            //horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
             // The Row itself will only take the width of its content.
             // If showArrows is false and LazyRow content is small, this Row will be small.
