@@ -71,7 +71,7 @@ fun MainAppScreen() {
     /* as soon as many choices will be available:
     Scaffold(
     // We can have a top bar for MainActivity if needed
-    // topBar = { TopAppBar(title = { Text("Archery Timer App") }) }
+    // topBar = { TopAppBar(title = { Text("Archery Training Timer") }) }
     ) { innerPadding ->
         Column(
             modifier = Modifier
