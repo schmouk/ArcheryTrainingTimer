@@ -42,7 +42,7 @@ import com.github.schmouk.archerytrainingtimer.ui.theme.AppTitleColor
 @Composable
 fun ViewHeader(
     viewTitleText : String,
-    modifier : Modifier
+    modifier : Modifier = Modifier
 ) {
     Text(
         text = viewTitleText,
