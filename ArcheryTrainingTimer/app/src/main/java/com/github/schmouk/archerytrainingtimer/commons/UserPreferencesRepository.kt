@@ -41,6 +41,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import java.io.IOException
 
+
 // Define the DataStore instance at the top level, associated with the application context
 // The name "user_preferences" will be the filename for the DataStore file.
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "user_preferences")
@@ -59,12 +60,33 @@ class UserPreferencesRepository(context: Context) {
 
     private val dataStore = context.dataStore
 
-    // Define keys for each preference
+    // The selected session type key
+    companion object {
+        // Define a key for the selected session type. We'll use integers to represent the choices.
+        val SELECTED_SESSION_TYPE = intPreferencesKey("selected_session_type")
+    }
+
+    // Define keys for each preference - No Arrows Session, Uniform Series
     private object PreferencesKeys {
         val SELECTED_DURATION = stringPreferencesKey("selected_duration")
         val NUMBER_OF_REPETITIONS = intPreferencesKey("number_of_repetitions")
         val NUMBER_OF_SERIES = intPreferencesKey("number_of_series")
         val INTERMEDIATE_BEEPS = booleanPreferencesKey("intermediate_beeps")
+    }
+
+    /**
+     * Flow to get the currently selected session type.
+     * It will emit a new value whenever the choice changes.
+     * We map the stored Int to our new SessionType enum.
+     */
+    val sessionType: Flow<SessionType?> = dataStore.data.map { preferences ->
+        when (preferences[SELECTED_SESSION_TYPE]) {
+            0 -> SessionType.NO_ARROWS_UNIFORM  // Notice: SessionType is defined in same package
+            1 -> SessionType.NO_ARROWS_PYRAMIDAL
+            2 -> SessionType.ARROWS_UNIFORM
+            3 -> SessionType.ARROWS_PYRAMIDAL
+            else -> null // No selection or unknown value
+        }
     }
 
     // Flow to read all user preferences
@@ -88,6 +110,13 @@ class UserPreferencesRepository(context: Context) {
             UserPreferences(selectedDuration, numberOfRepetitions, numberOfSeries, intermediateBeeps)  //saveSelection)
         }
 
+
+    // Function to save only the user's chosen session type
+    suspend fun saveSessionType(sessionType: SessionType) {
+        dataStore.edit { preferences ->
+            preferences[SELECTED_SESSION_TYPE] = sessionType.id
+        }
+    }
 
     // Function to save only the duration preference
     suspend fun saveDurationPreference(duration: String?) {
