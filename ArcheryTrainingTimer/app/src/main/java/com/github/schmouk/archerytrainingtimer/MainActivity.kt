@@ -137,7 +137,7 @@ fun MainAppScreen(viewModel: SessionChoiceViewModel) {
             ) {
                 // First Row: No-Arrows Sessions
                 SessionRow(
-                    mainImageRes = R.drawable.no_arrows_session,
+                    mainImageRes = R.drawable.no_arrows_session_400,
                     onOption1Click = { viewModel.selectSessionType(SessionType.NO_ARROWS_UNIFORM) },
                     onOption2Click = { viewModel.selectSessionType(SessionType.NO_ARROWS_PYRAMIDAL) },
                     selected = selectedSession,
@@ -149,7 +149,7 @@ fun MainAppScreen(viewModel: SessionChoiceViewModel) {
 
                 // Second Row: Arrows Sessions
                 SessionRow(
-                    mainImageRes = R.drawable.arrows_session,
+                    mainImageRes = R.drawable.arrows_session_400,
                     onOption1Click = { viewModel.selectSessionType(SessionType.ARROWS_UNIFORM) },
                     onOption2Click = { viewModel.selectSessionType(SessionType.ARROWS_PYRAMIDAL) },
                     selected = selectedSession,
