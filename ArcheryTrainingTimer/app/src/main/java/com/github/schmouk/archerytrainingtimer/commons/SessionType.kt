@@ -31,8 +31,12 @@ package com.github.schmouk.archerytrainingtimer.commons
  * The ID is used for storing the selection in DataStore.
  */
 enum class SessionType(val id: Int) {
-    NO_ARROWS_UNIFORM(0),
-    NO_ARROWS_PYRAMIDAL(1),
-    ARROWS_UNIFORM(10),
-    ARROWS_PYRAMIDAL(11)
+    NO_ARROWS_UNIFORM(1),
+    NO_ARROWS_PYRAMIDAL(2),
+    ARROWS_UNIFORM(11),
+    ARROWS_PYRAMIDAL(12),
+    KSL_SPT_ENDURANCE(21),  // Notice: SPT - Specific Physical Training
+    KSP_SPT_POWER_STRENGTH(22),
+    KSL_SPT_FLEXIBILITY(23)
+
 }
