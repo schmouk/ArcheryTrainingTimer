@@ -26,6 +26,8 @@ SOFTWARE.
 
 package com.github.schmouk.archerytrainingtimer.commons
 
+import androidx.compose.runtime.getValue
+
 /**
  * Defines the signals that can be sent to the NoArrowStateAutomaton-s
  * to trigger state transitions.
@@ -98,6 +100,28 @@ open class BaseSessionStateAutomaton {
      */
     fun reset() {
         currentState = EState.STATE_IDLE
+    }
+
+    /**
+     * Forces the current state of the automaton.
+     * Notice: mainly used when coming back to a training
+     * session after we went back to the app Home screen.
+     */
+    fun set(
+        isRestMode        : Boolean,
+        isSessionCompleted: Boolean,
+        isTimerRunning    : Boolean,
+        isTimerStopped    : Boolean,
+        isPreparationMode : Boolean
+    ) {
+        currentState = when {
+            isRestMode          -> EState.STATE_REST_MODE
+            isSessionCompleted  -> EState.STATE_COMPLETED
+            isTimerRunning      -> EState.STATE_TIMER_RUNNING
+            isTimerStopped      -> EState.STATE_TIMER_STOPPED
+            isPreparationMode   -> EState.STATE_PREPARATION
+            else                -> EState.STATE_IDLE
+        }
     }
 
     /**
