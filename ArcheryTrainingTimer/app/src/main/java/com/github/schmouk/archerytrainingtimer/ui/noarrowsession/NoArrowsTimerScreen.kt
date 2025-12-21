@@ -74,7 +74,9 @@ import androidx.lifecycle.viewModelScope
 import com.github.schmouk.archerytrainingtimer.SECOND_DURATION_MS
 import com.github.schmouk.archerytrainingtimer.R
 import com.github.schmouk.archerytrainingtimer.commons.ESignal
+import com.github.schmouk.archerytrainingtimer.commons.EState
 import com.github.schmouk.archerytrainingtimer.commons.SoundPlayer
+import com.github.schmouk.archerytrainingtimer.commons.TimerInternalRunningState
 import com.github.schmouk.archerytrainingtimer.commons.UserPreferencesRepository
 import com.github.schmouk.archerytrainingtimer.noarrowsession.NoArrowsTimerViewModel
 import com.github.schmouk.archerytrainingtimer.services.AudioService
@@ -121,8 +123,13 @@ private val sessionDurationManager = DurationSessionController()
 @Composable
 fun NoArrowsTimerScreen(
     noArrowsViewModel: NoArrowsTimerViewModel,
-    userPreferencesRepository: UserPreferencesRepository
+    userPreferencesRepository: UserPreferencesRepository,
+    formerAutomatonState: EState? = null,
+    formerInternalRunningValues: TimerInternalRunningState = TimerInternalRunningState()
 ) {
+    // restore the former automaton state if specified
+    noArrowsViewModel.setStateAutomaton(formerAutomatonState)
+
     // related finite state machine control values
     val isRestMode by noArrowsViewModel.isRestMode
     val isSessionCompleted by noArrowsViewModel.isSessionCompleted
@@ -187,7 +194,7 @@ fun NoArrowsTimerScreen(
             val selectionTextFontSize = deviceScaling(18)  // Notice; to be used with .sp for specifying font size
             val customInteractiveTextStyle = TextStyle(fontSize = selectionTextFontSize.sp)
             val smallerTextStyle = TextStyle(fontSize = deviceScaling(16).sp)
-            val clockFontSize = 18
+            //val clockFontSize = deviceScaling(18)
 
 
             // --- Repetitions selector state ---
@@ -433,6 +440,16 @@ fun NoArrowsTimerScreen(
                         lastNumberOfSeries = numberOfSeries ?: 0
                     }
                 }
+
+                if (formerAutomatonState != null) {
+                    // restores the former internal running state
+                    noArrowsViewModel.setStateAutomaton(formerAutomatonState)
+                    currentDurationSecondsLeft = formerInternalRunningValues.currentDurationSecondsLeft
+                    currentRepetitionsLeft = formerInternalRunningValues.currentRepetitionsLeft
+                    currentSeriesLeft = formerInternalRunningValues.currentSeriesLeft
+                    currentRestTimeLeft = formerInternalRunningValues.currentRestTimeLeft
+                }
+
             }
 
             /**
@@ -1240,8 +1257,9 @@ fun NoArrowsTimerScreen(
                 BottomEndLogoImage()
             }
 
-
+            // --------------------------------------------------------------
             // --- Two rows for the entire screen content (laptop layout) ---
+            // --------------------------------------------------------------
             @Composable
             fun TwoRows() {
                 Column(
@@ -1311,12 +1329,10 @@ fun NoArrowsTimerScreen(
 
 
             // --- UI Layout ---
-            val isPortraitPosition : Boolean = considerDevicePortraitPositioned()
-
             when (detectDeviceFoldedPosture()) {
                 EFoldedPosture.POSTURE_NOT_FOLDED -> {
                     // Device is not folded
-                    if (isPortraitPosition)
+                    if (considerDevicePortraitPositioned())
                         OneColumn()
                     else
                         TwoColumns()
@@ -1324,7 +1340,7 @@ fun NoArrowsTimerScreen(
 
                 EFoldedPosture.POSTURE_FLAT -> {
                     // Device is fully open flat (180 degrees)
-                    if (isPortraitPosition)
+                    if (considerDevicePortraitPositioned())
                         OneColumn()
                     else
                         TwoColumns(true)
@@ -1342,7 +1358,7 @@ fun NoArrowsTimerScreen(
 
                 else -> {
                     // Unknown folded posture, should act as being not folded
-                    if (isPortraitPosition)
+                    if (considerDevicePortraitPositioned())
                         OneColumn()
                     else
                         TwoColumns(true)

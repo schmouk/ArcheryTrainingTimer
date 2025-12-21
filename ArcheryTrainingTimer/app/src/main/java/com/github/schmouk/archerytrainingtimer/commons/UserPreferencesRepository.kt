@@ -79,14 +79,9 @@ class UserPreferencesRepository(context: Context) {
      * It will emit a new value whenever the choice changes.
      * We map the stored Int to our new SessionType enum.
      */
-    val sessionType: Flow<SessionType?> = dataStore.data.map { preferences ->
-        when (preferences[SELECTED_SESSION_TYPE]) {
-            0 -> SessionType.NO_ARROWS_UNIFORM  // Notice: SessionType is defined in same package
-            1 -> SessionType.NO_ARROWS_PYRAMIDAL
-            2 -> SessionType.ARROWS_UNIFORM
-            3 -> SessionType.ARROWS_PYRAMIDAL
-            else -> null // No selection or unknown value
-        }
+    //val sessionType: Flow<SessionType?> = dataStore.data.map { preferences ->
+    val sessionType: Flow<Int?> = dataStore.data.map { preferences ->
+        preferences[SELECTED_SESSION_TYPE] ?: null
     }
 
     // Flow to read all user preferences
@@ -112,9 +107,9 @@ class UserPreferencesRepository(context: Context) {
 
 
     // Function to save only the user's chosen session type
-    suspend fun saveSessionType(sessionType: SessionType) {
+    suspend fun saveSessionType(sessionType: Int?) {  //SessionType) {
         dataStore.edit { preferences ->
-            preferences[SELECTED_SESSION_TYPE] = sessionType.id
+            preferences[SELECTED_SESSION_TYPE] = sessionType ?: -1
         }
     }
 

@@ -56,10 +56,12 @@ import com.github.schmouk.archerytrainingtimer.commons.SessionType
 import com.github.schmouk.archerytrainingtimer.commons.UserPreferencesRepository
 import com.github.schmouk.archerytrainingtimer.noarrowsession.NoArrowsTrainingTimerActivity
 import com.github.schmouk.archerytrainingtimer.sessionchoice.SessionChoiceViewModel
+import com.github.schmouk.archerytrainingtimer.ui.commons.SessionDurationDisplay
 import com.github.schmouk.archerytrainingtimer.ui.commons.ViewHeader
 import com.github.schmouk.archerytrainingtimer.ui.theme.*
-
-
+import com.github.schmouk.archerytrainingtimer.ui.utils.EFoldedPosture
+import com.github.schmouk.archerytrainingtimer.ui.utils.considerDevicePortraitPositioned
+import com.github.schmouk.archerytrainingtimer.ui.utils.detectDeviceFoldedPosture
 
 
 // --- MainActivity class definition ---
@@ -117,6 +119,62 @@ fun MainAppScreen(viewModel: SessionChoiceViewModel) {
                 else -> null
             }
             intent?.let { context.startActivity(it) }
+        }
+    }
+
+
+    // --- A Main Column for the entire screen content (portrait layout) ---
+    @Composable
+    fun OneColumn() {
+    }
+
+
+    // --- Two Columns for the entire screen content (landscape or book layout) ---
+    @Composable
+    fun TwoColumns(equallySized: Boolean = false) {
+    }
+
+
+    // --- Two rows for the entire screen content (laptop layout) ---
+    @Composable
+    fun TwoRows() {
+    }
+
+
+    // --- UI Layout ---
+    when (detectDeviceFoldedPosture()) {
+        EFoldedPosture.POSTURE_NOT_FOLDED -> {
+            // Device is not folded
+            if (considerDevicePortraitPositioned())
+                OneColumn()
+            else
+                TwoColumns()
+        }
+
+        EFoldedPosture.POSTURE_FLAT -> {
+            // Device is fully open flat (180 degrees)
+            if (considerDevicePortraitPositioned())
+                OneColumn()
+            else
+                TwoColumns(true)
+        }
+
+        EFoldedPosture.POSTURE_BOOK_LIKE -> {
+            // Device is half-open (90 degrees, vertical)
+            TwoColumns(true)
+        }
+
+        EFoldedPosture.POSTURE_LAPTOP_LIKE -> {
+            // Device is half-open (90 degrees, horizontal)
+            TwoRows()
+        }
+
+        else -> {
+            // Unknown folded posture, should act as being not folded
+            if (considerDevicePortraitPositioned())
+                OneColumn()
+            else
+                TwoColumns(true)
         }
     }
 
@@ -210,9 +268,9 @@ fun SessionRow(
     mainImageRes: Int,
     onOption1Click: () -> Unit,
     onOption2Click: () -> Unit,
-    selected: SessionType?,
-    option1Type: SessionType,
-    option2Type: SessionType
+    selected: Int?,  //SessionType?,
+    option1Type: Int,  //SessionType,
+    option2Type: Int,  //SessionType
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),

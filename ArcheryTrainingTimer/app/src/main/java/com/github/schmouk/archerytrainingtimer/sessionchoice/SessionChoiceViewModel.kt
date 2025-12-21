@@ -41,7 +41,7 @@ class SessionChoiceViewModel(
 
     // Expose the selected session type as a StateFlow for the UI to observe.
     // Default to null initially.
-    val selectedSessionType: StateFlow<SessionType?> =
+    val selectedSessionType: StateFlow<Int?> =  //StateFlow<SessionType?> =
         userPreferencesRepository.sessionType.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(3_500),
@@ -49,9 +49,9 @@ class SessionChoiceViewModel(
         )
 
     // Function for the UI to call when a session type is selected.
-    fun selectSessionType(sessionType: SessionType) {
+    fun selectSessionType(sessionTypeId: Int) {
         viewModelScope.launch {
-            userPreferencesRepository.saveSessionType(sessionType)
+            userPreferencesRepository.saveSessionType(sessionTypeId)
         }
     }
 }
