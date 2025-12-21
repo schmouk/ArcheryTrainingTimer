@@ -26,8 +26,13 @@ SOFTWARE.
 
 package com.github.schmouk.archerytrainingtimer.commons
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModel
 
 
@@ -40,6 +45,14 @@ open class BaseCountdownViewModel(stateAutomaton: BaseSessionStateAutomaton) : V
 
     // Internal state automaton to manage timer states
     protected val stateAutomaton = stateAutomaton
+
+    // Remembers the current internal values associated with the running process
+    val timerInternalRunningValues: TimerInternalRunningState = TimerInternalRunningState()
+
+    // Sets the automaton internal state
+    fun setStateAutomaton(automatonState: EState?) {
+        this.stateAutomaton.set(automatonState)
+    }
 
     // Mutable checking of the internal state - idle mode
     private val _isIdleMode = mutableStateOf(stateAutomaton.isIdleMode())
