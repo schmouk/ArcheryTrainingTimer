@@ -69,13 +69,13 @@ android {
         applicationId = namespace  // i.e. "com.github.schmouk.archerytrainingtimer"
         minSdk = 24 // Or our current minSdk
         targetSdk = 36 // Or our current targetSdk
-        versionCode = 11 // To be incremented with each release
+        versionCode = 12 // To be incremented with each release
         // Using a property for versionName is common, but we can also hardcode it
         // If we want to use a property, we can define it in gradle.properties or
         // pass it as a command line argument, e.g., -PversionName=0.1.0
         // Here, we use a hardcoded value for simplicity, but we can replace it with a property if needed.
         // versionName = project.findProperty("versionName")?.toString() ?: "0.1.0"
-        versionName = "0.2.3" // REPLACE with the actual version or use a property as commented above
+        versionName = "0.3.0a" // REPLACE with the actual version or use a property as commented above
     }
 
     signingConfigs {

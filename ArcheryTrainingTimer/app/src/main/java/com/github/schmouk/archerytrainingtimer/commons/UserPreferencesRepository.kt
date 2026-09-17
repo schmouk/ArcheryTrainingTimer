@@ -107,7 +107,7 @@ class UserPreferencesRepository(context: Context) {
 
 
     // Function to save only the user's chosen session type
-    suspend fun saveSessionType(sessionType: Int?) {  //SessionType) {
+    suspend fun saveSessionType(sessionType: Int?) {
         dataStore.edit { preferences ->
             preferences[SELECTED_SESSION_TYPE] = sessionType ?: -1
         }

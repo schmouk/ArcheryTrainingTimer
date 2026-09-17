@@ -27,12 +27,13 @@ SOFTWARE.
 package com.github.schmouk.archerytrainingtimer
 
 /**
- * When set to true, the DEBUG MODE speeds-up testing
+ * When set to true,  the DEBUG MODE speeds-up testing
  * as well as does it allow for logging.
- * Set it to false to get a release version of the app.
+ * Set it to false for getting the best performance of
+ * a release version of the app.
  */
-const val DEBUG_MODE: Boolean = true  // i.e. DEBUG MODE (tests)
-//const val DEBUG_MODE: Boolean = false  // i.e. RELEASE MODE (production)
+//const val DEBUG_MODE: Boolean = true  // i.e. DEBUG MODE (tests)
+const val DEBUG_MODE: Boolean = false  // i.e. RELEASE MODE (production)
 
 val SECOND_DURATION_MS: Long = if (DEBUG_MODE) 600L else 1000L
 val MINUTE_DURATION_MS: Long = 60 * SECOND_DURATION_MS
