@@ -183,7 +183,10 @@ fun MainAppScreen(viewModel: SessionChoiceViewModel) {
         modifier = Modifier.fillMaxSize(),
         color = AppBackgroundColor
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(top=20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             ViewHeader(viewTitleText = "Archery Training Timer")
 
             Column(
