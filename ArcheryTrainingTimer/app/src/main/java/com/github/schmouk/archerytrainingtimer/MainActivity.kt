@@ -178,45 +178,52 @@ fun MainAppScreen(viewModel: SessionChoiceViewModel) {
         }
     }
 
-
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = AppBackgroundColor
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(top=20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+    Scaffold(
+        // We can have a top bar for MainActivity if needed
+        // topBar = { TopAppBar(title = { Text("Archery Training Timer") }) }
+    ) { innerPadding ->
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(8.dp),
+            color = AppBackgroundColor
         ) {
-            ViewHeader(viewTitleText = "Archery Training Timer")
-
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(vertical = 8.dp, horizontal = 16.dp),
-                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // First Row: No-Arrows Sessions
-                SessionRow(
-                    mainImageRes = R.drawable.no_arrows_session_400,
-                    onOption1Click = { viewModel.selectSessionType(SessionType.NO_ARROWS_UNIFORM) },
-                    onOption2Click = { viewModel.selectSessionType(SessionType.NO_ARROWS_PYRAMIDAL) },
-                    selected = selectedSession,
-                    option1Type = SessionType.NO_ARROWS_UNIFORM,
-                    option2Type = SessionType.NO_ARROWS_PYRAMIDAL
-                )
+                ViewHeader(viewTitleText = "Archery Training Timer")
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(vertical = 8.dp, horizontal = 16.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // First Row: No-Arrows Sessions
+                    SessionRow(
+                        mainImageRes = R.drawable.no_arrows_session_400,
+                        onOption1Click = { viewModel.selectSessionType(SessionType.NO_ARROWS_UNIFORM) },
+                        onOption2Click = { viewModel.selectSessionType(SessionType.NO_ARROWS_PYRAMIDAL) },
+                        selected = selectedSession,
+                        option1Type = SessionType.NO_ARROWS_UNIFORM,
+                        option2Type = SessionType.NO_ARROWS_PYRAMIDAL
+                    )
 
-                // Second Row: Arrows Sessions
-                SessionRow(
-                    mainImageRes = R.drawable.arrows_session_400,
-                    onOption1Click = { viewModel.selectSessionType(SessionType.ARROWS_UNIFORM) },
-                    onOption2Click = { viewModel.selectSessionType(SessionType.ARROWS_PYRAMIDAL) },
-                    selected = selectedSession,
-                    option1Type = SessionType.ARROWS_UNIFORM,
-                    option2Type = SessionType.ARROWS_PYRAMIDAL
-                )
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Second Row: Arrows Sessions
+                    SessionRow(
+                        mainImageRes = R.drawable.arrows_session_400,
+                        onOption1Click = { viewModel.selectSessionType(SessionType.ARROWS_UNIFORM) },
+                        onOption2Click = { viewModel.selectSessionType(SessionType.ARROWS_PYRAMIDAL) },
+                        selected = selectedSession,
+                        option1Type = SessionType.ARROWS_UNIFORM,
+                        option2Type = SessionType.ARROWS_PYRAMIDAL
+                    )
+                }
             }
         }
     }
