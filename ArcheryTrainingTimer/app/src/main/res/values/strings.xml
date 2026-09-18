@@ -26,6 +26,7 @@
 -->
 <resources>
     <string name="app_name">ArcheryTrainingTimer</string>
+    <string name="app_title">Archery Training Timer</string>
     <string name="close_button">Quitter</string>
     <string name="close_app_dialog_title">Fermer ?</string>
     <string name="close_app_dialog_message">Êtes vous sûr de vouloir quitter Archery Training Timer ?</string>

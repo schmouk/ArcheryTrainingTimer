@@ -45,6 +45,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
@@ -180,7 +182,16 @@ fun MainAppScreen(viewModel: SessionChoiceViewModel) {
 
     Scaffold(
         // We can have a top bar for MainActivity if needed
-        // topBar = { TopAppBar(title = { Text("Archery Training Timer") }) }
+        topBar = {
+            @OptIn(ExperimentalMaterial3Api::class)
+            CenterAlignedTopAppBar(title = {
+                Text(
+                    text = stringResource(id = R.string.app_title),
+                    style = MaterialTheme.typography.headlineLarge,  //titleLarge,
+                    color = AppTitleColor
+                )
+            })
+        }
     ) { innerPadding ->
         Surface(
             modifier = Modifier
@@ -190,40 +201,34 @@ fun MainAppScreen(viewModel: SessionChoiceViewModel) {
             color = AppBackgroundColor
         ) {
             Column(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(vertical = 8.dp, horizontal = 16.dp),
+                verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                ViewHeader(viewTitleText = "Archery Training Timer")
 
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(vertical = 8.dp, horizontal = 16.dp),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    // First Row: No-Arrows Sessions
-                    SessionRow(
-                        mainImageRes = R.drawable.no_arrows_session_400,
-                        onOption1Click = { viewModel.selectSessionType(SessionType.NO_ARROWS_UNIFORM) },
-                        onOption2Click = { viewModel.selectSessionType(SessionType.NO_ARROWS_PYRAMIDAL) },
-                        selected = selectedSession,
-                        option1Type = SessionType.NO_ARROWS_UNIFORM,
-                        option2Type = SessionType.NO_ARROWS_PYRAMIDAL
-                    )
+                // First Row: No-Arrows Sessions
+                SessionRow(
+                    mainImageRes = R.drawable.no_arrows_session_400,
+                    onOption1Click = { viewModel.selectSessionType(SessionType.NO_ARROWS_UNIFORM) },
+                    onOption2Click = { viewModel.selectSessionType(SessionType.NO_ARROWS_PYRAMIDAL) },
+                    selected = selectedSession,
+                    option1Type = SessionType.NO_ARROWS_UNIFORM,
+                    option2Type = SessionType.NO_ARROWS_PYRAMIDAL
+                )
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-                    // Second Row: Arrows Sessions
-                    SessionRow(
-                        mainImageRes = R.drawable.arrows_session_400,
-                        onOption1Click = { viewModel.selectSessionType(SessionType.ARROWS_UNIFORM) },
-                        onOption2Click = { viewModel.selectSessionType(SessionType.ARROWS_PYRAMIDAL) },
-                        selected = selectedSession,
-                        option1Type = SessionType.ARROWS_UNIFORM,
-                        option2Type = SessionType.ARROWS_PYRAMIDAL
-                    )
-                }
+                // Second Row: Arrows Sessions
+                SessionRow(
+                    mainImageRes = R.drawable.arrows_session_400,
+                    onOption1Click = { viewModel.selectSessionType(SessionType.ARROWS_UNIFORM) },
+                    onOption2Click = { viewModel.selectSessionType(SessionType.ARROWS_PYRAMIDAL) },
+                    selected = selectedSession,
+                    option1Type = SessionType.ARROWS_UNIFORM,
+                    option2Type = SessionType.ARROWS_PYRAMIDAL
+                )
             }
         }
     }
