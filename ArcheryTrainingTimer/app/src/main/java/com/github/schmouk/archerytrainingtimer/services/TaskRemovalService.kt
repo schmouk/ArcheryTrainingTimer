@@ -24,36 +24,47 @@ OUT  OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-package com.github.schmouk.archerytrainingtimer
+package com.github.schmouk.archerytrainingtimer.services
 
-import android.app.Application
+import android.app.Service
 import android.content.Intent
-import com.github.schmouk.archerytrainingtimer.services.AudioService
-import com.github.schmouk.archerytrainingtimer.services.TaskRemovalService
+
+import com.github.schmouk.archerytrainingtimer.commons.UserPreferencesRepository
+
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 /**
- * Custom Application class for ArcheryTrainingTimer.
+ * A centralized service to manage the removal of the application.
  *
- * This class is the first component to be instantiated when the application starts.
- * It serves as a centralized place to initialize and hold application-wide singletons,
- * such as the AudioService.
+ * @param context The application context, used for accessing system services and resources.
  */
-class ArcheryTrainingTimerApp : Application() {
+class TaskRemovalService(): Service() {
 
-    // A single, lazily-initialized instance of AudioService for the entire app.
-    // "lazy" means the AudioService will only be created the very first time it's accessed.
-    val audioService: AudioService by lazy {
-        AudioService(applicationContext)
-    }
+    private lateinit var userPreferencesRepo: UserPreferencesRepository
+    private val scope = CoroutineScope(Dispatchers.IO)
 
-    /**
     override fun onCreate() {
-
         super.onCreate()
-        startService(
-            Intent(this, TaskRemovalService::class.java)
-        )
+        userPreferencesRepo = UserPreferencesRepository(applicationContext)
     }
-    */
+
+    override fun onBind(intent: Intent?) = null
+    override fun onStartCommand(i: Intent?, f: Int, id: Int) = START_NOT_STICKY
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        runBlocking(Dispatchers.IO) {
+            userPreferencesRepo.saveSessionType(null)
+        }
+        stopSelf()
+    }
+
+    override fun onDestroy() {
+        scope.cancel()
+        super.onDestroy()
+    }
 
 }

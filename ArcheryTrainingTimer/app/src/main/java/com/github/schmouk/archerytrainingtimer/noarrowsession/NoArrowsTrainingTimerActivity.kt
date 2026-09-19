@@ -26,6 +26,7 @@ SOFTWARE.
 
 package com.github.schmouk.archerytrainingtimer.noarrowsession
 
+import android.content.Intent
 import android.media.AudioManager
 import android.os.Bundle
 import android.view.WindowManager
@@ -33,12 +34,15 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.lifecycleScope
 
 import com.github.schmouk.archerytrainingtimer.ArcheryTrainingTimerApp
 import com.github.schmouk.archerytrainingtimer.commons.UserPreferencesRepository
 import com.github.schmouk.archerytrainingtimer.services.AudioService
+import com.github.schmouk.archerytrainingtimer.services.TaskRemovalService
 import com.github.schmouk.archerytrainingtimer.ui.noarrowsession.NoArrowsTimerScreen
 import com.github.schmouk.archerytrainingtimer.ui.theme.*
+import kotlinx.coroutines.launch
 
 
 class NoArrowsTrainingTimerActivity : ComponentActivity() {
@@ -64,6 +68,8 @@ class NoArrowsTrainingTimerActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        startService(Intent(this, TaskRemovalService::class.java))
+
         //WindowCompat.setDecorFitsSystemWindows(window, false) // Edge-to-edge
         // Disable edge-to-edge display to NOT draw behind the system bars
         WindowCompat.setDecorFitsSystemWindows(window, true)
@@ -86,7 +92,13 @@ class NoArrowsTrainingTimerActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        stopService(Intent(this, TaskRemovalService::class.java))
+
         super.onDestroy()
+
+        lifecycleScope.launch {
+            userPreferencesRepository.saveSessionType(null)
+        }
 
         // It's good practice to clear the flag when the activity is destroyed
         // to ensure it doesn't leak or affect other parts of the system if not

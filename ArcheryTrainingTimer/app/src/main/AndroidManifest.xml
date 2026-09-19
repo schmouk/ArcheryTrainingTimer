@@ -38,6 +38,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.ArcheryTrainingTimer">
 
+        <!-- ACTIVITIES -->
         <!-- Main Activity -->
         <activity
             android:name=".MainActivity"
@@ -57,6 +58,10 @@
             android:theme="@style/Theme.ArcheryTrainingTimer">
             <!-- android:screenOrientation="portrait" -->
         </activity>
+
+        <!-- SERVICES -->
+        <!-- Task Removal Service -->
+        <service android:name=".services.TaskRemovalService" android:exported="false"/>
 
     </application>
 

@@ -51,12 +51,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.datastore.preferences.preferencesDataStore
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+
+import kotlinx.coroutines.launch
 
 import com.github.schmouk.archerytrainingtimer.commons.SessionType
 import com.github.schmouk.archerytrainingtimer.commons.UserPreferencesRepository
 import com.github.schmouk.archerytrainingtimer.noarrowsession.NoArrowsTrainingTimerActivity
+import com.github.schmouk.archerytrainingtimer.services.TaskRemovalService
 import com.github.schmouk.archerytrainingtimer.sessionchoice.SessionChoiceViewModel
 import com.github.schmouk.archerytrainingtimer.ui.commons.SessionDurationDisplay
 import com.github.schmouk.archerytrainingtimer.ui.commons.ViewHeader
@@ -69,11 +73,17 @@ import com.github.schmouk.archerytrainingtimer.ui.utils.detectDeviceFoldedPostur
 // --- MainActivity class definition ---
 class MainActivity : ComponentActivity() {
 
-    // the View Model associated with this Main Activity
-    private val mainActivityViewModel: SessionChoiceViewModel by viewModels {
-        SessionChoiceViewModelFactory(UserPreferencesRepository(applicationContext))
+    // The user preference repository associated with the app
+    private val userPreferencesRepository by lazy {
+        UserPreferencesRepository(applicationContext)
     }
 
+    // the View Model associated with this Main Activity
+    private val mainActivityViewModel: SessionChoiceViewModel by viewModels {
+        SessionChoiceViewModelFactory(userPreferencesRepository)
+    }
+
+    // onCreate() is called when the activity is first created.
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -85,6 +95,14 @@ class MainActivity : ComponentActivity() {
             ArcheryTrainingTimerTheme {
                 MainAppScreen(viewModel = mainActivityViewModel)
             }
+        }
+    }
+
+    // onDestroy() is called when the activity is about to be destroyed.
+    override fun onDestroy() {
+        super.onDestroy()
+        lifecycleScope.launch {
+            userPreferencesRepository.saveSessionType(null)
         }
     }
 }
@@ -326,8 +344,10 @@ fun SessionRow(
 // --- Individual Choice Button Composable ---
 @Composable
 fun ChoiceButton(imageRes: Int, isSelected: Boolean, onClick: () -> Unit) {
-    val elevation = if (isSelected) ButtonDefaults.buttonElevation(defaultElevation = 2.dp, pressedElevation = 0.dp)
-    else ButtonDefaults.buttonElevation(defaultElevation = 8.dp, pressedElevation = 4.dp)
+    val elevation = if (isSelected)
+        ButtonDefaults.buttonElevation(defaultElevation = 4.dp, pressedElevation = 0.dp)
+    else
+        ButtonDefaults.buttonElevation(defaultElevation = 12.dp, pressedElevation = 8.dp)
 
     Button(
         onClick = onClick,

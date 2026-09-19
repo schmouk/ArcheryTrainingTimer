@@ -27,10 +27,10 @@ SOFTWARE.
 package com.github.schmouk.archerytrainingtimer.services
 
 import android.content.Context
-import android.media.AudioAttributes
+//import android.media.AudioAttributes
 import android.media.AudioManager
-import android.media.SoundPool
-import com.github.schmouk.archerytrainingtimer.R
+//import android.media.SoundPool
+//import com.github.schmouk.archerytrainingtimer.R
 
 /**
  * A centralized service to manage all audio-related tasks for the application.
