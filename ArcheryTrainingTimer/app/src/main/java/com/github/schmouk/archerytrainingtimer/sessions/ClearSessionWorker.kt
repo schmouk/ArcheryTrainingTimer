@@ -24,34 +24,25 @@ OUT  OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-package com.github.schmouk.archerytrainingtimer.sessionchoice
+package com.github.schmouk.archerytrainingtimer.sessions
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.github.schmouk.archerytrainingtimer.commons.SessionType
+import android.content.Context
+import androidx.work.CoroutineWorker
+import androidx.work.WorkerParameters
 import com.github.schmouk.archerytrainingtimer.commons.UserPreferencesRepository
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 
-class SessionChoiceViewModel(
-    private val userPreferencesRepository: UserPreferencesRepository
-) : ViewModel() {
-
-    // Expose the selected session type as a StateFlow for the UI to observe.
-    // Default to null initially.
-    val selectedSessionType: StateFlow<Int?> =  //StateFlow<SessionType?> =
-        userPreferencesRepository.sessionType.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(3_500),
-            initialValue = null
-        )
-
-    // Function for the UI to call when a session type is selected.
-    fun selectSessionType(sessionTypeId: Int) {
-        viewModelScope.launch {
-            userPreferencesRepository.saveSessionType(sessionTypeId)
+// The class for the worker that clears the session type
+class ClearSessionWorker(
+    appContext: Context, params: WorkerParameters
+) : CoroutineWorker(appContext, params) {
+    override suspend fun doWork(): Result {
+        return try {
+            val userPreferencesRepository = UserPreferencesRepository(applicationContext)
+            userPreferencesRepository.saveSessionType(null)
+            Result.success()
+        }
+        catch (t: Throwable) {
+            Result.retry()
         }
     }
 }

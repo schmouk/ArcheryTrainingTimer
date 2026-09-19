@@ -183,16 +183,34 @@ dependencies {
 
     // Essential Compose UI libraries (versions managed by BOM if used)
     implementation("androidx.compose.material3:material3:1.4.0")  // 1.4.0-beta03 and 1.5.0-alpha03 are available also
-    //implementation("androidx.compose.material3.adaptive:adaptive:1.1.0") // Or the latest version shown in the docs (e.g., 1.2.0-beta01 if that's current)
     implementation("androidx.compose.material3.adaptive:adaptive-layout:1.1.0")  // 1.2.0-beta01 is available also
-    //implementation("androidx.compose.material3.adaptive:adaptive-navigation:1.1.0")  // 1.2.0-beta01 is available also
     implementation("androidx.compose.ui:ui:1.9.2")
     //implementation("androidx.compose.ui:ui-graphics:1.9.1")
     //implementation("androidx.compose.ui:ui-unit:1.9.1")
 
+    //-- Tooling for Previews (optional but very helpful)
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation(libs.androidx.ui.unit)
+    debugImplementation("androidx.compose.ui:ui-tooling") // For tools like Layout Inspector
 
+    // DataStore Preferences
+    implementation("androidx.datastore:datastore-preferences:1.1.7") // Or the latest stable version
+
+    // Lif Cycle
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.4")
-    /*
+    // Lifecycle KTX (often useful with Compose)
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.4") // Or our version
+
+    // Work Manager
+    implementation("androidx.work:work-runtime-ktx:2.8.1")
+    implementation("androidx.work:work-runtime-testing:2.8.1")
+    implementation("androidx.work:work-multiprocess:2.8.1")
+    implementation("androidx.work:work-testing:2.8.1")
+
+    implementation("com.google.accompanist:accompanist-flowlayout:0.36.0")
+
+
+    /**********************************
     val lifecycleVersion = "2.9.3"
     val archVersion = "2.2.0"
 
@@ -225,18 +243,6 @@ dependencies {
     testImplementation("androidx.arch.core:core-testing:$archVersion")
     // optional - Test helpers for Lifecycle runtime
     testImplementation ("androidx.lifecycle:lifecycle-runtime-testing:$lifecycleVersion")
-    */
+    *****************/
 
-    //-- Tooling for Previews (optional but very helpful)
-    implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation(libs.androidx.ui.unit)
-    debugImplementation("androidx.compose.ui:ui-tooling") // For tools like Layout Inspector
-
-    // DataStore Preferences
-    implementation("androidx.datastore:datastore-preferences:1.1.7") // Or the latest stable version
-
-    // Lifecycle KTX (often useful with Compose)
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.4") // Or our version
-
-    implementation("com.google.accompanist:accompanist-flowlayout:0.36.0")
 }

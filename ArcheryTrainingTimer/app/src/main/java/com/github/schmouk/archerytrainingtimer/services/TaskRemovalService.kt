@@ -28,14 +28,19 @@ package com.github.schmouk.archerytrainingtimer.services
 
 import android.app.Service
 import android.content.Intent
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 
 import com.github.schmouk.archerytrainingtimer.commons.UserPreferencesRepository
+import com.github.schmouk.archerytrainingtimer.sessions.ClearSessionWorker
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+/*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+*/
 
 /**
  * A centralized service to manage the removal of the application.
@@ -56,9 +61,13 @@ class TaskRemovalService(): Service() {
     override fun onStartCommand(i: Intent?, f: Int, id: Int) = START_NOT_STICKY
 
     override fun onTaskRemoved(rootIntent: Intent?) {
+        val req = OneTimeWorkRequestBuilder<ClearSessionWorker>().build()
+        WorkManager.getInstance(applicationContext).enqueue(req)
+        /*
         runBlocking(Dispatchers.IO) {
             userPreferencesRepo.saveSessionType(null)
         }
+        */
         stopSelf()
     }
 

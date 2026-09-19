@@ -26,14 +26,12 @@ SOFTWARE.
 
 package com.github.schmouk.archerytrainingtimer
 
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -42,15 +40,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
-import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -60,10 +54,7 @@ import kotlinx.coroutines.launch
 import com.github.schmouk.archerytrainingtimer.commons.SessionType
 import com.github.schmouk.archerytrainingtimer.commons.UserPreferencesRepository
 import com.github.schmouk.archerytrainingtimer.noarrowsession.NoArrowsTrainingTimerActivity
-import com.github.schmouk.archerytrainingtimer.services.TaskRemovalService
-import com.github.schmouk.archerytrainingtimer.sessionchoice.SessionChoiceViewModel
-import com.github.schmouk.archerytrainingtimer.ui.commons.SessionDurationDisplay
-import com.github.schmouk.archerytrainingtimer.ui.commons.ViewHeader
+import com.github.schmouk.archerytrainingtimer.sessions.SessionChoiceViewModel
 import com.github.schmouk.archerytrainingtimer.ui.theme.*
 import com.github.schmouk.archerytrainingtimer.ui.utils.EFoldedPosture
 import com.github.schmouk.archerytrainingtimer.ui.utils.considerDevicePortraitPositioned
