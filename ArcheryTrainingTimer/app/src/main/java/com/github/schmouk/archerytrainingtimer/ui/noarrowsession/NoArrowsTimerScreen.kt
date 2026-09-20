@@ -450,6 +450,8 @@ fun NoArrowsTimerScreen(
                     currentRestTimeLeft = formerInternalRunningValues.currentRestTimeLeft
                 }
 
+                //TODO: not satisfactory implementation, to be refactored
+                userPreferencesRepository.saveSessionType(null)  /***********/
             }
 
             /**

@@ -81,6 +81,10 @@ class NoArrowsTrainingTimerActivity : ComponentActivity() {
 
         keepScreenOn()
 
+        lifecycleScope.launch {
+            userPreferencesRepository.saveSessionType(null)
+        }
+
         setContent {
             ArcheryTrainingTimerTheme {
                 NoArrowsTimerScreen(
@@ -96,9 +100,11 @@ class NoArrowsTrainingTimerActivity : ComponentActivity() {
 
         super.onDestroy()
 
+        /** /
         lifecycleScope.launch {
             userPreferencesRepository.saveSessionType(null)
         }
+        / **/
 
         // It's good practice to clear the flag when the activity is destroyed
         // to ensure it doesn't leak or affect other parts of the system if not
