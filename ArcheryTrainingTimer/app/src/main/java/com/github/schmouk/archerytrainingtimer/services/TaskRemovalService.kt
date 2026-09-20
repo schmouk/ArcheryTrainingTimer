@@ -37,10 +37,7 @@ import com.github.schmouk.archerytrainingtimer.sessions.ClearSessionWorker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
-/*
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-*/
 
 /**
  * A centralized service to manage the removal of the application.
@@ -49,12 +46,12 @@ import kotlinx.coroutines.runBlocking
  */
 class TaskRemovalService(): Service() {
 
-    private lateinit var userPreferencesRepo: UserPreferencesRepository
+    private lateinit var userPreferencesRepository: UserPreferencesRepository
     private val scope = CoroutineScope(Dispatchers.IO)
 
     override fun onCreate() {
         super.onCreate()
-        userPreferencesRepo = UserPreferencesRepository(applicationContext)
+        userPreferencesRepository = UserPreferencesRepository(applicationContext)
     }
 
     override fun onBind(intent: Intent?) = null
@@ -63,11 +60,11 @@ class TaskRemovalService(): Service() {
     override fun onTaskRemoved(rootIntent: Intent?) {
         val req = OneTimeWorkRequestBuilder<ClearSessionWorker>().build()
         WorkManager.getInstance(applicationContext).enqueue(req)
-        /*
+        /**/
         runBlocking(Dispatchers.IO) {
-            userPreferencesRepo.saveSessionType(null)
+            userPreferencesRepository.saveSessionType(null)
         }
-        */
+        /**/
         stopSelf()
     }
 

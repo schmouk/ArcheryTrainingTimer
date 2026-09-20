@@ -203,9 +203,9 @@ dependencies {
 
     // Work Manager
     implementation("androidx.work:work-runtime-ktx:2.8.1")
-    implementation("androidx.work:work-runtime-testing:2.8.1")
-    implementation("androidx.work:work-multiprocess:2.8.1")
-    implementation("androidx.work:work-testing:2.8.1")
+    //implementation("androidx.work:work-runtime-testing:2.8.1")
+    //implementation("androidx.work:work-multiprocess:2.8.1")
+    //implementation("androidx.work:work-testing:2.8.1")
 
     implementation("com.google.accompanist:accompanist-flowlayout:0.36.0")
 

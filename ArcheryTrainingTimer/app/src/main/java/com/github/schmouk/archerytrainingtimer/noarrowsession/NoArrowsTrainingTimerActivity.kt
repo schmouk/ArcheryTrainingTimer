@@ -70,9 +70,9 @@ class NoArrowsTrainingTimerActivity : ComponentActivity() {
 
         startService(Intent(this, TaskRemovalService::class.java))
 
-        //WindowCompat.setDecorFitsSystemWindows(window, false) // Edge-to-edge
         // Disable edge-to-edge display to NOT draw behind the system bars
         WindowCompat.setDecorFitsSystemWindows(window, true)
+        //WindowCompat.setDecorFitsSystemWindows(window, false) // Edge-to-edge
 
         userPreferencesRepository = UserPreferencesRepository(applicationContext) // Initialize or inject
 
