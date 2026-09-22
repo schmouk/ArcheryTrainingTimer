@@ -29,6 +29,8 @@ package com.github.schmouk.archerytrainingtimer.noarrowsession
 import android.content.Intent
 import android.media.AudioManager
 import android.os.Bundle
+import android.view.GestureDetector
+import android.view.MotionEvent
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -47,6 +49,30 @@ import kotlinx.coroutines.launch
 
 class NoArrowsTrainingTimerActivity : ComponentActivity() {
 
+    private val swipeGestureDetector by lazy {
+        GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onFling(
+                e1: MotionEvent?,
+                e2: MotionEvent,
+                velocityX: Float,
+                velocityY: Float
+            ): Boolean {
+                if (e1 == null) return false
+
+                val horizontalDistance = kotlin.math.abs(e2.x - e1.x)
+                val verticalDistance = kotlin.math.abs(e2.y - e1.y)
+                val minSwipeDistance : Int = 120
+
+                if (horizontalDistance > minSwipeDistance && verticalDistance < minSwipeDistance) {
+                    finish()
+                    return true
+                }
+
+                return false
+            }
+        })
+    }
+
     // Get the single, shared instance of AudioService from the Application class.
     val audioService: AudioService by lazy {
         (applicationContext as ArcheryTrainingTimerApp).audioService
@@ -64,6 +90,13 @@ class NoArrowsTrainingTimerActivity : ComponentActivity() {
     private val noArrowsTimerViewModel: NoArrowsTimerViewModel by viewModels()
 
     // --- Lifecycle Methods ---
+
+    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+        if (swipeGestureDetector.onTouchEvent(event)) {
+            return true
+        }
+        return super.dispatchTouchEvent(event)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
