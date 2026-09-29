@@ -53,4 +53,10 @@ class SessionChoiceViewModel(
             userPreferencesRepository.saveSessionType(sessionTypeId)
         }
     }
+
+    fun clearSelectedSessionType() {
+        viewModelScope.launch {
+            userPreferencesRepository.saveSessionType(null)
+        }
+    }
 }

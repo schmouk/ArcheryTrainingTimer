@@ -27,6 +27,7 @@
 <resources>
     <string name="app_name">ArcheryTrainingTimer</string>
     <string name="app_title">Archery Training Timer</string>
+    <string name="back_button">Volver</string>
     <string name="close_button">Salir</string>
     <string name="close_app_dialog_title">¿Cerrar la aplicación?</string>
     <string name="close_app_dialog_message">¿Seguro que quieres salir del Archery Training Timer?</string>
@@ -35,6 +36,7 @@
     <string name="editor_logo">Logotipo del editor</string>
     <string name="empty_string"></string>
     <string name="intermediate_beeps">Pitidos intermedios cada 5 segundos</string>
+    <string name="not_implemented_session_title">tipo de sesión aún no implementado</string>
     <string name="please_select">Seleccione los controles de su sesión :</string>
     <string name="preparation">Inicio...</string>
     <string name="preparation_label">Inicio de sesión en </string>

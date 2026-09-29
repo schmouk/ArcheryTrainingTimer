@@ -27,6 +27,7 @@
 <resources>
     <string name="app_name">ArcheryTrainingTimer</string>
     <string name="app_title">Archery Training Timer</string>
+    <string name="back_button">Back</string>
     <string name="close_button">Quit</string>
     <string name="close_app_dialog_title">Close App?</string>
     <string name="close_app_dialog_message">Are you sure you want to exit the Archery Training Timer?</string>
@@ -35,6 +36,7 @@
     <string name="editor_logo">Editor logo</string>
     <string name="empty_string"></string>
     <string name="intermediate_beeps">Intermediate beeps every 5 seconds</string>
+    <string name="not_implemented_session_title">not yet implemented session type</string>
     <string name="please_select">Select your session controls:</string>
     <string name="preparation">Prep...</string>
     <string name="preparation_label">Preparation time:</string>
