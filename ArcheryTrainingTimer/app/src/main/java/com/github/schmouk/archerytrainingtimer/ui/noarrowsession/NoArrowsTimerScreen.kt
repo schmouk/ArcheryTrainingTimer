@@ -1351,7 +1351,9 @@ fun NoArrowsTimerScreen(
             }
 
 
+            // -----------------
             // --- UI Layout ---
+            // -----------------
             when (detectDeviceFoldedPosture()) {
                 EFoldedPosture.POSTURE_NOT_FOLDED -> {
                     // Device is not folded

@@ -136,71 +136,138 @@ fun MainAppScreen(viewModel: SessionChoiceViewModel) {
             }
         }
     }
-
-
     // --- A Main Column for the entire screen content (portrait layout) ---
     @Composable
-    fun OneColumn() {
-    }
+    fun OneColumn(scale: Float = 1f) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 12.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            SessionRow(
+                mainImageRes = R.drawable.no_arrows_session_400,
+                onOption1Click = { viewModel.selectSessionType(SessionType.NO_ARROWS_UNIFORM) },
+                onOption2Click = { viewModel.selectSessionType(SessionType.NO_ARROWS_PYRAMIDAL) },
+                selected = selectedSession,
+                option1Type = SessionType.NO_ARROWS_UNIFORM,
+                option2Type = SessionType.NO_ARROWS_PYRAMIDAL,
+                scale = scale,
+                modifier = Modifier.weight(1f)
+            )
 
+            Spacer(modifier = Modifier.height(minOf(24.dp, (12f * scale).dp)))
+
+            SessionRow(
+                mainImageRes = R.drawable.arrows_session_400,
+                onOption1Click = { viewModel.selectSessionType(SessionType.ARROWS_UNIFORM) },
+                onOption2Click = { viewModel.selectSessionType(SessionType.ARROWS_PYRAMIDAL) },
+                selected = selectedSession,
+                option1Type = SessionType.ARROWS_UNIFORM,
+                option2Type = SessionType.ARROWS_PYRAMIDAL,
+                scale = scale,
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
 
     // --- Two Columns for the entire screen content (landscape or book layout) ---
     @Composable
-    fun TwoColumns(equallySized: Boolean = false) {
-    }
+    fun TwoColumns(equallySized: Boolean = false, scale: Float = 1f) {
+        val leftWeight = if (equallySized) 1f else 1f
+        val rightWeight = if (equallySized) 1f else 1f
 
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy((12f * scale).dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                modifier = Modifier
+                    .weight(leftWeight)
+                    .fillMaxHeight(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                SessionRow(
+                    mainImageRes = R.drawable.no_arrows_session_400,
+                    onOption1Click = { viewModel.selectSessionType(SessionType.NO_ARROWS_UNIFORM) },
+                    onOption2Click = { viewModel.selectSessionType(SessionType.NO_ARROWS_PYRAMIDAL) },
+                    selected = selectedSession,
+                    option1Type = SessionType.NO_ARROWS_UNIFORM,
+                    option2Type = SessionType.NO_ARROWS_PYRAMIDAL,
+                    scale = scale,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            Column(
+                modifier = Modifier
+                    .weight(rightWeight)
+                    .fillMaxHeight(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                SessionRow(
+                    mainImageRes = R.drawable.arrows_session_400,
+                    onOption1Click = { viewModel.selectSessionType(SessionType.ARROWS_UNIFORM) },
+                    onOption2Click = { viewModel.selectSessionType(SessionType.ARROWS_PYRAMIDAL) },
+                    selected = selectedSession,
+                    option1Type = SessionType.ARROWS_UNIFORM,
+                    option2Type = SessionType.ARROWS_PYRAMIDAL,
+                    scale = scale,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+    }
 
     // --- Two rows for the entire screen content (laptop layout) ---
     @Composable
-    fun TwoRows() {
-    }
+    fun TwoRows(scale: Float = 1f) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 12.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            SessionRow(
+                mainImageRes = R.drawable.no_arrows_session_400,
+                onOption1Click = { viewModel.selectSessionType(SessionType.NO_ARROWS_UNIFORM) },
+                onOption2Click = { viewModel.selectSessionType(SessionType.NO_ARROWS_PYRAMIDAL) },
+                selected = selectedSession,
+                option1Type = SessionType.NO_ARROWS_UNIFORM,
+                option2Type = SessionType.NO_ARROWS_PYRAMIDAL,
+                scale = scale,
+                modifier = Modifier.fillMaxWidth().weight(1f)
+            )
 
+            Spacer(modifier = Modifier.height((18f * scale).dp))
 
-    // --- UI Layout ---
-    when (detectDeviceFoldedPosture()) {
-        EFoldedPosture.POSTURE_NOT_FOLDED -> {
-            // Device is not folded
-            if (considerDevicePortraitPositioned())
-                OneColumn()
-            else
-                TwoColumns()
-        }
-
-        EFoldedPosture.POSTURE_FLAT -> {
-            // Device is fully open flat (180 degrees)
-            if (considerDevicePortraitPositioned())
-                OneColumn()
-            else
-                TwoColumns(true)
-        }
-
-        EFoldedPosture.POSTURE_BOOK_LIKE -> {
-            // Device is half-open (90 degrees, vertical)
-            TwoColumns(true)
-        }
-
-        EFoldedPosture.POSTURE_LAPTOP_LIKE -> {
-            // Device is half-open (90 degrees, horizontal)
-            TwoRows()
-        }
-
-        else -> {
-            // Unknown folded posture, should act as being not folded
-            if (considerDevicePortraitPositioned())
-                OneColumn()
-            else
-                TwoColumns(true)
+            SessionRow(
+                mainImageRes = R.drawable.arrows_session_400,
+                onOption1Click = { viewModel.selectSessionType(SessionType.ARROWS_UNIFORM) },
+                onOption2Click = { viewModel.selectSessionType(SessionType.ARROWS_PYRAMIDAL) },
+                selected = selectedSession,
+                option1Type = SessionType.ARROWS_UNIFORM,
+                option2Type = SessionType.ARROWS_PYRAMIDAL,
+                scale = scale,
+                modifier = Modifier.fillMaxWidth().weight(1f)
+            )
         }
     }
 
     Scaffold(
-        // We can have a top bar for MainActivity if needed
         topBar = {
             @OptIn(ExperimentalMaterial3Api::class)
             CenterAlignedTopAppBar(title = {
                 Text(
                     text = stringResource(id = R.string.app_title),
-                    style = MaterialTheme.typography.headlineLarge,  //titleLarge,
+                    style = MaterialTheme.typography.headlineLarge,
                     color = AppTitleColor
                 )
             })
@@ -213,35 +280,30 @@ fun MainAppScreen(viewModel: SessionChoiceViewModel) {
                 .padding(8.dp),
             color = AppBackgroundColor
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(vertical = 8.dp, horizontal = 16.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
+            BoxWithConstraints(
+                modifier = Modifier.fillMaxSize()
             ) {
+                val horizontalScale = if (maxWidth > 0.dp) (maxWidth.value / 720f) else 1f
+                val verticalScale = if (maxHeight > 0.dp) (maxHeight.value / 1280f) else 1f
+                val adaptiveScale = maxOf(horizontalScale, verticalScale, 0.8f).coerceAtMost(1.15f)
 
-                // First Row: No-Arrows Sessions
-                SessionRow(
-                    mainImageRes = R.drawable.no_arrows_session_400,
-                    onOption1Click = { viewModel.selectSessionType(SessionType.NO_ARROWS_UNIFORM) },
-                    onOption2Click = { viewModel.selectSessionType(SessionType.NO_ARROWS_PYRAMIDAL) },
-                    selected = selectedSession,
-                    option1Type = SessionType.NO_ARROWS_UNIFORM,
-                    option2Type = SessionType.NO_ARROWS_PYRAMIDAL
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Second Row: Arrows Sessions
-                SessionRow(
-                    mainImageRes = R.drawable.arrows_session_400,
-                    onOption1Click = { viewModel.selectSessionType(SessionType.ARROWS_UNIFORM) },
-                    onOption2Click = { viewModel.selectSessionType(SessionType.ARROWS_PYRAMIDAL) },
-                    selected = selectedSession,
-                    option1Type = SessionType.ARROWS_UNIFORM,
-                    option2Type = SessionType.ARROWS_PYRAMIDAL
-                )
+                when (detectDeviceFoldedPosture()) {
+                    EFoldedPosture.POSTURE_NOT_FOLDED -> {
+                        if (considerDevicePortraitPositioned()) OneColumn(adaptiveScale) else TwoColumns(scale = adaptiveScale)
+                    }
+                    EFoldedPosture.POSTURE_FLAT -> {
+                        if (considerDevicePortraitPositioned()) OneColumn(adaptiveScale) else TwoColumns(true, adaptiveScale)
+                    }
+                    EFoldedPosture.POSTURE_BOOK_LIKE -> {
+                        TwoColumns(true, adaptiveScale)
+                    }
+                    EFoldedPosture.POSTURE_LAPTOP_LIKE -> {
+                        TwoRows(adaptiveScale)
+                    }
+                    else -> {
+                        if (considerDevicePortraitPositioned()) OneColumn(adaptiveScale) else TwoColumns(true, adaptiveScale)
+                    }
+                }
             }
         }
     }
@@ -296,41 +358,55 @@ fun SessionRow(
     mainImageRes: Int,
     onOption1Click: () -> Unit,
     onOption2Click: () -> Unit,
-    selected: Int?,  //SessionType?,
-    option1Type: Int,  //SessionType,
-    option2Type: Int,  //SessionType
+    selected: Int?,
+    option1Type: Int,
+    option2Type: Int,
+    scale: Float = 1f,
+    modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
+    BoxWithConstraints(
+        modifier = modifier.fillMaxWidth()
     ) {
-        // Left Side: Main Image
-        Image(
-            painter = painterResource(id = mainImageRes),
-            contentDescription = null, // Descriptions should be more specific if needed
-            modifier = Modifier
-                .weight(1f)
-                .heightIn(max = 256.dp)
-        )
+        val spacing = (12f * scale).dp
+        val imageHeight = if (maxHeight > 0.dp) maxHeight * 0.72f else (130f * scale).dp
+        val buttonHeight = (imageHeight - spacing) / 2f
 
-        Spacer(modifier = Modifier.width(16.dp))
-
-        // Right Side: Two choice buttons
-        Column(
-            modifier = Modifier.weight(1f),
-            horizontalAlignment = Alignment.CenterHorizontally
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            ChoiceButton(
-                imageRes = R.drawable.uniform_series,
-                isSelected = selected == option1Type,
-                onClick = onOption1Click
+            Image(
+                painter = painterResource(id = mainImageRes),
+                contentDescription = null,
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .weight(0.5f)
+                    .aspectRatio(1f)
+                    .padding(end = spacing)
             )
-            Spacer(modifier = Modifier.height(16.dp))
-            ChoiceButton(
-                imageRes = R.drawable.pyramidal_series,
-                isSelected = selected == option2Type,
-                onClick = onOption2Click
-            )
+
+            Column(
+                modifier = Modifier
+                    .weight(0.5f)
+                    .padding(start = 4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(spacing)
+            ) {
+                ChoiceButton(
+                    imageRes = R.drawable.uniform_series,
+                    isSelected = selected == option1Type,
+                    onClick = onOption1Click,
+                    scale = scale,
+                    modifier = Modifier.fillMaxWidth().height(buttonHeight)
+                )
+                ChoiceButton(
+                    imageRes = R.drawable.pyramidal_series,
+                    isSelected = selected == option2Type,
+                    onClick = onOption2Click,
+                    scale = scale,
+                    modifier = Modifier.fillMaxWidth().height(buttonHeight)
+                )
+            }
         }
     }
 }
@@ -338,7 +414,13 @@ fun SessionRow(
 
 // --- Individual Choice Button Composable ---
 @Composable
-fun ChoiceButton(imageRes: Int, isSelected: Boolean, onClick: () -> Unit) {
+fun ChoiceButton(
+    imageRes: Int,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    scale: Float = 1f,
+    modifier: Modifier = Modifier
+) {
     val elevation = if (isSelected)
         ButtonDefaults.buttonElevation(defaultElevation = 4.dp, pressedElevation = 0.dp)
     else
@@ -351,13 +433,15 @@ fun ChoiceButton(imageRes: Int, isSelected: Boolean, onClick: () -> Unit) {
             containerColor = MaterialTheme.colorScheme.surface,
             contentColor = MaterialTheme.colorScheme.onSurface
         ),
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .aspectRatio(1.7f) // Adjust aspect ratio to make buttons look good
     ) {
         Image(
             painter = painterResource(id = imageRes),
-            contentDescription = null // Decorative
+            contentDescription = null,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(4.dp)
         )
     }
 }

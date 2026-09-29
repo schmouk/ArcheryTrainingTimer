@@ -34,12 +34,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.lifecycle.lifecycleScope
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -48,6 +50,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -118,28 +121,56 @@ private fun NotImplementedSessionScreen(onBack: () -> Unit) {
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+        BoxWithConstraints(
+            modifier = Modifier.fillMaxSize()
         ) {
-            Text(
-                text = stringResource(R.string.not_implemented_session_title),
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.headlineMedium,
-                color = WARedColor
+            val smallerSide = minOf(maxWidth, maxHeight)
+            val minimumButtonSize = smallerSide * 0.25f
+            val backLabel = stringResource(R.string.back_button)
+            val textStyle = MaterialTheme.typography.labelLarge
+            val textWidthEstimatePx = with(LocalDensity.current) {
+                textStyle.fontSize.toPx() * backLabel.length /* * 0.62f*/ + 24.dp.toPx()
+            }
+            val buttonWidth = maxOf(with(LocalDensity.current) { textWidthEstimatePx.toDp() }, minimumButtonSize)
+            val labelHeight = with(LocalDensity.current) {
+                textStyle.lineHeight.toPx()
+            }
+            val buttonHeight = minOf(
+                with(LocalDensity.current) { (labelHeight + 16.dp.toPx()).toDp() },
+                minimumButtonSize * 0.45f
             )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Button(
-                onClick = onBack,
-                colors = ButtonDefaults.buttonColors(containerColor = AppButtonColor)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(text = stringResource(R.string.back_button), color= AppButtonTextColor)
+                Text(
+                    text = stringResource(R.string.not_implemented_session_title),
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = WARedColor
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Button(
+                    onClick = onBack,
+                    colors = ButtonDefaults.buttonColors(containerColor = AppButtonColor),
+                    modifier = Modifier
+                        .width(buttonWidth)
+                        .height(buttonHeight)
+                ) {
+                    Text(
+                        text = stringResource(R.string.back_button),
+                        color = AppButtonTextColor,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                }
             }
         }
     }
