@@ -51,6 +51,7 @@ import androidx.lifecycle.ViewModelProvider
 
 import kotlinx.coroutines.launch
 
+import com.github.schmouk.archerytrainingtimer.commons.NotImplementedSessionActivity
 import com.github.schmouk.archerytrainingtimer.commons.SessionType
 import com.github.schmouk.archerytrainingtimer.commons.UserPreferencesRepository
 import com.github.schmouk.archerytrainingtimer.noarrowsession.NoArrowsTrainingTimerActivity
@@ -124,13 +125,15 @@ fun MainAppScreen(viewModel: SessionChoiceViewModel) {
         if (selectedSession != null) {
             val intent = when (selectedSession) {
                 SessionType.NO_ARROWS_UNIFORM -> Intent(context, NoArrowsTrainingTimerActivity::class.java)
-                // TODO: Add intents for other activities once they are created
-                SessionType.NO_ARROWS_PYRAMIDAL -> null // Intent(context, NoArrowsPyramidalActivity::class.java)
-                SessionType.ARROWS_UNIFORM -> null // Intent(context, ArrowsTrainingTimerActivity::class.java)
-                SessionType.ARROWS_PYRAMIDAL -> null // Intent(context, ArrowsPyramidalActivity::class.java)
+                SessionType.NO_ARROWS_PYRAMIDAL -> Intent(context, NotImplementedSessionActivity::class.java)
+                SessionType.ARROWS_UNIFORM -> Intent(context, NotImplementedSessionActivity::class.java)
+                SessionType.ARROWS_PYRAMIDAL -> Intent(context, NotImplementedSessionActivity::class.java)
                 else -> null
             }
-            intent?.let { context.startActivity(it) }
+            intent?.let {
+                context.startActivity(it)
+                viewModel.clearSelectedSessionType()
+            }
         }
     }
 
