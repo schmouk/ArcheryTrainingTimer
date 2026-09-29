@@ -53,6 +53,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -115,6 +117,15 @@ import kotlin.math.roundToInt
 // --- Session Duration Management ---
 private val sessionDurationManager = DurationSessionController()
 
+
+// --- Delay Adjustment ---
+suspend fun adjustedDelay(countDownDelay: Long, tickBaseTimeState: MutableState<Long>) {
+    val t2 = System.currentTimeMillis()
+    val d = countDownDelay - (t2 - tickBaseTimeState.value)
+    //if (d < 0L) d = 0L
+    tickBaseTimeState.value += countDownDelay
+    delay(if (d >= 0L) d else 0L)
+}
 
 // Props for NoArrowsTimerScreen
 // - userPreferencesRepository: UserPreferencesRepository
@@ -212,6 +223,8 @@ fun NoArrowsTimerScreen(
             // --- Debug / Testing ---
             val countDownDelay = SECOND_DURATION_MS
 
+            // --- To accurately evaluate delays in countdowns ---
+            val tickBaseTimeState = remember { mutableLongStateOf(System.currentTimeMillis()) }
 
             // --- Dynamic Sizes & SPs ---
             val mainTimerStrokeWidthDp = deviceScaling(14).dp
@@ -364,6 +377,7 @@ fun NoArrowsTimerScreen(
              * Pauses countdown
              */
             fun pauseCountdowns() {
+                tickBaseTimeState.value = System.currentTimeMillis()
                 noArrowsViewModel.action(ESignal.SIG_STOP)
             }
 
@@ -371,6 +385,7 @@ fun NoArrowsTimerScreen(
              * Resumes countdown
              */
             fun resumeCountdowns() {
+                tickBaseTimeState.value = System.currentTimeMillis()
                 noArrowsViewModel.action(ESignal.SIG_START)
             }
 
@@ -569,6 +584,9 @@ fun NoArrowsTimerScreen(
                     )
                 }
 
+                // Base tick time for adjusted delays
+                tickBaseTimeState.value = System.currentTimeMillis()
+
                 while (isActive && (isTimerRunning || isRestMode || isTimerStopped || isPreparationMode)) {
                     // --- Normal Repetition Countdown ---
                     if (!isRestMode) {
@@ -593,7 +611,8 @@ fun NoArrowsTimerScreen(
                         }
 
                         if (isPreparationMode) {
-                            delay(countDownDelay)
+                            //delay(countDownDelay)
+                            adjustedDelay(countDownDelay, tickBaseTimeState)
                             currentPreparationSecondsLeft = currentPreparationSecondsLeft!! - 1
                             if (currentPreparationSecondsLeft == 0)
                                 startCountdowns()
@@ -607,7 +626,8 @@ fun NoArrowsTimerScreen(
                                 if (currentDurationSecondsLeft!! > 0) {
                                     // current repetition timer tick
                                     if (isTimerRunning)
-                                        delay(countDownDelay)
+                                        adjustedDelay(countDownDelay, tickBaseTimeState)
+                                        //delay(countDownDelay)
                                     if (!isTimerStopped)
                                         currentDurationSecondsLeft =
                                             currentDurationSecondsLeft!! - 1
@@ -683,7 +703,8 @@ fun NoArrowsTimerScreen(
                                 if (currentRestTimeLeft == endOfRestBeepTime) {
                                     soundPlayer.playRestBeep(noArrowsViewModel.viewModelScope)
                                 }
-                                delay(countDownDelay)
+                                //delay(countDownDelay)
+                                adjustedDelay(countDownDelay, tickBaseTimeState)
                                 currentRestTimeLeft = currentRestTimeLeft!! - 1
                             } else {
                                 // Rest time ended (currentRestTimeLeft is 0 or null)
