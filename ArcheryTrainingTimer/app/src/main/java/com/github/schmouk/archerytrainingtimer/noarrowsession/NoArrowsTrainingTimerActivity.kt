@@ -39,6 +39,7 @@ import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 
 import com.github.schmouk.archerytrainingtimer.ArcheryTrainingTimerApp
+import com.github.schmouk.archerytrainingtimer.commons.horizontalSwipeDetector
 import com.github.schmouk.archerytrainingtimer.commons.UserPreferencesRepository
 import com.github.schmouk.archerytrainingtimer.services.AudioService
 import com.github.schmouk.archerytrainingtimer.services.TaskRemovalService
@@ -59,20 +60,10 @@ class NoArrowsTrainingTimerActivity : ComponentActivity() {
                 velocityX: Float,
                 velocityY: Float
             ): Boolean {
-                if (e1 == null) return false
-
-                val horizontalDistance = kotlin.math.abs(e2.x - e1.x)
-                val verticalDistance = kotlin.math.abs(e2.y - e1.y)
-                val minSwipeDistance : Int = 120
-                val minVelocity : Float = 100f
-
-                if (horizontalDistance > minSwipeDistance &&
-                    verticalDistance < minSwipeDistance &&
-                    abs(velocityX) > minVelocity) {
+                if (horizontalSwipeDetector(e1, e2, velocityX)) {
                     finish()
                     return true
                 }
-
                 return false
             }
         })
