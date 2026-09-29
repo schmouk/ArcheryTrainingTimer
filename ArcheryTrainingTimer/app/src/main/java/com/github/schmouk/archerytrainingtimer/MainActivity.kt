@@ -96,6 +96,7 @@ class MainActivity : ComponentActivity() {
             userPreferencesRepository.saveSessionType(null)
         }
     }
+
 }
 
 

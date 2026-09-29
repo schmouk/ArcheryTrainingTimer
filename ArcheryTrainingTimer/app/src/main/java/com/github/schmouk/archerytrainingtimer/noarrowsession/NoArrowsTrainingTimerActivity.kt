@@ -44,7 +44,9 @@ import com.github.schmouk.archerytrainingtimer.services.AudioService
 import com.github.schmouk.archerytrainingtimer.services.TaskRemovalService
 import com.github.schmouk.archerytrainingtimer.ui.noarrowsession.NoArrowsTimerScreen
 import com.github.schmouk.archerytrainingtimer.ui.theme.*
+
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 
 
 class NoArrowsTrainingTimerActivity : ComponentActivity() {
@@ -62,8 +64,11 @@ class NoArrowsTrainingTimerActivity : ComponentActivity() {
                 val horizontalDistance = kotlin.math.abs(e2.x - e1.x)
                 val verticalDistance = kotlin.math.abs(e2.y - e1.y)
                 val minSwipeDistance : Int = 120
+                val minVelocity : Float = 100f
 
-                if (horizontalDistance > minSwipeDistance && verticalDistance < minSwipeDistance) {
+                if (horizontalDistance > minSwipeDistance &&
+                    verticalDistance < minSwipeDistance &&
+                    abs(velocityX) > minVelocity) {
                     finish()
                     return true
                 }

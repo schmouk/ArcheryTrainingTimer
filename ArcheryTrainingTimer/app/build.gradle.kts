@@ -25,20 +25,18 @@ SOFTWARE.
 */
 
 import java.util.Properties
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 // Plugins block is usually essential
 plugins {
     id("com.android.application")
     id("base")
     id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.plugin.compose") // OR alias(libs.plugins.kotlin.compose) if using version catalog
-    //id("com.android.application") version "8.13.0" apply false
-    //id("com.android.library") version "8.13.0" apply false
-    //id("org.jetbrains.kotlin.android") version "2.1.20" apply false
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
-// Set archivesBaseName
-//base.archivesBaseName = "ArcheryTrainingTimer"  // <-----<<< Notice: deprecated!
+// Keep the archive name aligned with the project name without relying on the
+// deprecated archivesBaseName/BasePluginConvention API removed in Gradle 9.
 base.archivesName = "ArcheryTrainingTimer"
 
 // Load properties from keystore.properties
@@ -120,48 +118,17 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
-    kotlinOptions {
-        jvmTarget = "1.8"
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_1_8)
+        }
     }
     buildFeatures {
         compose = true
     }
-    composeOptions {
-        // Ensure we have a valid Compose Compiler version.
-        // If using BOM, this is often managed by it.
-        // If not using BOM or using a version catalog, it might look like:
-        kotlinCompilerExtensionVersion = "1.5.15" // REPLACE with the actual/compatible version or libs.versions.compose.compiler.get()
-    }
     packaging { // Added from your original, good for excluding duplicate metadata
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-    }
-}
-
-
-// --- Configure APK Naming with Version ---
-// This uses the modern AndroidComponentsExtension API
-// Ensure our AGP version supports this (AGP 7.0+ is typical)
-androidComponents {
-    onVariants { variant -> // 'variant' here is an instance of com.android.build.api.variant.Variant
-        variant.outputs.forEach { output ->
-            val baseName = project.property("archivesBaseName").toString()
-            val version = android.defaultConfig.versionName ?: "" // Using the Elvis operator for null safety
-            val variantName = variant.name // i.e., "debug", "release"
-
-            // Ensure outputFileName is settable on the specific output type
-            // The type of 'output' can vary. For APKs, it's often related to ApkVariantOutput.
-            // Let's try to find a common settable property.
-            // In many AGP versions, variant.outputs are of type com.android.build.api.variant.VariantOutput
-            // which has a property for outputFileName (or similar) on its concrete implementations.
-            // This is a common pattern for AGP 7+
-            (output as? com.android.build.api.variant.impl.VariantOutputImpl)?.outputFileName?.set(
-                if (version == "") "$baseName-$variantName.apk" else "$baseName-v$version-$variantName.apk"
-            )
-            // If the above cast fails or outputFileName is not settable,
-            // it means the specific AGP version has a slightly different API structure.
-            // The exact type of 'output' and how to set its name can be version-dependent.
         }
     }
 }
