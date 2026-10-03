@@ -149,24 +149,11 @@ fun NoArrowsTimerScreen(
     val isPreparationMode by noArrowsViewModel.isPreparationMode
 
     // The screen content
-    Scaffold /*(
-        // topBar is no more useful since we call
-        // WindowCompat.setDecorFitsSystemWindows(window, true)
-        // in the related/embedding Activity --> we don't draw behind system bars
-        topBar = {
-            Spacer(
-                Modifier
-                    .fillMaxWidth()
-                    .windowInsetsTopHeight(WindowInsets.statusBars)
-            )
-        }
-        // We don't use Scaffold's bottomBar for this either
-        // as we will pad the content area directly.
-    )*/ { innerPaddingFromScaffold -> // This innerPadding from Scaffold handles the TOP spacer
+    Scaffold {
+        innerPaddingFromScaffold -> // Notice: This innerPadding from Scaffold handles the TOP spacer
         BoxWithConstraints(
             modifier = Modifier
                 .padding(innerPaddingFromScaffold)
-                //.padding(WindowInsets.navigationBars.asPaddingValues())  // <-----
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
         ) {
@@ -196,16 +183,15 @@ fun NoArrowsTimerScreen(
             }
 
             val heightScalingFactor =
-                this.maxHeight.value / availableHeightForContentDp.value  //currentScreenHeightDp.value
+                this.maxHeight.value / availableHeightForContentDp.value
             val widthScalingFactor =
-                this.maxWidth.value / availableWidthForContentDp.value  //currentScreenWidthDp.value
+                this.maxWidth.value / availableWidthForContentDp.value
 
 
             // --- Text styles ---
             val selectionTextFontSize = deviceScaling(18)  // Notice; to be used with .sp for specifying font size
             val customInteractiveTextStyle = TextStyle(fontSize = selectionTextFontSize.sp)
             val smallerTextStyle = TextStyle(fontSize = deviceScaling(16).sp)
-            //val clockFontSize = deviceScaling(18)
 
 
             // --- Repetitions selector state ---
@@ -369,8 +355,6 @@ fun NoArrowsTimerScreen(
             fun startCountdowns() {
                 noArrowsViewModel.action(ESignal.SIG_START)
                 currentDurationSecondsLeft = initialDurationSeconds
-                // currentRepetitionsLeft = numberOfRepetitions
-                // currentSeriesLeft = numberOfSeries
             }
 
             /**
@@ -557,7 +541,7 @@ fun NoArrowsTimerScreen(
 
 
             /**
-             * Manages the session duration man ager in a coroutine
+             * Manages the session duration manager in a coroutine
              */
             LaunchedEffect(isPreparationMode) {
                 if (isPreparationMode) {
