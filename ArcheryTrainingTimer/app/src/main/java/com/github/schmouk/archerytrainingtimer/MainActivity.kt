@@ -136,6 +136,29 @@ fun MainAppScreen(viewModel: SessionChoiceViewModel) {
             }
         }
     }
+
+    // --- The Sessions Row Composable ---
+    @Composable
+    fun TypedSessionRow(
+        scale: Float,
+        sessionImageRes: Int,
+        uniformSessionType: Int,
+        pyramidalSessionType: Int,
+        modifier: Modifier
+    ) {
+        SessionRow(
+            mainImageRes = sessionImageRes,
+            onOption1Click = { viewModel.selectSessionType(uniformSessionType) },
+            onOption2Click = { viewModel.selectSessionType(pyramidalSessionType) },
+            selected = selectedSession,
+            option1Type = uniformSessionType,
+            option2Type = pyramidalSessionType,
+            scale = scale,
+            modifier = modifier
+        )
+
+    }
+
     // --- A Main Column for the entire screen content (portrait layout) ---
     @Composable
     fun OneColumn(scale: Float = 1f) {
@@ -146,28 +169,20 @@ fun MainAppScreen(viewModel: SessionChoiceViewModel) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            SessionRow(
-                mainImageRes = R.drawable.no_arrows_session_400,
-                onOption1Click = { viewModel.selectSessionType(SessionType.NO_ARROWS_UNIFORM) },
-                onOption2Click = { viewModel.selectSessionType(SessionType.NO_ARROWS_PYRAMIDAL) },
-                selected = selectedSession,
-                option1Type = SessionType.NO_ARROWS_UNIFORM,
-                option2Type = SessionType.NO_ARROWS_PYRAMIDAL,
-                scale = scale,
-                modifier = Modifier.weight(1f)
+            TypedSessionRow(scale,
+                R.drawable.no_arrows_session_400,
+                SessionType.NO_ARROWS_UNIFORM,
+                SessionType.NO_ARROWS_PYRAMIDAL,
+                Modifier.weight(1f)
             )
 
             Spacer(modifier = Modifier.height(minOf(24.dp, (12f * scale).dp)))
 
-            SessionRow(
-                mainImageRes = R.drawable.arrows_session_400,
-                onOption1Click = { viewModel.selectSessionType(SessionType.ARROWS_UNIFORM) },
-                onOption2Click = { viewModel.selectSessionType(SessionType.ARROWS_PYRAMIDAL) },
-                selected = selectedSession,
-                option1Type = SessionType.ARROWS_UNIFORM,
-                option2Type = SessionType.ARROWS_PYRAMIDAL,
-                scale = scale,
-                modifier = Modifier.weight(1f)
+            TypedSessionRow(scale,
+                R.drawable.arrows_session_400,
+                SessionType.ARROWS_UNIFORM,
+                SessionType.ARROWS_PYRAMIDAL,
+                Modifier.weight(1f)
             )
         }
     }
@@ -192,15 +207,11 @@ fun MainAppScreen(viewModel: SessionChoiceViewModel) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                SessionRow(
-                    mainImageRes = R.drawable.no_arrows_session_400,
-                    onOption1Click = { viewModel.selectSessionType(SessionType.NO_ARROWS_UNIFORM) },
-                    onOption2Click = { viewModel.selectSessionType(SessionType.NO_ARROWS_PYRAMIDAL) },
-                    selected = selectedSession,
-                    option1Type = SessionType.NO_ARROWS_UNIFORM,
-                    option2Type = SessionType.NO_ARROWS_PYRAMIDAL,
-                    scale = scale,
-                    modifier = Modifier.fillMaxWidth()
+                TypedSessionRow(scale,
+                    R.drawable.no_arrows_session_400,
+                    SessionType.NO_ARROWS_UNIFORM,
+                    SessionType.NO_ARROWS_PYRAMIDAL,
+                    Modifier.fillMaxWidth()
                 )
             }
 
@@ -211,15 +222,11 @@ fun MainAppScreen(viewModel: SessionChoiceViewModel) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                SessionRow(
-                    mainImageRes = R.drawable.arrows_session_400,
-                    onOption1Click = { viewModel.selectSessionType(SessionType.ARROWS_UNIFORM) },
-                    onOption2Click = { viewModel.selectSessionType(SessionType.ARROWS_PYRAMIDAL) },
-                    selected = selectedSession,
-                    option1Type = SessionType.ARROWS_UNIFORM,
-                    option2Type = SessionType.ARROWS_PYRAMIDAL,
-                    scale = scale,
-                    modifier = Modifier.fillMaxWidth()
+                TypedSessionRow(scale,
+                    R.drawable.arrows_session_400,
+                    SessionType.ARROWS_UNIFORM,
+                    SessionType.ARROWS_PYRAMIDAL,
+                    Modifier.fillMaxWidth()
                 )
             }
         }
@@ -235,7 +242,13 @@ fun MainAppScreen(viewModel: SessionChoiceViewModel) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            SessionRow(
+            TypedSessionRow(scale,
+                R.drawable.no_arrows_session_400,
+                SessionType.NO_ARROWS_UNIFORM,
+                SessionType.NO_ARROWS_PYRAMIDAL,
+                Modifier.fillMaxWidth().weight(1f)
+            )
+            /*SessionRow(
                 mainImageRes = R.drawable.no_arrows_session_400,
                 onOption1Click = { viewModel.selectSessionType(SessionType.NO_ARROWS_UNIFORM) },
                 onOption2Click = { viewModel.selectSessionType(SessionType.NO_ARROWS_PYRAMIDAL) },
@@ -244,11 +257,17 @@ fun MainAppScreen(viewModel: SessionChoiceViewModel) {
                 option2Type = SessionType.NO_ARROWS_PYRAMIDAL,
                 scale = scale,
                 modifier = Modifier.fillMaxWidth().weight(1f)
-            )
+            )*/
 
             Spacer(modifier = Modifier.height((18f * scale).dp))
 
-            SessionRow(
+            TypedSessionRow(scale,
+                R.drawable.arrows_session_400,
+                SessionType.ARROWS_UNIFORM,
+                SessionType.ARROWS_PYRAMIDAL,
+                Modifier.fillMaxWidth().weight(1f)
+            )
+            /*SessionRow(
                 mainImageRes = R.drawable.arrows_session_400,
                 onOption1Click = { viewModel.selectSessionType(SessionType.ARROWS_UNIFORM) },
                 onOption2Click = { viewModel.selectSessionType(SessionType.ARROWS_PYRAMIDAL) },
@@ -257,7 +276,7 @@ fun MainAppScreen(viewModel: SessionChoiceViewModel) {
                 option2Type = SessionType.ARROWS_PYRAMIDAL,
                 scale = scale,
                 modifier = Modifier.fillMaxWidth().weight(1f)
-            )
+            )*/
         }
     }
 
@@ -307,48 +326,6 @@ fun MainAppScreen(viewModel: SessionChoiceViewModel) {
             }
         }
     }
-
-
-    /* // Only one choice actually available
-    context.startActivity(
-        Intent(context, NoArrowsTrainingTimerActivity::class.java)
-    )
-    */
-
-    /* as soon as many choices will be available:
-    Scaffold(
-    // We can have a top bar for MainActivity if needed
-    // topBar = { TopAppBar(title = { Text("Archery Training Timer") }) }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(16.dp), // General padding for the content
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "Welcome to Archery Training Timer",
-                style = MaterialTheme.typography.headlineSmall
-            )
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Button(onClick = {
-                context.startActivity(Intent(context, NoArrowsTrainingTimerActivity::class.java))
-            }) {
-                Text("Start No-Arrows Timer")
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Add buttons for other activities here when you create them
-            // Button(onClick = { /* Launch AnotherActivity */ }) {
-            // Text("Other Feature")
-            // }
-        }
-    }
-    */
 }
 
 
@@ -445,14 +422,3 @@ fun ChoiceButton(
         )
     }
 }
-
-
-/*
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreviewMainActivity() {  // Notice: currently unused
-    ArcheryTrainingTimerTheme {
-        MainAppScreen()
-    }
-}
-*/
