@@ -80,9 +80,11 @@ import com.github.schmouk.archerytrainingtimer.commons.EState
 import com.github.schmouk.archerytrainingtimer.commons.SoundPlayer
 import com.github.schmouk.archerytrainingtimer.commons.TimerInternalRunningState
 import com.github.schmouk.archerytrainingtimer.commons.UserPreferencesRepository
+import com.github.schmouk.archerytrainingtimer.noarrowsession.NoArrowSessionController
+import com.github.schmouk.archerytrainingtimer.noarrowsession.NoArrowSessionReducer
+import com.github.schmouk.archerytrainingtimer.noarrowsession.NoArrowSessionState
 import com.github.schmouk.archerytrainingtimer.noarrowsession.NoArrowsTimerViewModel
 import com.github.schmouk.archerytrainingtimer.services.AudioService
-//import com.github.schmouk.archerytrainingtimer.ui.commons.ClockDisplay
 import com.github.schmouk.archerytrainingtimer.ui.commons.IntermediateBeepsCheckedRow
 import com.github.schmouk.archerytrainingtimer.ui.commons.LogoImage
 import com.github.schmouk.archerytrainingtimer.ui.commons.PleaseSelectText
@@ -108,10 +110,8 @@ import com.github.schmouk.archerytrainingtimer.ui.utils.detectDeviceFoldedPostur
 import com.github.schmouk.archerytrainingtimer.ui.utils.EFoldedPosture
 
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.math.roundToInt
 
 
 // --- Session Duration Management ---
@@ -122,7 +122,6 @@ private val sessionDurationManager = DurationSessionController()
 suspend fun adjustedDelay(countDownDelay: Long, tickBaseTimeState: MutableState<Long>) {
     val t2 = System.currentTimeMillis()
     val d = countDownDelay - (t2 - tickBaseTimeState.value)
-    //if (d < 0L) d = 0L
     tickBaseTimeState.value += countDownDelay
     delay(if (d >= 0L) d else 0L)
 }
@@ -209,6 +208,15 @@ fun NoArrowsTimerScreen(
             // --- Debug / Testing ---
             val countDownDelay = SECOND_DURATION_MS
 
+            val sessionController = remember {
+                NoArrowSessionController(
+                    noArrowsViewModel = noArrowsViewModel,
+                    soundPlayer = soundPlayer,
+                    scope = noArrowsViewModel.viewModelScope,
+                    sessionDurationManager = sessionDurationManager
+                )
+            }
+
             // --- To accurately evaluate delays in countdowns ---
             val tickBaseTimeState = remember { mutableLongStateOf(System.currentTimeMillis()) }
 
@@ -273,436 +281,305 @@ fun NoArrowsTimerScreen(
              * Actions associated to the completion of a session
              */
             fun sessionHasCompleted() {
-                noArrowsViewModel.action(ESignal.SIG_COMPLETED)
-                soundPlayer.playEndBeep(noArrowsViewModel.viewModelScope)
+                sessionController.sessionHasCompleted()
                 currentDurationSecondsLeft = 0
                 currentRepetitionsLeft = 0
                 currentSeriesLeft = 0
-                sessionDurationManager.endSession()
             }
 
             /**
              * Evaluates the resting time ratio
              */
             fun evaluateRestingRatio(
-                repetitionsDuration: Int,
-                repetitionsNumberPerSeries: Int?
-            ) : Float {
-                val ratio: Float = if (repetitionsNumberPerSeries == null) {
-                    0.5f
-                }
-                else if (repetitionsDuration <= 20){
-                    1.1f - repetitionsDuration / 25f
-                }
-                else {
-                    (0.3f - (repetitionsDuration - 20) / 50f).coerceAtLeast(0.0f)
-                }
-
-                return (100f * ratio).roundToInt().toFloat() / 100f
-            }
+               repetitionsDuration: Int,
+               repetitionsNumberPerSeries: Int?
+            ): Float = NoArrowSessionReducer.evaluateRestingRatio(
+               repetitionsDuration,
+               repetitionsNumberPerSeries
+            )
 
             /**
              * Evaluates the resting time
              */
-            fun evaluateRestTime(): Int {
-                val ratio = evaluateRestingRatio(
-                    lastDurationSeconds,
-                    numberOfRepetitions
-                )
-                return ((numberOfRepetitions ?: 0) * lastDurationSeconds * ratio)  //restingRatio)
-                    .roundToInt()
-                    //.coerceAtLeast(endOfRestBeepTime + 2) // Ensure rest gets a minimum value for the beep logic
-            }
+            fun evaluateRestTime(): Int = NoArrowSessionReducer.evaluateRestTime(
+               lastDurationSeconds,
+               numberOfRepetitions
+            )
 
 
             /**
              * Starts the preparation mode before starting countdowns
              */
             fun startPreparationMode() {
+                val updatedState = NoArrowSessionReducer.startPreparationMode(
+                    NoArrowSessionState(
+                        currentPreparationSecondsLeft = currentPreparationSecondsLeft,
+                        isPreparationMode = isPreparationMode,
+                        isRestMode = isRestMode,
+                        isTimerRunning = isTimerRunning,
+                        isTimerStopped = isTimerStopped,
+                    ),
+                    preparationTime
+                )
+                currentPreparationSecondsLeft = updatedState.currentPreparationSecondsLeft
                 noArrowsViewModel.action(ESignal.SIG_PREPARE)
-                currentPreparationSecondsLeft = preparationTime
             }
 
             /**
              * Starts or Restarts a new session
              */
             fun startNewSession() {
-                // Trying to Start (or Restart after session completion)
-                if (allSelectionsMade()) {
-                    // If currentRepetitionsLeft is 0, it means a cycle just finished (dimmed state).
-                    // Reset both countdowns for a new cycle.
-                    if (currentSeriesLeft == null || currentSeriesLeft == 0) {
-                        currentSeriesLeft = numberOfSeries
-                        currentRepetitionsLeft = numberOfRepetitions
-                        currentDurationSecondsLeft = initialDurationSeconds
-                        currentPreparationSecondsLeft = preparationTime
-                    } else {
-                        // Handle cases where selections might have been cleared or timer never run
-                        if (currentDurationSecondsLeft == null || currentDurationSecondsLeft == 0) {
-                            currentDurationSecondsLeft = initialDurationSeconds
-                        }
-                        if (currentRepetitionsLeft == null) { // This should ideally not happen if allSelectionsMade is true
-                            currentRepetitionsLeft = numberOfRepetitions
-                        }
-                    }
-                    startPreparationMode()
-                }
+               if (allSelectionsMade()) {
+                   if (currentSeriesLeft == null || currentSeriesLeft == 0) {
+                       currentSeriesLeft = numberOfSeries
+                       currentRepetitionsLeft = numberOfRepetitions
+                       currentDurationSecondsLeft = initialDurationSeconds
+                       currentPreparationSecondsLeft = preparationTime
+                   } else {
+                       if (currentDurationSecondsLeft == null || currentDurationSecondsLeft == 0) {
+                           currentDurationSecondsLeft = initialDurationSeconds
+                       }
+                       if (currentRepetitionsLeft == null) {
+                           currentRepetitionsLeft = numberOfRepetitions
+                       }
+                   }
+                   startPreparationMode()
+               }
             }
 
             /**
              * Starts countdown
              */
             fun startCountdowns() {
-                noArrowsViewModel.action(ESignal.SIG_START)
-                currentDurationSecondsLeft = initialDurationSeconds
+               val nextState = NoArrowSessionReducer.startCountdowns(
+                   NoArrowSessionState(
+                       initialDurationSeconds = initialDurationSeconds,
+                       currentDurationSecondsLeft = currentDurationSecondsLeft,
+                       isPreparationMode = isPreparationMode,
+                       isTimerRunning = isTimerRunning,
+                       isTimerStopped = isTimerStopped,
+                   )
+               )
+               currentDurationSecondsLeft = nextState.currentDurationSecondsLeft
+               noArrowsViewModel.action(ESignal.SIG_START)
             }
 
             /**
              * Pauses countdown
              */
-            fun pauseCountdowns() {
-                tickBaseTimeState.value = System.currentTimeMillis()
-                noArrowsViewModel.action(ESignal.SIG_STOP)
-            }
+            fun pauseCountdowns() = sessionController.pauseCountdowns(tickBaseTimeState)
 
             /**
              * Resumes countdown
              */
-            fun resumeCountdowns() {
-                tickBaseTimeState.value = System.currentTimeMillis()
-                noArrowsViewModel.action(ESignal.SIG_START)
-            }
+            fun resumeCountdowns() = sessionController.resumeCountdowns(tickBaseTimeState)
 
             /**
              * Sets resting mode
              */
-            fun setRestMode() {
-                noArrowsViewModel.action(ESignal.SIG_REST_ON)
-            }
+            fun setRestMode() = sessionController.setRestMode()
 
             /**
              * Quits resting mode
              */
-            fun setEndOfRestMode() {
-                noArrowsViewModel.action(ESignal.SIG_REST_OFF)
-            }
+            fun setEndOfRestMode() = sessionController.setEndOfRestMode()
 
             /**
              * Sets future resting mode
              */
-            fun setFutureRestMode() {
-                noArrowsViewModel.action(ESignal.SIG_WILL_REST)
-            }
+            fun setFutureRestMode() = sessionController.setFutureRestMode()
 
             /**
              * Evaluates the new or next resting mode
              */
             fun evaluateRestingMode() {
-                currentDurationSecondsLeft = 0
-                currentRestTimeLeft = evaluateRestTime()
+               currentDurationSecondsLeft = 0
+               currentRestTimeLeft = NoArrowSessionReducer.evaluateRestTime(
+                   lastDurationSeconds,
+                   numberOfRepetitions
+               )
 
-                if (currentSeriesLeft!! <= 1) {
-                    // To not have rest time launched if this was the last series
-                    currentSeriesLeft = 0
-                } else if (isTimerStopped) {
-                    setFutureRestMode()
-                } else {
-                    setRestMode()
-                }
+               if (currentSeriesLeft!! <= 1) {
+                   currentSeriesLeft = 0
+               } else if (isTimerStopped) {
+                   setFutureRestMode()
+               } else {
+                   setRestMode()
+               }
             }
 
             /**
              * Loads user preferences on first composition
              */
             LaunchedEffect(key1 = Unit) {
-                userPreferencesRepository.userPreferencesFlow.collect { loadedPrefs ->
-                    selectedDurationString = loadedPrefs.selectedDuration
-                    numberOfRepetitions = loadedPrefs.numberOfRepetitions
-                    numberOfSeries = loadedPrefs.numberOfSeries
-                    intermediateBeepsChecked = loadedPrefs.intermediateBeeps
+               userPreferencesRepository.userPreferencesFlow.collect { loadedPrefs ->
+                   selectedDurationString = loadedPrefs.selectedDuration
+                   numberOfRepetitions = loadedPrefs.numberOfRepetitions
+                   numberOfSeries = loadedPrefs.numberOfSeries
+                   intermediateBeepsChecked = loadedPrefs.intermediateBeeps
 
-                    if (!isTimerRunning && !isRestMode) {
-                        val durationValue =
-                            loadedPrefs.selectedDuration?.split(" ")?.firstOrNull()
-                                ?.toIntOrNull()
-                        initialDurationSeconds = durationValue
-                        if (currentRepetitionsLeft != 0 && !isTimerStopped) { // Only reset if not in a "completed or dimmed" state
-                            currentDurationSecondsLeft = durationValue
-                        }
-                        if (!isTimerStopped) {
-                            currentRepetitionsLeft = numberOfRepetitions
-                            currentSeriesLeft = numberOfSeries
-                        }
+                   if (!isTimerRunning && !isRestMode) {
+                       val durationValue =
+                           loadedPrefs.selectedDuration?.split(" ")?.firstOrNull()
+                               ?.toIntOrNull()
+                       initialDurationSeconds = durationValue
+                       if (currentRepetitionsLeft != 0 && !isTimerStopped) { // Only reset if not in a "completed or dimmed" state
+                           currentDurationSecondsLeft = durationValue
+                       }
+                       if (!isTimerStopped) {
+                           currentRepetitionsLeft = numberOfRepetitions
+                           currentSeriesLeft = numberOfSeries
+                       }
 
-                        lastDurationSeconds = durationValue ?: 0
-                        lastNumberOfRepetitions = numberOfRepetitions ?: 0
-                        lastNumberOfSeries = numberOfSeries ?: 0
-                    }
-                }
+                       lastDurationSeconds = durationValue ?: 0
+                       lastNumberOfRepetitions = numberOfRepetitions ?: 0
+                       lastNumberOfSeries = numberOfSeries ?: 0
+                   }
+               }
 
-                if (formerAutomatonState != null) {
-                    // restores the former internal running state
-                    noArrowsViewModel.setStateAutomaton(formerAutomatonState)
-                    currentDurationSecondsLeft = formerInternalRunningValues.currentDurationSecondsLeft
-                    currentRepetitionsLeft = formerInternalRunningValues.currentRepetitionsLeft
-                    currentSeriesLeft = formerInternalRunningValues.currentSeriesLeft
-                    currentRestTimeLeft = formerInternalRunningValues.currentRestTimeLeft
-                }
+               if (formerAutomatonState != null) {
+                   noArrowsViewModel.setStateAutomaton(formerAutomatonState)
+                   currentDurationSecondsLeft = formerInternalRunningValues.currentDurationSecondsLeft
+                   currentRepetitionsLeft = formerInternalRunningValues.currentRepetitionsLeft
+                   currentSeriesLeft = formerInternalRunningValues.currentSeriesLeft
+                   currentRestTimeLeft = formerInternalRunningValues.currentRestTimeLeft
+               }
 
-                //TODO: not satisfactory implementation, to be refactored
-                userPreferencesRepository.saveSessionType(null)  /***********/
+               userPreferencesRepository.saveSessionType(null)
             }
 
             /**
              * Updates initial/current countdown values when selections change
              */
             LaunchedEffect(
-                selectedDurationString,
-                numberOfRepetitions,
-                numberOfSeries,
-                intermediateBeepsChecked
+               selectedDurationString,
+               numberOfRepetitions,
+               numberOfSeries,
+               intermediateBeepsChecked
             ) {
-                if (selectedDurationString != null) {
-                    val durationValue =
-                        selectedDurationString?.split(" ")?.firstOrNull()?.toIntOrNull()
-                    if (durationValue != null && durationValue != lastDurationSeconds) {
-                        initialDurationSeconds = durationValue
-                        currentDurationSecondsLeft = if (isRestMode) {
-                            initialDurationSeconds
-                        } else {
-                            min(
-                                max(
-                                    1,
-                                    (currentDurationSecondsLeft
-                                        ?: 0) + durationValue - lastDurationSeconds
-                                ),
-                                durationValue
-                            )
-                        }
-                        lastDurationSeconds = durationValue
+               if (selectedDurationString != null) {
+                   val durationValue =
+                       selectedDurationString?.split(" ")?.firstOrNull()?.toIntOrNull()
+                   if (durationValue != null && durationValue != lastDurationSeconds) {
+                       initialDurationSeconds = durationValue
+                       currentDurationSecondsLeft = if (isRestMode) {
+                           initialDurationSeconds
+                       } else {
+                           min(
+                               max(
+                                   1,
+                                   (currentDurationSecondsLeft ?: 0) + durationValue - lastDurationSeconds
+                               ),
+                               durationValue
+                           )
+                       }
+                       lastDurationSeconds = durationValue
 
-                        if (currentDurationSecondsLeft!! <= 1 && currentRepetitionsLeft!! <= 1) {
-                            evaluateRestingMode()
-                        }
+                       if (currentDurationSecondsLeft!! <= 1 && currentRepetitionsLeft!! <= 1) {
+                           evaluateRestingMode()
+                       }
 
-                        userPreferencesRepository.saveDurationPreference(selectedDurationString)
-                    }
-                }
+                       userPreferencesRepository.saveDurationPreference(selectedDurationString)
+                   }
+               }
 
-                if (numberOfRepetitions != null && numberOfRepetitions != lastNumberOfRepetitions) {
-                    if (!isRestMode) {
-                        currentRepetitionsLeft = min(
-                            max(
-                                0,
-                                (currentRepetitionsLeft
-                                    ?: 0) + numberOfRepetitions!! - lastNumberOfRepetitions
-                            ),
-                            numberOfRepetitions!!
-                        )
-                        if (currentRepetitionsLeft == 0) {
-                            evaluateRestingMode()
-                        }
-                    } else {
-                        currentDurationSecondsLeft = 0
-                    }
-                    lastNumberOfRepetitions = numberOfRepetitions!!
-                    userPreferencesRepository.saveRepetitionsPreference(numberOfRepetitions)
-                }
+               if (numberOfRepetitions != null && numberOfRepetitions != lastNumberOfRepetitions) {
+                   if (!isRestMode) {
+                       currentRepetitionsLeft = min(
+                           max(
+                               0,
+                               (currentRepetitionsLeft ?: 0) + numberOfRepetitions!! - lastNumberOfRepetitions
+                           ),
+                           numberOfRepetitions!!
+                       )
+                       if (currentRepetitionsLeft == 0) {
+                           evaluateRestingMode()
+                       }
+                   } else {
+                       currentDurationSecondsLeft = 0
+                   }
+                   lastNumberOfRepetitions = numberOfRepetitions!!
+                   userPreferencesRepository.saveRepetitionsPreference(numberOfRepetitions)
+               }
 
-                if (numberOfSeries != null && numberOfSeries != lastNumberOfSeries) {
-                    currentSeriesLeft =
-                        max(0, (currentSeriesLeft ?: 0) + numberOfSeries!! - lastNumberOfSeries)
-                    lastNumberOfSeries = numberOfSeries!!
-                    userPreferencesRepository.saveSeriesPreference(numberOfSeries)
-                    //if (currentSeriesLeft == 0 || (sessionAutomaton.isRestMode() && currentSeriesLeft == 1)) {
-                    if (currentSeriesLeft == 0 || (isRestMode && currentSeriesLeft!! <= 1)) {
-                        currentRestTimeLeft =
-                            0  // To not get rest time if this was the last series
-                        currentDurationSecondsLeft = 0
-                        currentRepetitionsLeft = 0
-                        currentSeriesLeft = 0
-                        if (isRestMode) {
-                            sessionHasCompleted()
-                            //noArrowsViewModel.action(ESignal.SIG_COMPLETED)
-                            //playEndBeepEvent = true
-                        } else if (isTimerStopped) {
-                            resumeCountdowns()
-                        }
-                    }
-                }
+               if (numberOfSeries != null && numberOfSeries != lastNumberOfSeries) {
+                   currentSeriesLeft =
+                       max(0, (currentSeriesLeft ?: 0) + numberOfSeries!! - lastNumberOfSeries)
+                   lastNumberOfSeries = numberOfSeries!!
+                   userPreferencesRepository.saveSeriesPreference(numberOfSeries)
+                   if (currentSeriesLeft == 0 || (isRestMode && currentSeriesLeft!! <= 1)) {
+                       currentRestTimeLeft = 0
+                       currentDurationSecondsLeft = 0
+                       currentRepetitionsLeft = 0
+                       currentSeriesLeft = 0
+                       if (isRestMode) {
+                           sessionHasCompleted()
+                       } else if (isTimerStopped) {
+                           resumeCountdowns()
+                       }
+                   }
+               }
 
-                if (intermediateBeepsChecked != null && intermediateBeepsChecked != lastIntermediateBeepsChecked) {
-                    userPreferencesRepository.saveIntermediateBeepsPreference(
-                        intermediateBeepsChecked ?: false
-                    )
-                    lastIntermediateBeepsChecked = intermediateBeepsChecked!!
-                }
+               if (intermediateBeepsChecked != null && intermediateBeepsChecked != lastIntermediateBeepsChecked) {
+                   userPreferencesRepository.saveIntermediateBeepsPreference(
+                       intermediateBeepsChecked ?: false
+                   )
+                   lastIntermediateBeepsChecked = intermediateBeepsChecked!!
+               }
             }
-
 
             /**
              * Manages the session duration manager in a coroutine
              */
             LaunchedEffect(isPreparationMode) {
-                if (isPreparationMode) {
-                    sessionDurationManager.beginSession()
-                }
+               if (isPreparationMode) {
+                   sessionDurationManager.beginSession()
+               }
             }
-
 
             /**
              * Manages the timer countdown in a coroutine
-             *
-             * This is the core of the timer logic, managing countdowns, repetitions, series,
-             * rest periods, and state transitions.
-             * It reacts to changes in isTimerRunning and isRestMode states.
              */
             LaunchedEffect(isTimerRunning, isRestMode, isPreparationMode) {
-                if (isTimerRunning || isRestMode || isPreparationMode) {
-                    (this as? ComponentActivity)?.window?.addFlags(
-                        WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
-                    )
-                } else {
-                    (this as? ComponentActivity)?.window?.clearFlags(
-                        WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
-                    )
-                }
-
-                // Base tick time for adjusted delays
-                tickBaseTimeState.value = System.currentTimeMillis()
-
-                while (isActive && (isTimerRunning || isRestMode || isTimerStopped || isPreparationMode)) {
-                    // --- Normal Repetition Countdown ---
-                    if (!isRestMode) {
-                        // Ensure values are sane before starting countdown loop
-                        // If starting from a dimmed state (reps=0, duration=0), reset them.
-                        if (currentRepetitionsLeft == 0) { // Indicates a previous cycle was completed
-                            currentRepetitionsLeft = numberOfRepetitions  // Reset for new cycle
-                            if (currentDurationSecondsLeft == 0)
-                                currentDurationSecondsLeft =
-                                    initialDurationSeconds  // Reset for new cycle
-                            currentSeriesLeft = currentSeriesLeft!! - 1
-                        } else { // Normal start or resume
-                            if (currentDurationSecondsLeft == null || currentDurationSecondsLeft == 0) {
-                                currentDurationSecondsLeft = initialDurationSeconds
-                            }
-                            if (currentRepetitionsLeft == null) {
-                                currentRepetitionsLeft = numberOfRepetitions
-                            }
-                            if (currentSeriesLeft == null) {
-                                currentSeriesLeft = numberOfSeries  //numberOfSeries
-                            }
-                        }
-
-                        if (isPreparationMode) {
-                            //delay(countDownDelay)
-                            adjustedDelay(countDownDelay, tickBaseTimeState)
-                            currentPreparationSecondsLeft = currentPreparationSecondsLeft!! - 1
-                            if (currentPreparationSecondsLeft == 0)
-                                startCountdowns()
-                        }
-                        else {
-                            while (isActive && currentSeriesLeft!! > 0) {
-                                if (currentDurationSecondsLeft!! == initialDurationSeconds!!) {
-                                    soundPlayer.playBeep(noArrowsViewModel.viewModelScope)
-                                }
-
-                                if (currentDurationSecondsLeft!! > 0) {
-                                    // current repetition timer tick
-                                    if (isTimerRunning)
-                                        adjustedDelay(countDownDelay, tickBaseTimeState)
-                                        //delay(countDownDelay)
-                                    if (!isTimerStopped)
-                                        currentDurationSecondsLeft =
-                                            currentDurationSecondsLeft!! - 1
-                                    // intermediate beep logic
-                                    if (intermediateBeepsChecked != null &&
-                                        intermediateBeepsChecked == true &&
-                                        currentDurationSecondsLeft != null &&
-                                        currentDurationSecondsLeft!! > 0 &&
-                                        (initialDurationSeconds!! - currentDurationSecondsLeft!!) % intermediateBeepsDuration == 0
-                                    ) {
-                                        //playIntermediateBeep = true
-                                        soundPlayer.playIntermediateBeep(noArrowsViewModel.viewModelScope)
-                                    }
-                                } else if (currentDurationSecondsLeft!! == 0) {
-                                    // end of current repetition duration
-                                    if (currentRepetitionsLeft != null && currentRepetitionsLeft!! > 0) {
-                                        // go to next repetition in current series
-                                        currentRepetitionsLeft = currentRepetitionsLeft!! - 1
-
-                                        if (currentRepetitionsLeft == 0) {
-                                            // this was the last repetition in current series
-                                            if (currentSeriesLeft != null && currentSeriesLeft!! > 0) {
-                                                // then, count down series number
-                                                if (currentSeriesLeft == 1) {
-                                                    // If no more series left, stop the timer and show dimmed state
-                                                    sessionHasCompleted()
-                                                    break
-                                                } else {
-                                                    // enters the rest mode
-                                                    setRestMode()
-                                                    currentRestTimeLeft = evaluateRestTime()
-                                                }
-                                            } else {
-                                                // --> this is the end of the training session
-                                                // If no more series left, stop the timer and show dimmed state
-                                                sessionHasCompleted()
-                                                break
-                                            }
-                                        } else {
-                                            // let's start a new repetition into current series
-                                            currentDurationSecondsLeft = initialDurationSeconds
-                                        }
-                                    } else {
-                                        // end of current series
-                                        // Notice: if end of session also, will be checked in the outer loop
-                                        setRestMode()
-                                        break
-                                    }
-                                }
-
-                                if (isTimerStopped) {
-                                    break
-                                }
-                            }
-                        }
-                    }
-
-                    // Have to check this since it may have been set in the block above
-                    if (currentSeriesLeft!! <= 0) {
-                        // If no more series left, stop the timer and show dimmed state
-                        sessionHasCompleted()
-                    } else if (isRestMode) {
-                        // --- Rest Mode Countdown ---
-                        if ((currentRestTimeLeft ?: 0) == evaluateRestTime()) {
-                            //playRestBeepEvent = true
-                            soundPlayer.playRestBeep(noArrowsViewModel.viewModelScope)
-                        }
-
-                        // Check isRestMode again, as it could have been modified in the block above
-                        while (isActive) {  // Notice: isRestMode is always true here
-                            if (currentRestTimeLeft != null && currentRestTimeLeft!! > 0) {
-                                // Check for some seconds left --> to play rest-beeps
-                                if (currentRestTimeLeft == endOfRestBeepTime) {
-                                    soundPlayer.playRestBeep(noArrowsViewModel.viewModelScope)
-                                }
-                                //delay(countDownDelay)
-                                adjustedDelay(countDownDelay, tickBaseTimeState)
-                                currentRestTimeLeft = currentRestTimeLeft!! - 1
-                            } else {
-                                // Rest time ended (currentRestTimeLeft is 0 or null)
-                                setEndOfRestMode()
-                                currentRepetitionsLeft = numberOfRepetitions // Reset for new cycle
-                                currentSeriesLeft = currentSeriesLeft!! - 1
-                                break // Exit rest loop
-                            }
-                        }
-                    }
-
-                    if (isTimerStopped)
-                        break
-                }
+               sessionController.runTimerLoop(
+                   isTimerRunningProvider = { isTimerRunning },
+                   isRestModeProvider = { isRestMode },
+                   isPreparationModeProvider = { isPreparationMode },
+                   isTimerStoppedProvider = { isTimerStopped },
+                   tickBaseTimeState = tickBaseTimeState,
+                   countDownDelay = countDownDelay,
+                   getInitialDurationSeconds = { initialDurationSeconds },
+                   getCurrentDurationSecondsLeft = { currentDurationSecondsLeft },
+                   getCurrentRepetitionsLeft = { currentRepetitionsLeft },
+                   getCurrentSeriesLeft = { currentSeriesLeft },
+                   getCurrentRestTimeLeft = { currentRestTimeLeft },
+                   getCurrentPreparationSecondsLeft = { currentPreparationSecondsLeft },
+                   getNumberOfRepetitions = { numberOfRepetitions },
+                   getNumberOfSeries = { numberOfSeries },
+                   getIntermediateBeepsChecked = { intermediateBeepsChecked },
+                   getEndOfRestBeepTime = { endOfRestBeepTime },
+                   getIntermediateBeepsDuration = { intermediateBeepsDuration },
+                   setCurrentDurationSecondsLeft = { value -> currentDurationSecondsLeft = value },
+                   setCurrentRepetitionsLeft = { value -> currentRepetitionsLeft = value },
+                   setCurrentSeriesLeft = { value -> currentSeriesLeft = value },
+                   setCurrentRestTimeLeft = { value -> currentRestTimeLeft = value },
+                   setCurrentPreparationSecondsLeft = { value -> currentPreparationSecondsLeft = value },
+                   startCountdowns = { startCountdowns() },
+                   setRestMode = { setRestMode() },
+                   setEndOfRestMode = { setEndOfRestMode() },
+                   sessionHasCompletedCallback = { sessionHasCompleted() },
+                   evaluateRestTime = { evaluateRestTime() },
+                   playBeep = { soundPlayer.playBeep(noArrowsViewModel.viewModelScope) },
+                   playIntermediateBeep = { soundPlayer.playIntermediateBeep(noArrowsViewModel.viewModelScope) },
+                   playRestBeep = { soundPlayer.playRestBeep(noArrowsViewModel.viewModelScope) },
+                   keepScreenOn = { enabled ->
+                       if (enabled) {
+                           (this as? ComponentActivity)?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                       } else {
+                           (this as? ComponentActivity)?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                       }
+                   }
+               )
             }
 
 

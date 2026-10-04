@@ -103,7 +103,8 @@ class SoundPlayer(
      * The sound is played 3 times with a delay of 380 milliseconds between each play.
      */
     fun playEndBeep(scope: CoroutineScope) = scope.launch {
-        playSound(endBeepSoundId, 3, 380L)
+        playSound(beepSoundId, 3, 280L)
+        //playSound(endBeepSoundId)  //, 3, 380L)
     }
 
     /**
