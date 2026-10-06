@@ -108,9 +108,6 @@ import com.github.schmouk.archerytrainingtimer.ui.utils.EFoldedPosture
 import kotlin.math.min
 
 
-// --- Session Duration Management ---
-private val sessionDurationManager = DurationSessionController()
-
 // Props for NoArrowsTimerScreen
 // - userPreferencesRepository: UserPreferencesRepository
 // - any other callbacks or data needed
@@ -123,9 +120,12 @@ fun NoArrowsTimerScreen(
     formerInternalRunningValues: TimerInternalRunningState = TimerInternalRunningState()
 ) {
     // restore the former automaton state if specified
-    noArrowsViewModel.setStateAutomaton(formerAutomatonState)
+    if (formerAutomatonState != null) {
+        noArrowsViewModel.setStateAutomaton(formerAutomatonState)
+    }
 
     // related finite state machine control values
+    val isIdleMode by noArrowsViewModel.isIdleMode
     val isRestMode by noArrowsViewModel.isRestMode
     val isSessionCompleted by noArrowsViewModel.isSessionCompleted
     val isTimerRunning by noArrowsViewModel.isTimerRunning
@@ -189,11 +189,12 @@ fun NoArrowsTimerScreen(
                 audioManager
             )
 
+            // --- State retained in ViewModel ---
+            val selectionState = noArrowsViewModel.selectionState
+            val sessionDurationManager = noArrowsViewModel.sessionDurationManager
 
             // --- Session Controller ---
-            val countDownDelay = SECOND_DURATION_MS
-
-            val sessionController = remember {
+            val sessionController = remember(noArrowsViewModel, soundPlayer) {
                 NoArrowSessionController(
                     noArrowsViewModel = noArrowsViewModel,
                     soundPlayer = soundPlayer,
@@ -203,7 +204,9 @@ fun NoArrowsTimerScreen(
             }
 
             // --- To accurately evaluate delays in countdowns ---
-            val tickBaseTimeState = remember { mutableLongStateOf(System.currentTimeMillis()) }
+            selectionState.countDownDelay = SECOND_DURATION_MS
+            selectionState.endOfRestBeepTime = 7
+            selectionState.intermediateBeepsDuration = 5
 
             // --- Dynamic Sizes & SPs ---
             val mainTimerStrokeWidthDp = deviceScaling(14).dp
@@ -212,14 +215,12 @@ fun NoArrowsTimerScreen(
             val generalPadding = deviceScaling(8).dp
             val mainHorizontalSpacingDp = deviceScaling(10).dp
 
-            val selectionState = remember { SelectionState() }
+            var selectedDurationString by rememberSaveable { mutableStateOf(selectionState.selectedDurationString) }
+            var numberOfRepetitions by rememberSaveable { mutableStateOf(selectionState.numberOfRepetitions) }
+            var numberOfSeries by rememberSaveable { mutableStateOf(selectionState.numberOfSeries) }
+            var intermediateBeepsChecked by rememberSaveable { mutableStateOf(selectionState.intermediateBeepsChecked) }
 
-            var selectedDurationString by rememberSaveable { mutableStateOf<String?>(null) }
-            var numberOfRepetitions by rememberSaveable { mutableStateOf<Int?>(null) }
-            var numberOfSeries by rememberSaveable { mutableStateOf<Int?>(null) }
-            var intermediateBeepsChecked by rememberSaveable { mutableStateOf<Boolean?>(null) }
-
-            var lastDurationSeconds by rememberSaveable { mutableStateOf(0) }
+            var lastDurationSeconds by rememberSaveable { mutableStateOf(selectionState.lastDurationSeconds) }
 
             fun syncUiFromSelectionState() {
                 selectedDurationString = selectionState.selectedDurationString
@@ -228,33 +229,23 @@ fun NoArrowsTimerScreen(
                 intermediateBeepsChecked = selectionState.intermediateBeepsChecked
                 lastDurationSeconds = selectionState.lastDurationSeconds
             }
-            //var lastNumberOfRepetitions by rememberSaveable { mutableStateOf(0) }
-            //var lastNumberOfSeries by rememberSaveable { mutableStateOf(0) }
-            //var lastIntermediateBeepsChecked by rememberSaveable { mutableStateOf(false) }
-
-            //var initialDurationSeconds by rememberSaveable { mutableStateOf<Int?>(null) }
-            //var currentDurationSecondsLeft by rememberSaveable { mutableStateOf<Int?>(null) }
-            //var currentRepetitionsLeft by rememberSaveable { mutableStateOf<Int?>(null) }
-            //var currentSeriesLeft by rememberSaveable { mutableStateOf<Int?>(null) }
 
             val minRepetitions = 3
             val maxRepetitions = 15
             val repetitionRange = (minRepetitions..maxRepetitions).toList()
 
             // --- Rest Mode & Series Tracking ---
-            //var currentRestTimeLeft by rememberSaveable { mutableStateOf<Int?>(null) }
-            val endOfRestBeepTime = 7 // seconds before end of rest to play beep
-
             val durationOptions = listOf("10 s", "15 s", "20 s", "30 s")
             val seriesOptions = mutableListOf(1, 2, 3, 5, 10, 15, 20, 25, 30)
-            val intermediateBeepsDuration = 5 // seconds for intermediate beeps
 
             val restModeText = stringResource(R.string.rest_indicator)
 
             val preparationTime = 7 // seconds for preparation time before start
             val resPreparationText = stringResource(R.string.preparation)
-            var currentPreparationSecondsLeft by rememberSaveable { mutableStateOf<Int?>(null) }
 
+
+            // Sync on each composition
+            syncUiFromSelectionState()
 
             /**
              * Checks if all selections have been made
@@ -278,46 +269,17 @@ fun NoArrowsTimerScreen(
              * Loads user preferences on first composition
              */
             LaunchedEffect(key1 = Unit) {
-               userPreferencesRepository.userPreferencesFlow.collect { loadedPrefs ->
-                   val durationValue = loadedPrefs.selectedDuration?.split(" ")?.firstOrNull()?.toIntOrNull()
-
-                   selectionState.hydrateFromPreferences(
-                       selectedDurationString = loadedPrefs.selectedDuration,
-                       numberOfRepetitions = loadedPrefs.numberOfRepetitions,
-                       numberOfSeries = loadedPrefs.numberOfSeries,
-                       intermediateBeepsChecked = loadedPrefs.intermediateBeeps,
-                       lastDurationSeconds = durationValue ?: 0,
-                       lastNumberOfRepetitions = loadedPrefs.numberOfRepetitions ?: 0,
-                       lastNumberOfSeries = loadedPrefs.numberOfSeries ?: 0,
-                       lastIntermediateBeepsChecked = loadedPrefs.intermediateBeeps ?: false,
-                       initialDurationSeconds = durationValue,
-                       currentDurationSecondsLeft = if (!isTimerRunning && !isRestMode && !isTimerStopped) durationValue else selectionState.currentDurationSecondsLeft,
-                       currentRepetitionsLeft = if (!isTimerRunning && !isRestMode && !isTimerStopped) loadedPrefs.numberOfRepetitions else selectionState.currentRepetitionsLeft,
-                       currentSeriesLeft = if (!isTimerRunning && !isRestMode && !isTimerStopped) loadedPrefs.numberOfSeries else selectionState.currentSeriesLeft,
-                       currentRestTimeLeft = selectionState.currentRestTimeLeft,
-                   )
-                   syncUiFromSelectionState()
-
-                   if (!isTimerRunning && !isRestMode) {
-                       if (selectionState.currentRepetitionsLeft != 0 && !isTimerStopped) {
-                           selectionState.currentDurationSecondsLeft = durationValue
-                       }
-                       if (!isTimerStopped) {
-                           selectionState.currentRepetitionsLeft = selectionState.numberOfRepetitions
-                           selectionState.currentSeriesLeft = selectionState.numberOfSeries
-                       }
-                   }
-               }
-
-               if (formerAutomatonState != null) {
-                   noArrowsViewModel.setStateAutomaton(formerAutomatonState)
-                   selectionState.currentDurationSecondsLeft = formerInternalRunningValues.currentDurationSecondsLeft
-                   selectionState.currentRepetitionsLeft = formerInternalRunningValues.currentRepetitionsLeft
-                   selectionState.currentSeriesLeft = formerInternalRunningValues.currentSeriesLeft
-                   selectionState.currentRestTimeLeft = formerInternalRunningValues.currentRestTimeLeft
-               }
-
-               userPreferencesRepository.saveSessionType(null)
+               selectionState.initState(
+                   userPreferencesRepository = userPreferencesRepository,
+                   isTimerRunning = isTimerRunning,
+                   isRestMode = isRestMode,
+                   isTimerStopped = isTimerStopped,
+                   isPreparationMode = isPreparationMode,
+                   formerAutomatonState = formerAutomatonState,
+                   formerInternalRunningValues = formerInternalRunningValues,
+                   onAutomatonStateRestored = { state -> noArrowsViewModel.setStateAutomaton(state) },
+                   onPreferencesLoaded = { syncUiFromSelectionState() }
+               )
             }
 
             /**
@@ -332,6 +294,8 @@ fun NoArrowsTimerScreen(
                selectionState.updateSelectionState(
                    isRestMode = isRestMode,
                    isTimerStopped = isTimerStopped,
+                   isTimerRunning = isTimerRunning,
+                   isPreparationMode = isPreparationMode,
                    saveDurationPreference = { value ->
                        userPreferencesRepository.saveDurationPreference(value)
                    },
@@ -350,9 +314,7 @@ fun NoArrowsTimerScreen(
                            selectionState.lastDurationSeconds,
                            selectionState.numberOfRepetitions
                        )
-                       if ((selectionState.currentSeriesLeft ?: 0) <= 1) {
-                           selectionState.currentSeriesLeft = 0
-                       } else if (isTimerStopped) {
+                       if (isTimerStopped) {
                            sessionController.setFutureRestMode()
                        } else {
                            sessionController.setRestMode()
@@ -363,8 +325,9 @@ fun NoArrowsTimerScreen(
                        selectionState.currentDurationSecondsLeft = 0
                        selectionState.currentRepetitionsLeft = 0
                        selectionState.currentSeriesLeft = 0
+                       selectionState.currentRestTimeLeft = 0
                    },
-                   resumeCountdowns = { sessionController.resumeCountdowns(tickBaseTimeState) }
+                   resumeCountdowns = { sessionController.resumeCountdowns(selectionState.tickBaseTimeState) }
                )
                syncUiFromSelectionState()
             }
@@ -381,48 +344,21 @@ fun NoArrowsTimerScreen(
             /**
              * Manages the timer countdown in a coroutine
              */
-            LaunchedEffect(isTimerRunning, isRestMode, isPreparationMode) {
-               sessionController.runTimerLoop(
-                   isTimerRunningProvider = { isTimerRunning },
-                   isRestModeProvider = { isRestMode },
-                   isPreparationModeProvider = { isPreparationMode },
-                   isTimerStoppedProvider = { isTimerStopped },
-                   tickBaseTimeState = tickBaseTimeState,
-                   countDownDelay = countDownDelay,
-                   getInitialDurationSeconds = { selectionState.initialDurationSeconds },
-                   getCurrentDurationSecondsLeft = { selectionState.currentDurationSecondsLeft },
-                   getCurrentRepetitionsLeft = { selectionState.currentRepetitionsLeft },
-                   getCurrentSeriesLeft = { selectionState.currentSeriesLeft },
-                   getCurrentRestTimeLeft = { selectionState.currentRestTimeLeft },
-                   getCurrentPreparationSecondsLeft = { currentPreparationSecondsLeft },
-                   getNumberOfRepetitions = { numberOfRepetitions },
-                   getNumberOfSeries = { numberOfSeries },
-                   getIntermediateBeepsChecked = { intermediateBeepsChecked },
-                   getEndOfRestBeepTime = { endOfRestBeepTime },
-                   getIntermediateBeepsDuration = { intermediateBeepsDuration },
-                   setCurrentDurationSecondsLeft = { value -> selectionState.currentDurationSecondsLeft = value },
-                   setCurrentRepetitionsLeft = { value -> selectionState.currentRepetitionsLeft = value },
-                   setCurrentSeriesLeft = { value -> selectionState.currentSeriesLeft = value },
-                   setCurrentRestTimeLeft = { value -> selectionState.currentRestTimeLeft = value },
-                   setCurrentPreparationSecondsLeft = { value -> currentPreparationSecondsLeft = value },
-                   startCountdowns = { selectionState.currentDurationSecondsLeft = sessionController.startCountdowns(selectionState.initialDurationSeconds) },
-                   setRestMode = { sessionController.setRestMode() },
-                   setEndOfRestMode = { sessionController.setEndOfRestMode() },
-                   sessionHasCompletedCallback = {
-                       sessionController.sessionHasCompleted()
-                       selectionState.currentDurationSecondsLeft = 0
-                       selectionState.currentRepetitionsLeft = 0
-                       selectionState.currentSeriesLeft = 0
-                   },
-                   evaluateRestTime = { sessionController.evaluateRestTime(selectionState.lastDurationSeconds, selectionState.numberOfRepetitions) },
-                   keepScreenOn = { enabled ->
-                       if (enabled) {
-                           (this as? ComponentActivity)?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-                       } else {
-                           (this as? ComponentActivity)?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            LaunchedEffect(isIdleMode, isSessionCompleted) {
+               if (!isIdleMode && !isSessionCompleted) {
+                   selectionState.runTimerLoop(
+                       controller = sessionController,
+                       keepScreenOn = { enabled ->
+                           (currentLocalContext as? ComponentActivity)?.window?.let { window ->
+                               if (enabled) {
+                                   window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                               } else {
+                                   window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                               }
+                           }
                        }
-                   }
-               )
+                   )
+               }
             }
 
 
@@ -440,26 +376,25 @@ fun NoArrowsTimerScreen(
              */
             val onStartButtonClick = {
                 if (isTimerRunning) {
-                    sessionController.pauseCountdowns(tickBaseTimeState)
+                    sessionController.pauseCountdowns(selectionState.tickBaseTimeState)
                 } else if (isTimerStopped) {
-                    sessionController.resumeCountdowns(tickBaseTimeState)
+                    sessionController.resumeCountdowns(selectionState.tickBaseTimeState)
                 } else {
                     val prepared = sessionController.startNewSession(
                         allSelectionsMade = allSelectionsMade(),
-                        currentSeriesLeft = selectionState.currentSeriesLeft,
                         numberOfSeries = numberOfSeries,
                         numberOfRepetitions = numberOfRepetitions,
                         initialDurationSeconds = selectionState.initialDurationSeconds,
-                        currentDurationSecondsLeft = selectionState.currentDurationSecondsLeft,
-                        currentRepetitionsLeft = selectionState.currentRepetitionsLeft,
-                        preparationTime = preparationTime
                     )
                     selectionState.currentSeriesLeft = prepared.first
                     selectionState.currentRepetitionsLeft = prepared.second
                     selectionState.currentDurationSecondsLeft = prepared.third
                     if (allSelectionsMade()) {
-                        currentPreparationSecondsLeft = preparationTime
-                        currentPreparationSecondsLeft = sessionController.startPreparationMode(selectionState.initialDurationSeconds, preparationTime)
+                        selectionState.currentPreparationSecondsLeft = preparationTime
+                        sessionController.startPreparationMode(
+                            selectionState.initialDurationSeconds,
+                            preparationTime
+                        )
                     }
                 }
             }
@@ -569,7 +504,7 @@ fun NoArrowsTimerScreen(
                                     numberOfRepetitions,
                                     selectionState.currentRepetitionsLeft,
                                     selectionState.currentRestTimeLeft,
-                                    currentPreparationSecondsLeft,
+                                    selectionState.currentPreparationSecondsLeft,
                                     isPreparationMode,
                                     isTimerRunning,
                                     isTimerStopped,
@@ -636,7 +571,7 @@ fun NoArrowsTimerScreen(
                                 numberOfRepetitions,
                                 selectionState.currentRepetitionsLeft,
                                 selectionState.currentRestTimeLeft,
-                                currentPreparationSecondsLeft,
+                                selectionState.currentPreparationSecondsLeft,
                                 isPreparationMode,
                                 isTimerRunning,
                                 isTimerStopped,

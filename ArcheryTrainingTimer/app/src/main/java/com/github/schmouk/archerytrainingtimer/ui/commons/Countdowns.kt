@@ -412,13 +412,13 @@ fun TimerCountdown(
 
         // --- Column to hold Time Countdown numbers and "Rest..." text ---
         // Text for the main duration
-        val showDimmedTimers = currentRepetitionsLeft == 0 &&
-                !(isTimerRunning || isTimerStopped || isRestMode)
+        val showDimmedTimers = (isDimmedDisplay || currentRepetitionsLeft == 0) &&
+                !(isTimerRunning || isTimerStopped || isRestMode || isPreparationMode)
 
         val durationToDisplayValue =
-            if (showDimmedTimers) 0
+            if (isPreparationMode) currentPreparationSecondsLeft
             else if (isRestMode) currentRestTimeLeft
-            else if (isPreparationMode) currentPreparationSecondsLeft
+            else if (showDimmedTimers) 0
             else currentDurationSecondsLeft
 
         val durationToDisplayString = durationToDisplayValue?.toString()

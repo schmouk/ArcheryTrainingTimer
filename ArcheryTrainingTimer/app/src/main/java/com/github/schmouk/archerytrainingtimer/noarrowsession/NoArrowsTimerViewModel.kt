@@ -27,6 +27,7 @@ SOFTWARE.
 package com.github.schmouk.archerytrainingtimer.noarrowsession
 
 import com.github.schmouk.archerytrainingtimer.commons.BaseCountdownViewModel
+import com.github.schmouk.archerytrainingtimer.ui.commons.DurationSessionController
 
 /**
  * ViewModel for managing the state of the No Arrows Training Timer.
@@ -34,7 +35,6 @@ import com.github.schmouk.archerytrainingtimer.commons.BaseCountdownViewModel
  * based on user actions and timer events.
  */
 class NoArrowsTimerViewModel : BaseCountdownViewModel(NoArrowStateAutomaton()) {
-    // Notice: nothing to implement here
-    // all is managed by the BaseCountdownViewModel and the NoArrowStateAutomaton
-    // which is a specialization of BaseSessionStateAutomaton
+    val selectionState: SelectionState = SelectionState()
+    val sessionDurationManager: DurationSessionController = DurationSessionController()
 }

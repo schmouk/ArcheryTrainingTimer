@@ -29,10 +29,15 @@ package com.github.schmouk.archerytrainingtimer.noarrowsession
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.github.schmouk.archerytrainingtimer.SECOND_DURATION_MS
 import com.github.schmouk.archerytrainingtimer.commons.ESignal
+import com.github.schmouk.archerytrainingtimer.commons.EState
 import com.github.schmouk.archerytrainingtimer.commons.SoundPlayer
+import com.github.schmouk.archerytrainingtimer.commons.TimerInternalRunningState
+import com.github.schmouk.archerytrainingtimer.commons.UserPreferencesRepository
 import com.github.schmouk.archerytrainingtimer.ui.commons.DurationSessionController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -57,40 +62,71 @@ class SelectionState {
     var currentRepetitionsLeft by mutableStateOf<Int?>(null)
     var currentSeriesLeft by mutableStateOf<Int?>(null)
     var currentRestTimeLeft by mutableStateOf<Int?>(null)
+    var currentPreparationSecondsLeft by mutableStateOf<Int?>(null)
 
-    fun hydrateFromPreferences(
-        selectedDurationString: String?,
-        numberOfRepetitions: Int?,
-        numberOfSeries: Int?,
-        intermediateBeepsChecked: Boolean?,
-        lastDurationSeconds: Int = 0,
-        lastNumberOfRepetitions: Int = 0,
-        lastNumberOfSeries: Int = 0,
-        lastIntermediateBeepsChecked: Boolean = false,
-        initialDurationSeconds: Int? = null,
-        currentDurationSecondsLeft: Int? = null,
-        currentRepetitionsLeft: Int? = null,
-        currentSeriesLeft: Int? = null,
-        currentRestTimeLeft: Int? = null,
+    var tickBaseTimeState: MutableState<Long> = mutableLongStateOf(System.currentTimeMillis())
+    var countDownDelay: Long = SECOND_DURATION_MS
+    var endOfRestBeepTime: Int = 7
+    var intermediateBeepsDuration: Int = 5
+
+    suspend fun initState(
+        userPreferencesRepository: UserPreferencesRepository,
+        isTimerRunning: Boolean = false,
+        isRestMode: Boolean = false,
+        isTimerStopped: Boolean = false,
+        isPreparationMode: Boolean = false,
+        formerAutomatonState: EState? = null,
+        formerInternalRunningValues: TimerInternalRunningState = TimerInternalRunningState(),
+        onAutomatonStateRestored: ((EState) -> Unit)? = null,
+        onPreferencesLoaded: (() -> Unit)? = null,
     ) {
-        this.selectedDurationString = selectedDurationString
-        this.numberOfRepetitions = numberOfRepetitions
-        this.numberOfSeries = numberOfSeries
-        this.intermediateBeepsChecked = intermediateBeepsChecked
-        this.lastDurationSeconds = lastDurationSeconds
-        this.lastNumberOfRepetitions = lastNumberOfRepetitions
-        this.lastNumberOfSeries = lastNumberOfSeries
-        this.lastIntermediateBeepsChecked = lastIntermediateBeepsChecked
-        this.initialDurationSeconds = initialDurationSeconds
-        this.currentDurationSecondsLeft = currentDurationSecondsLeft
-        this.currentRepetitionsLeft = currentRepetitionsLeft
-        this.currentSeriesLeft = currentSeriesLeft
-        this.currentRestTimeLeft = currentRestTimeLeft
+        if (formerAutomatonState != null) {
+            onAutomatonStateRestored?.invoke(formerAutomatonState)
+            currentDurationSecondsLeft = formerInternalRunningValues.currentDurationSecondsLeft
+            currentRepetitionsLeft = formerInternalRunningValues.currentRepetitionsLeft
+            currentSeriesLeft = formerInternalRunningValues.currentSeriesLeft
+            currentRestTimeLeft = formerInternalRunningValues.currentRestTimeLeft
+        }
+
+        userPreferencesRepository.saveSessionType(null)
+
+        userPreferencesRepository.userPreferencesFlow.collect { loadedPrefs ->
+            val durationValue = loadedPrefs.selectedDuration?.split(" ")?.firstOrNull()?.toIntOrNull()
+
+            selectedDurationString = loadedPrefs.selectedDuration
+            numberOfRepetitions = loadedPrefs.numberOfRepetitions
+            numberOfSeries = loadedPrefs.numberOfSeries
+            intermediateBeepsChecked = loadedPrefs.intermediateBeeps
+
+            lastDurationSeconds = durationValue ?: 0
+            lastNumberOfRepetitions = loadedPrefs.numberOfRepetitions ?: 0
+            lastNumberOfSeries = loadedPrefs.numberOfSeries ?: 0
+            lastIntermediateBeepsChecked = loadedPrefs.intermediateBeeps ?: false
+
+            initialDurationSeconds = durationValue
+
+            val isIdleOrConfig = !isTimerRunning && !isRestMode && !isTimerStopped && !isPreparationMode
+            if (isIdleOrConfig) {
+                if (currentDurationSecondsLeft == null || currentDurationSecondsLeft == 0) {
+                    currentDurationSecondsLeft = durationValue
+                }
+                if (currentRepetitionsLeft == null || currentRepetitionsLeft == 0) {
+                    currentRepetitionsLeft = loadedPrefs.numberOfRepetitions
+                }
+                if (currentSeriesLeft == null || currentSeriesLeft == 0) {
+                    currentSeriesLeft = loadedPrefs.numberOfSeries
+                }
+            }
+
+            onPreferencesLoaded?.invoke()
+        }
     }
 
     suspend fun updateSelectionState(
         isRestMode: Boolean,
         isTimerStopped: Boolean,
+        isTimerRunning: Boolean = false,
+        isPreparationMode: Boolean = false,
         saveDurationPreference: suspend (String?) -> Unit,
         saveRepetitionsPreference: suspend (Int?) -> Unit,
         saveSeriesPreference: suspend (Int?) -> Unit,
@@ -99,12 +135,16 @@ class SelectionState {
         sessionHasCompletedCallback: () -> Unit,
         resumeCountdowns: () -> Unit,
     ) {
+        val isSessionActive = isTimerRunning || isRestMode || isTimerStopped || isPreparationMode
+
         val selectedValue = selectedDurationString
         if (selectedValue != null) {
             val durationValue = selectedValue.split(" ").firstOrNull()?.toIntOrNull()
             if (durationValue != null && durationValue != lastDurationSeconds) {
                 initialDurationSeconds = durationValue
-                currentDurationSecondsLeft = if (isRestMode) {
+                currentDurationSecondsLeft = if (!isSessionActive) {
+                    durationValue
+                } else if (isRestMode) {
                     durationValue
                 } else {
                     min(
@@ -117,7 +157,7 @@ class SelectionState {
                 }
                 lastDurationSeconds = durationValue
 
-                if ((currentDurationSecondsLeft ?: 0) <= 1 && (currentRepetitionsLeft ?: 0) <= 1) {
+                if (isSessionActive && (currentDurationSecondsLeft ?: 0) <= 1 && (currentRepetitionsLeft ?: 0) <= 1) {
                     evaluateRestingMode()
                 }
 
@@ -127,7 +167,9 @@ class SelectionState {
 
         val repetitions = numberOfRepetitions
         if (repetitions != null && repetitions != lastNumberOfRepetitions) {
-            if (!isRestMode) {
+            if (!isSessionActive) {
+                currentRepetitionsLeft = repetitions
+            } else if (!isRestMode) {
                 val nextRepetitions = min(
                     max(
                         0,
@@ -148,21 +190,25 @@ class SelectionState {
 
         val series = numberOfSeries
         if (series != null && series != lastNumberOfSeries) {
-            val nextSeries = max(0, (currentSeriesLeft ?: 0) + series - lastNumberOfSeries)
-            currentSeriesLeft = nextSeries
-            lastNumberOfSeries = series
-            saveSeriesPreference(series)
-            if (nextSeries == 0 || (isRestMode && nextSeries <= 1)) {
-                currentRestTimeLeft = 0
-                currentDurationSecondsLeft = 0
-                currentRepetitionsLeft = 0
-                currentSeriesLeft = 0
-                if (isRestMode) {
-                    sessionHasCompletedCallback()
-                } else if (isTimerStopped) {
-                    resumeCountdowns()
+            if (!isSessionActive) {
+                currentSeriesLeft = series
+            } else {
+                val nextSeries = max(0, (currentSeriesLeft ?: 0) + series - lastNumberOfSeries)
+                currentSeriesLeft = nextSeries
+                if (nextSeries == 0 || (isRestMode && nextSeries <= 1)) {
+                    currentRestTimeLeft = 0
+                    currentDurationSecondsLeft = 0
+                    currentRepetitionsLeft = 0
+                    currentSeriesLeft = 0
+                    if (isRestMode) {
+                        sessionHasCompletedCallback()
+                    } else if (isTimerStopped) {
+                        resumeCountdowns()
+                    }
                 }
             }
+            lastNumberOfSeries = series
+            saveSeriesPreference(series)
         }
 
         val intermediate = intermediateBeepsChecked
@@ -170,6 +216,16 @@ class SelectionState {
             saveIntermediateBeepsPreference(intermediate)
             lastIntermediateBeepsChecked = intermediate
         }
+    }
+
+    suspend fun runTimerLoop(
+        controller: NoArrowSessionController,
+        keepScreenOn: (Boolean) -> Unit,
+    ) {
+        controller.runTimerLoop(
+            selectionState = this,
+            keepScreenOn = keepScreenOn,
+        )
     }
 }
 
@@ -183,8 +239,6 @@ class NoArrowSessionController(
     private val sessionDurationManager: DurationSessionController = DurationSessionController(),
     private val beepScheduler: NoArrowBeepScheduler = NoArrowBeepScheduler(soundPlayer, scope),
 ) {
-    private var lastRepetitionStartKey: String? = null
-    private var lastRestStartKey: String? = null
     fun pauseCountdowns(tickBaseTimeState: MutableState<Long>) {
         tickBaseTimeState.value = System.currentTimeMillis()
         noArrowsViewModel.action(ESignal.SIG_STOP)
@@ -284,207 +338,193 @@ class NoArrowSessionController(
 
     fun startNewSession(
         allSelectionsMade: Boolean,
-        currentSeriesLeft: Int?,
         numberOfSeries: Int?,
         numberOfRepetitions: Int?,
         initialDurationSeconds: Int?,
-        currentDurationSecondsLeft: Int?,
-        currentRepetitionsLeft: Int?,
-        preparationTime: Int
     ): Triple<Int?, Int?, Int?> {
-        if (!allSelectionsMade) return Triple(currentSeriesLeft, currentRepetitionsLeft, currentDurationSecondsLeft)
-        val nextSeries = if (currentSeriesLeft == null || currentSeriesLeft == 0) numberOfSeries else currentSeriesLeft
-        val nextRepetitions = if (currentSeriesLeft == null || currentSeriesLeft == 0) numberOfRepetitions else currentRepetitionsLeft ?: numberOfRepetitions
-        val nextDuration = if (currentDurationSecondsLeft == null || currentDurationSecondsLeft == 0) initialDurationSeconds else currentDurationSecondsLeft
-        return Triple(nextSeries, nextRepetitions, nextDuration)
+        if (!allSelectionsMade) return Triple(null, null, null)
+        return Triple(numberOfSeries, numberOfRepetitions, initialDurationSeconds)
     }
 
     fun startCountdowns(initialDurationSeconds: Int?): Int? {
         noArrowsViewModel.action(ESignal.SIG_START)
+        playBeep()
         return initialDurationSeconds
     }
 
-    //fun sessionCompleted(state: NoArrowSessionState): NoArrowSessionState = completeSessionState(state)
-
     suspend fun runTimerLoop(
-        isTimerRunningProvider: () -> Boolean,
-        isRestModeProvider: () -> Boolean,
-        isPreparationModeProvider: () -> Boolean,
-        isTimerStoppedProvider: () -> Boolean,
-        tickBaseTimeState: MutableState<Long>,
-        countDownDelay: Long,
-        getInitialDurationSeconds: () -> Int?,
-        getCurrentDurationSecondsLeft: () -> Int?,
-        getCurrentRepetitionsLeft: () -> Int?,
-        getCurrentSeriesLeft: () -> Int?,
-        getCurrentRestTimeLeft: () -> Int?,
-        getCurrentPreparationSecondsLeft: () -> Int?,
-        getNumberOfRepetitions: () -> Int?,
-        getNumberOfSeries: () -> Int?,
-        getIntermediateBeepsChecked: () -> Boolean?,
-        getEndOfRestBeepTime: () -> Int,
-        getIntermediateBeepsDuration: () -> Int,
-        setCurrentDurationSecondsLeft: (Int?) -> Unit,
-        setCurrentRepetitionsLeft: (Int?) -> Unit,
-        setCurrentSeriesLeft: (Int?) -> Unit,
-        setCurrentRestTimeLeft: (Int?) -> Unit,
-        setCurrentPreparationSecondsLeft: (Int?) -> Unit,
-        startCountdowns: () -> Unit,
-        setRestMode: () -> Unit,
-        setEndOfRestMode: () -> Unit,
-        sessionHasCompletedCallback: () -> Unit,
-        evaluateRestTime: () -> Int,
+        selectionState: SelectionState,
         keepScreenOn: (Boolean) -> Unit,
     ) {
-        while (scope.coroutineContext.isActive) {
-            val timerRunning = isTimerRunningProvider()
-            val restMode = isRestModeProvider()
-            val preparationMode = isPreparationModeProvider()
-            val timerStopped = isTimerStoppedProvider()
-
-            if (timerRunning || restMode || preparationMode) {
-                keepScreenOn(true)
-            } else {
-                keepScreenOn(false)
-            }
-
-            if (!(timerRunning || restMode || timerStopped || preparationMode)) {
-                break
-            }
-
-            tickBaseTimeState.value = System.currentTimeMillis()
-
-            if (!restMode) {
-                if (getCurrentRepetitionsLeft() == 0) {
-                    setCurrentRepetitionsLeft(getNumberOfRepetitions())
-                    if (getCurrentDurationSecondsLeft() == 0) {
-                        setCurrentDurationSecondsLeft(getInitialDurationSeconds())
-                    }
-                    setCurrentSeriesLeft(getCurrentSeriesLeft()!! - 1)
-                } else {
-                    if (getCurrentDurationSecondsLeft() == null || getCurrentDurationSecondsLeft() == 0) {
-                        setCurrentDurationSecondsLeft(getInitialDurationSeconds())
-                    }
-                    if (getCurrentRepetitionsLeft() == null) {
-                        setCurrentRepetitionsLeft(getNumberOfRepetitions())
-                    }
-                    if (getCurrentSeriesLeft() == null) {
-                        setCurrentSeriesLeft(getNumberOfSeries())
-                    }
+        keepScreenOn(true)
+        try {
+            while (scope.coroutineContext.isActive) {
+                // If paused (stopped), suspend until resumed or cancelled
+                if (noArrowsViewModel.isTimerStopped.value) {
+                    delay(100L)
+                    selectionState.tickBaseTimeState.value = System.currentTimeMillis()
+                    continue
                 }
 
-                if (preparationMode) {
-                    adjustedDelay(countDownDelay, tickBaseTimeState)
-                    setCurrentPreparationSecondsLeft((getCurrentPreparationSecondsLeft() ?: 0) - 1)
-                    if (getCurrentPreparationSecondsLeft() == 0) {
-                        startCountdowns()
+                // If not in active running/rest/preparation mode, exit loop
+                if (!noArrowsViewModel.isTimerRunning.value &&
+                    !noArrowsViewModel.isRestMode.value &&
+                    !noArrowsViewModel.isPreparationMode.value
+                ) {
+                    break
+                }
+
+                // --- 1. PREPARATION MODE ---
+                if (noArrowsViewModel.isPreparationMode.value) {
+                    selectionState.tickBaseTimeState.value = System.currentTimeMillis()
+                    val prepLeft = selectionState.currentPreparationSecondsLeft ?: 0
+                    if (prepLeft > 0) {
+                        adjustedDelay(selectionState.countDownDelay, selectionState.tickBaseTimeState)
+                        if (noArrowsViewModel.isTimerStopped.value) continue
+                        val remainingPrep = prepLeft - 1
+                        selectionState.currentPreparationSecondsLeft = remainingPrep
+                        if (remainingPrep <= 0) {
+                            selectionState.currentDurationSecondsLeft = selectionState.initialDurationSeconds
+                            selectionState.currentRepetitionsLeft = selectionState.numberOfRepetitions
+                            if (selectionState.currentSeriesLeft == null || selectionState.currentSeriesLeft == 0) {
+                                selectionState.currentSeriesLeft = selectionState.numberOfSeries
+                            }
+                            startCountdowns(selectionState.initialDurationSeconds)
+                        }
+                    } else {
+                        selectionState.currentDurationSecondsLeft = selectionState.initialDurationSeconds
+                        selectionState.currentRepetitionsLeft = selectionState.numberOfRepetitions
+                        if (selectionState.currentSeriesLeft == null || selectionState.currentSeriesLeft == 0) {
+                            selectionState.currentSeriesLeft = selectionState.numberOfSeries
+                        }
+                        startCountdowns(selectionState.initialDurationSeconds)
                     }
                     continue
                 }
 
-                while (scope.coroutineContext.isActive && getCurrentSeriesLeft()!! > 0) {
-                    val currentDuration = getCurrentDurationSecondsLeft()
-                    val initialDuration = getInitialDurationSeconds()
-                    val repetitionStartKey = listOf(
-                        getCurrentSeriesLeft(),
-                        getCurrentRepetitionsLeft(),
-                        initialDuration,
-                        currentDuration
-                    ).joinToString(":")
-                    if (
-                        currentDuration != null &&
-                        initialDuration != null &&
-                        currentDuration == initialDuration &&
-                        repetitionStartKey != lastRepetitionStartKey
-                    ) {
-                        lastRepetitionStartKey = repetitionStartKey
-                        playBeep()
-                    }
+                // --- 2. REST MODE ---
+                if (noArrowsViewModel.isRestMode.value) {
+                    val totalRestTime = evaluateRestTime(selectionState.lastDurationSeconds, selectionState.numberOfRepetitions)
+                    val restLeft = selectionState.currentRestTimeLeft ?: totalRestTime
+                    if (restLeft > 0) {
+                        adjustedDelay(selectionState.countDownDelay, selectionState.tickBaseTimeState)
+                        if (noArrowsViewModel.isTimerStopped.value) continue
+                        val nextRestTime = restLeft - 1
+                        selectionState.currentRestTimeLeft = nextRestTime
 
-                    if (currentDuration != null && currentDuration > 0) {
-                        if (timerRunning) {
-                            adjustedDelay(countDownDelay, tickBaseTimeState)
-                        }
-                        if (!timerStopped) {
-                            setCurrentDurationSecondsLeft(currentDuration - 1)
-                        }
-                        if (getIntermediateBeepsChecked() != null &&
-                            getIntermediateBeepsChecked() == true &&
-                            getCurrentDurationSecondsLeft() != null &&
-                            getCurrentDurationSecondsLeft()!! > 0 &&
-                            (initialDuration!! - getCurrentDurationSecondsLeft()!!) % getIntermediateBeepsDuration() == 0
-                        ) {
-                            playIntermediateBeep()
-                        }
-                    } else if (currentDuration == 0) {
-                        if (getCurrentRepetitionsLeft() != null && getCurrentRepetitionsLeft()!! > 0) {
-                            setCurrentRepetitionsLeft(getCurrentRepetitionsLeft()!! - 1)
-
-                            if (getCurrentRepetitionsLeft() == 0) {
-                                if (getCurrentSeriesLeft() != null && getCurrentSeriesLeft()!! > 0) {
-                                    if (getCurrentSeriesLeft() == 1) {
-                                        sessionHasCompletedCallback()
-                                        return
-                                    } else {
-                                        setRestMode()
-                                        setCurrentRestTimeLeft(evaluateRestTime())
-                                    }
-                                } else {
-                                    sessionHasCompletedCallback()
-                                    return
-                                }
-                            } else {
-                                setCurrentDurationSecondsLeft(initialDuration)
-                            }
-                        } else {
-                            setRestMode()
-                            break
-                        }
-                    }
-
-                    if (isTimerStoppedProvider()) {
-                        return
-                    }
-                }
-            }
-
-            val latestRestMode = isRestModeProvider()
-            if ((getCurrentSeriesLeft() ?: 0) <= 0) {
-                sessionHasCompletedCallback()
-                return
-            } else if (latestRestMode) {
-                val restStartKey = listOf(
-                    getCurrentSeriesLeft(),
-                    getCurrentRepetitionsLeft(),
-                    getCurrentRestTimeLeft(),
-                    evaluateRestTime()
-                ).joinToString(":")
-                if ((getCurrentRestTimeLeft() ?: 0) == evaluateRestTime() && restStartKey != lastRestStartKey) {
-                    lastRestStartKey = restStartKey
-                    playRestBeep()
-                }
-
-                while (scope.coroutineContext.isActive) {
-                    val restTimeLeft = getCurrentRestTimeLeft()
-                    if (restTimeLeft != null && restTimeLeft > 0) {
-                        if (restTimeLeft == getEndOfRestBeepTime()) {
+                        // Play warning rest beep near end of rest (e.g. at 7 seconds remaining)
+                        if (nextRestTime == selectionState.endOfRestBeepTime && nextRestTime > 0) {
                             playRestBeep()
                         }
-                        adjustedDelay(countDownDelay, tickBaseTimeState)
-                        setCurrentRestTimeLeft(restTimeLeft - 1)
+
+                        if (nextRestTime == 0) {
+                            val currentSeries = selectionState.currentSeriesLeft ?: 1
+                            val nextSeries = currentSeries - 1
+                            selectionState.currentSeriesLeft = nextSeries
+                            if (nextSeries <= 0) {
+                                completeSession(selectionState)
+                                break
+                            } else {
+                                setEndOfRestMode()
+                                selectionState.currentDurationSecondsLeft = selectionState.initialDurationSeconds
+                                selectionState.currentRepetitionsLeft = selectionState.numberOfRepetitions
+                                selectionState.currentRestTimeLeft = null
+                                playBeep()
+                            }
+                        }
                     } else {
-                        setEndOfRestMode()
-                        setCurrentRepetitionsLeft(getNumberOfRepetitions())
-                        setCurrentSeriesLeft((getCurrentSeriesLeft() ?: 0) - 1)
-                        break
+                        val currentSeries = selectionState.currentSeriesLeft ?: 1
+                        val nextSeries = currentSeries - 1
+                        selectionState.currentSeriesLeft = nextSeries
+                        if (nextSeries <= 0) {
+                            completeSession(selectionState)
+                            break
+                        } else {
+                            setEndOfRestMode()
+                            selectionState.currentDurationSecondsLeft = selectionState.initialDurationSeconds
+                            selectionState.currentRepetitionsLeft = selectionState.numberOfRepetitions
+                            selectionState.currentRestTimeLeft = null
+                            playBeep()
+                        }
                     }
+                    continue
+                }
+
+                // --- 3. TIMER RUNNING (WORK REPETITION) ---
+                if (noArrowsViewModel.isTimerRunning.value) {
+                    val initialDuration = selectionState.initialDurationSeconds ?: 10
+                    val currentDuration = selectionState.currentDurationSecondsLeft ?: initialDuration
+                    val currentRepetitions = selectionState.currentRepetitionsLeft ?: (selectionState.numberOfRepetitions ?: 1)
+                    val currentSeries = selectionState.currentSeriesLeft ?: (selectionState.numberOfSeries ?: 1)
+
+                    if (currentDuration > 0) {
+                        adjustedDelay(selectionState.countDownDelay, selectionState.tickBaseTimeState)
+                        if (noArrowsViewModel.isTimerStopped.value) continue
+                        val nextDuration = currentDuration - 1
+                        selectionState.currentDurationSecondsLeft = nextDuration
+
+                        // Play intermediate beep if enabled
+                        if (selectionState.intermediateBeepsChecked == true && nextDuration > 0) {
+                            val elapsed = initialDuration - nextDuration
+                            if (elapsed > 0 && elapsed % selectionState.intermediateBeepsDuration == 0) {
+                                playIntermediateBeep()
+                            }
+                        }
+
+                        if (nextDuration == 0) {
+                            val nextReps = currentRepetitions - 1
+                            selectionState.currentRepetitionsLeft = nextReps
+
+                            if (nextReps <= 0) {
+                                // Series completed!
+                                if (currentSeries <= 1) {
+                                    completeSession(selectionState)
+                                    break
+                                } else {
+                                    // Enter rest period
+                                    setRestMode()
+                                    val restTime = evaluateRestTime(selectionState.lastDurationSeconds, selectionState.numberOfRepetitions)
+                                    selectionState.currentRestTimeLeft = restTime
+                                    playRestBeep()
+                                }
+                            } else {
+                                // Next repetition in current series
+                                selectionState.currentDurationSecondsLeft = initialDuration
+                                playBeep()
+                            }
+                        }
+                    } else {
+                        val nextReps = currentRepetitions - 1
+                        selectionState.currentRepetitionsLeft = nextReps
+                        if (nextReps <= 0) {
+                            if (currentSeries <= 1) {
+                                completeSession(selectionState)
+                                break
+                            } else {
+                                setRestMode()
+                                val restTime = evaluateRestTime(selectionState.lastDurationSeconds, selectionState.numberOfRepetitions)
+                                selectionState.currentRestTimeLeft = restTime
+                                playRestBeep()
+                            }
+                        } else {
+                            selectionState.currentDurationSecondsLeft = initialDuration
+                            playBeep()
+                        }
+                    }
+                    continue
                 }
             }
-
-            if (isTimerStoppedProvider()) {
-                return
-            }
+        } finally {
+            keepScreenOn(false)
         }
+    }
+
+    private fun completeSession(selectionState: SelectionState) {
+        sessionHasCompleted()
+        selectionState.currentDurationSecondsLeft = 0
+        selectionState.currentRepetitionsLeft = 0
+        selectionState.currentSeriesLeft = 0
+        selectionState.currentRestTimeLeft = 0
     }
 
     private suspend fun adjustedDelay(countDownDelay: Long, tickBaseTimeState: MutableState<Long>) {
