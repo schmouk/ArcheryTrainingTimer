@@ -26,68 +26,7 @@ SOFTWARE.
 
 package com.github.schmouk.archerytrainingtimer.noarrowsession
 
-import kotlin.math.roundToInt
-
 /**
- * Pure reducer helpers for the No-Arrows timer logic.
- * These functions keep the countdown rules out of the Compose screen.
+ * This reducer logic was moved into NoArrowSessionController.kt.
+ * Keeping this file intentionally empty avoids dead, duplicated reducer code.
  */
-object NoArrowSessionReducer {
-
-    fun evaluateRestingRatio(
-        repetitionsDuration: Int,
-        repetitionsNumberPerSeries: Int?
-    ): Float {
-        val ratio: Float = if (repetitionsNumberPerSeries == null) {
-            0.5f
-        } else if (repetitionsDuration <= 20) {
-            1.1f - repetitionsDuration / 25f
-        } else {
-            (0.3f - (repetitionsDuration - 20) / 50f).coerceAtLeast(0.0f)
-        }
-
-        return (100f * ratio).roundToInt().toFloat() / 100f
-    }
-
-    fun evaluateRestTime(
-        lastDurationSeconds: Int,
-        numberOfRepetitions: Int?
-    ): Int {
-        val ratio = evaluateRestingRatio(lastDurationSeconds, numberOfRepetitions)
-        return ((numberOfRepetitions ?: 0) * lastDurationSeconds * ratio).roundToInt()
-    }
-
-    fun startPreparationMode(
-        state: NoArrowSessionState,
-        preparationTime: Int
-    ): NoArrowSessionState = state.copy(
-        currentPreparationSecondsLeft = preparationTime,
-        isPreparationMode = true,
-        isRestMode = false,
-        isTimerRunning = false,
-        isTimerStopped = false,
-    )
-
-    fun startCountdowns(
-        state: NoArrowSessionState
-    ): NoArrowSessionState = state.copy(
-        currentDurationSecondsLeft = state.initialDurationSeconds,
-        isPreparationMode = false,
-        isTimerRunning = true,
-        isTimerStopped = false,
-    )
-
-    fun sessionCompleted(
-        state: NoArrowSessionState
-    ): NoArrowSessionState = state.copy(
-        currentDurationSecondsLeft = 0,
-        currentRepetitionsLeft = 0,
-        currentSeriesLeft = 0,
-        currentRestTimeLeft = 0,
-        isSessionCompleted = true,
-        isTimerRunning = false,
-        isTimerStopped = false,
-        isPreparationMode = false,
-        isRestMode = false,
-    )
-}

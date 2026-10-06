@@ -27,12 +27,151 @@ SOFTWARE.
 package com.github.schmouk.archerytrainingtimer.noarrowsession
 
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.github.schmouk.archerytrainingtimer.commons.ESignal
 import com.github.schmouk.archerytrainingtimer.commons.SoundPlayer
 import com.github.schmouk.archerytrainingtimer.ui.commons.DurationSessionController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.roundToInt
+
+class SelectionState {
+    var selectedDurationString by mutableStateOf<String?>(null)
+    var numberOfRepetitions by mutableStateOf<Int?>(null)
+    var numberOfSeries by mutableStateOf<Int?>(null)
+    var intermediateBeepsChecked by mutableStateOf<Boolean?>(null)
+
+    var lastDurationSeconds by mutableIntStateOf(0)
+    var lastNumberOfRepetitions by mutableIntStateOf(0)
+    var lastNumberOfSeries by mutableIntStateOf(0)
+    var lastIntermediateBeepsChecked by mutableStateOf(false)
+
+    var initialDurationSeconds by mutableStateOf<Int?>(null)
+    var currentDurationSecondsLeft by mutableStateOf<Int?>(null)
+    var currentRepetitionsLeft by mutableStateOf<Int?>(null)
+    var currentSeriesLeft by mutableStateOf<Int?>(null)
+    var currentRestTimeLeft by mutableStateOf<Int?>(null)
+
+    fun hydrateFromPreferences(
+        selectedDurationString: String?,
+        numberOfRepetitions: Int?,
+        numberOfSeries: Int?,
+        intermediateBeepsChecked: Boolean?,
+        lastDurationSeconds: Int = 0,
+        lastNumberOfRepetitions: Int = 0,
+        lastNumberOfSeries: Int = 0,
+        lastIntermediateBeepsChecked: Boolean = false,
+        initialDurationSeconds: Int? = null,
+        currentDurationSecondsLeft: Int? = null,
+        currentRepetitionsLeft: Int? = null,
+        currentSeriesLeft: Int? = null,
+        currentRestTimeLeft: Int? = null,
+    ) {
+        this.selectedDurationString = selectedDurationString
+        this.numberOfRepetitions = numberOfRepetitions
+        this.numberOfSeries = numberOfSeries
+        this.intermediateBeepsChecked = intermediateBeepsChecked
+        this.lastDurationSeconds = lastDurationSeconds
+        this.lastNumberOfRepetitions = lastNumberOfRepetitions
+        this.lastNumberOfSeries = lastNumberOfSeries
+        this.lastIntermediateBeepsChecked = lastIntermediateBeepsChecked
+        this.initialDurationSeconds = initialDurationSeconds
+        this.currentDurationSecondsLeft = currentDurationSecondsLeft
+        this.currentRepetitionsLeft = currentRepetitionsLeft
+        this.currentSeriesLeft = currentSeriesLeft
+        this.currentRestTimeLeft = currentRestTimeLeft
+    }
+
+    suspend fun updateSelectionState(
+        isRestMode: Boolean,
+        isTimerStopped: Boolean,
+        saveDurationPreference: suspend (String?) -> Unit,
+        saveRepetitionsPreference: suspend (Int?) -> Unit,
+        saveSeriesPreference: suspend (Int?) -> Unit,
+        saveIntermediateBeepsPreference: suspend (Boolean) -> Unit,
+        evaluateRestingMode: () -> Unit,
+        sessionHasCompletedCallback: () -> Unit,
+        resumeCountdowns: () -> Unit,
+    ) {
+        val selectedValue = selectedDurationString
+        if (selectedValue != null) {
+            val durationValue = selectedValue.split(" ").firstOrNull()?.toIntOrNull()
+            if (durationValue != null && durationValue != lastDurationSeconds) {
+                initialDurationSeconds = durationValue
+                currentDurationSecondsLeft = if (isRestMode) {
+                    durationValue
+                } else {
+                    min(
+                        max(
+                            1,
+                            (currentDurationSecondsLeft ?: 0) + durationValue - lastDurationSeconds
+                        ),
+                        durationValue
+                    )
+                }
+                lastDurationSeconds = durationValue
+
+                if ((currentDurationSecondsLeft ?: 0) <= 1 && (currentRepetitionsLeft ?: 0) <= 1) {
+                    evaluateRestingMode()
+                }
+
+                saveDurationPreference(selectedValue)
+            }
+        }
+
+        val repetitions = numberOfRepetitions
+        if (repetitions != null && repetitions != lastNumberOfRepetitions) {
+            if (!isRestMode) {
+                val nextRepetitions = min(
+                    max(
+                        0,
+                        (currentRepetitionsLeft ?: 0) + repetitions - lastNumberOfRepetitions
+                    ),
+                    repetitions
+                )
+                currentRepetitionsLeft = nextRepetitions
+                if (nextRepetitions == 0) {
+                    evaluateRestingMode()
+                }
+            } else {
+                currentDurationSecondsLeft = 0
+            }
+            lastNumberOfRepetitions = repetitions
+            saveRepetitionsPreference(repetitions)
+        }
+
+        val series = numberOfSeries
+        if (series != null && series != lastNumberOfSeries) {
+            val nextSeries = max(0, (currentSeriesLeft ?: 0) + series - lastNumberOfSeries)
+            currentSeriesLeft = nextSeries
+            lastNumberOfSeries = series
+            saveSeriesPreference(series)
+            if (nextSeries == 0 || (isRestMode && nextSeries <= 1)) {
+                currentRestTimeLeft = 0
+                currentDurationSecondsLeft = 0
+                currentRepetitionsLeft = 0
+                currentSeriesLeft = 0
+                if (isRestMode) {
+                    sessionHasCompletedCallback()
+                } else if (isTimerStopped) {
+                    resumeCountdowns()
+                }
+            }
+        }
+
+        val intermediate = intermediateBeepsChecked
+        if (intermediate != null && intermediate != lastIntermediateBeepsChecked) {
+            saveIntermediateBeepsPreference(intermediate)
+            lastIntermediateBeepsChecked = intermediate
+        }
+    }
+}
 
 /**
  * Keeps the runtime No-Arrows timer actions out of the screen composable.
@@ -44,6 +183,8 @@ class NoArrowSessionController(
     private val sessionDurationManager: DurationSessionController = DurationSessionController(),
     private val beepScheduler: NoArrowBeepScheduler = NoArrowBeepScheduler(soundPlayer, scope),
 ) {
+    private var lastRepetitionStartKey: String? = null
+    private var lastRestStartKey: String? = null
     fun pauseCountdowns(tickBaseTimeState: MutableState<Long>) {
         tickBaseTimeState.value = System.currentTimeMillis()
         noArrowsViewModel.action(ESignal.SIG_STOP)
@@ -60,12 +201,110 @@ class NoArrowSessionController(
 
     fun beginSession() = sessionDurationManager.beginSession()
     fun endSession() = sessionDurationManager.endSession()
+    fun playBeep() = beepScheduler.playStartBeep()
+    fun playIntermediateBeep() = beepScheduler.playIntermediateBeep()
+    fun playRestBeep() = beepScheduler.playRestBeep()
 
     fun sessionHasCompleted() {
         noArrowsViewModel.action(ESignal.SIG_COMPLETED)
         beepScheduler.playEndBeep()
         sessionDurationManager.endSession()
     }
+
+    fun calculateRestingRatio(
+        repetitionsDuration: Int,
+        repetitionsNumberPerSeries: Int?
+    ): Float {
+        val ratio: Float = if (repetitionsNumberPerSeries == null) {
+            0.5f
+        } else if (repetitionsDuration <= 20) {
+            1.1f - repetitionsDuration / 25f
+        } else {
+            (0.3f - (repetitionsDuration - 20) / 50f).coerceAtLeast(0.0f)
+        }
+        return (100f * ratio).roundToInt().toFloat() / 100f
+    }
+
+    fun calculateRestTime(
+        lastDurationSeconds: Int,
+        numberOfRepetitions: Int?
+    ): Int {
+        val ratio = calculateRestingRatio(lastDurationSeconds, numberOfRepetitions)
+        return ((numberOfRepetitions ?: 0) * lastDurationSeconds * ratio).roundToInt()
+    }
+
+    fun evaluateRestingRatio(
+        repetitionsDuration: Int,
+        repetitionsNumberPerSeries: Int?
+    ): Float = calculateRestingRatio(repetitionsDuration, repetitionsNumberPerSeries)
+
+    fun evaluateRestTime(
+        lastDurationSeconds: Int,
+        numberOfRepetitions: Int?
+    ): Int = calculateRestTime(lastDurationSeconds, numberOfRepetitions)
+
+    fun prepareSessionState(
+        state: NoArrowSessionState,
+        preparationTime: Int
+    ): NoArrowSessionState = state.copy(
+        currentPreparationSecondsLeft = preparationTime,
+        isPreparationMode = true,
+        isRestMode = false,
+        isTimerRunning = false,
+        isTimerStopped = false,
+    )
+
+    fun startCountdownState(
+        state: NoArrowSessionState
+    ): NoArrowSessionState = state.copy(
+        currentDurationSecondsLeft = state.initialDurationSeconds,
+        isPreparationMode = false,
+        isTimerRunning = true,
+        isTimerStopped = false,
+    )
+
+    fun completeSessionState(
+        state: NoArrowSessionState
+    ): NoArrowSessionState = state.copy(
+        currentDurationSecondsLeft = 0,
+        currentRepetitionsLeft = 0,
+        currentSeriesLeft = 0,
+        currentRestTimeLeft = 0,
+        isSessionCompleted = true,
+        isTimerRunning = false,
+        isTimerStopped = false,
+        isPreparationMode = false,
+        isRestMode = false,
+    )
+
+    fun startPreparationMode(initialSeconds: Int?, preparationTime: Int): Int {
+        noArrowsViewModel.action(ESignal.SIG_PREPARE)
+        return preparationTime
+    }
+
+    fun startNewSession(
+        allSelectionsMade: Boolean,
+        currentSeriesLeft: Int?,
+        numberOfSeries: Int?,
+        numberOfRepetitions: Int?,
+        initialDurationSeconds: Int?,
+        currentDurationSecondsLeft: Int?,
+        currentRepetitionsLeft: Int?,
+        preparationTime: Int
+    ): Triple<Int?, Int?, Int?> {
+        if (!allSelectionsMade) return Triple(currentSeriesLeft, currentRepetitionsLeft, currentDurationSecondsLeft)
+        val nextSeries = if (currentSeriesLeft == null || currentSeriesLeft == 0) numberOfSeries else currentSeriesLeft
+        val nextRepetitions = if (currentSeriesLeft == null || currentSeriesLeft == 0) numberOfRepetitions else currentRepetitionsLeft ?: numberOfRepetitions
+        val nextDuration = if (currentDurationSecondsLeft == null || currentDurationSecondsLeft == 0) initialDurationSeconds else currentDurationSecondsLeft
+        return Triple(nextSeries, nextRepetitions, nextDuration)
+    }
+
+    fun startCountdowns(initialDurationSeconds: Int?): Int? {
+        noArrowsViewModel.action(ESignal.SIG_START)
+        return initialDurationSeconds
+    }
+
+    //fun sessionCompleted(state: NoArrowSessionState): NoArrowSessionState = completeSessionState(state)
 
     suspend fun runTimerLoop(
         isTimerRunningProvider: () -> Boolean,
@@ -95,9 +334,6 @@ class NoArrowSessionController(
         setEndOfRestMode: () -> Unit,
         sessionHasCompletedCallback: () -> Unit,
         evaluateRestTime: () -> Int,
-        playBeep: () -> Unit,
-        playIntermediateBeep: () -> Unit,
-        playRestBeep: () -> Unit,
         keepScreenOn: (Boolean) -> Unit,
     ) {
         while (scope.coroutineContext.isActive) {
@@ -149,7 +385,19 @@ class NoArrowSessionController(
                 while (scope.coroutineContext.isActive && getCurrentSeriesLeft()!! > 0) {
                     val currentDuration = getCurrentDurationSecondsLeft()
                     val initialDuration = getInitialDurationSeconds()
-                    if (currentDuration != null && initialDuration != null && currentDuration == initialDuration) {
+                    val repetitionStartKey = listOf(
+                        getCurrentSeriesLeft(),
+                        getCurrentRepetitionsLeft(),
+                        initialDuration,
+                        currentDuration
+                    ).joinToString(":")
+                    if (
+                        currentDuration != null &&
+                        initialDuration != null &&
+                        currentDuration == initialDuration &&
+                        repetitionStartKey != lastRepetitionStartKey
+                    ) {
+                        lastRepetitionStartKey = repetitionStartKey
                         playBeep()
                     }
 
@@ -205,7 +453,14 @@ class NoArrowSessionController(
                 sessionHasCompletedCallback()
                 return
             } else if (latestRestMode) {
-                if ((getCurrentRestTimeLeft() ?: 0) == evaluateRestTime()) {
+                val restStartKey = listOf(
+                    getCurrentSeriesLeft(),
+                    getCurrentRepetitionsLeft(),
+                    getCurrentRestTimeLeft(),
+                    evaluateRestTime()
+                ).joinToString(":")
+                if ((getCurrentRestTimeLeft() ?: 0) == evaluateRestTime() && restStartKey != lastRestStartKey) {
+                    lastRestStartKey = restStartKey
                     playRestBeep()
                 }
 
@@ -235,7 +490,7 @@ class NoArrowSessionController(
     private suspend fun adjustedDelay(countDownDelay: Long, tickBaseTimeState: MutableState<Long>) {
         val t2 = System.currentTimeMillis()
         val d = countDownDelay - (t2 - tickBaseTimeState.value)
+        if (d >= 0L) delay(d)
         tickBaseTimeState.value += countDownDelay
-        delay(if (d >= 0L) d else 0L)
     }
 }
