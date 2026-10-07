@@ -296,38 +296,6 @@ fun NoArrowsTimerScreen(
                    isTimerStopped = isTimerStopped,
                    isTimerRunning = isTimerRunning,
                    isPreparationMode = isPreparationMode,
-                   saveDurationPreference = { value ->
-                       userPreferencesRepository.saveDurationPreference(value)
-                   },
-                   saveRepetitionsPreference = { value ->
-                       userPreferencesRepository.saveRepetitionsPreference(value)
-                   },
-                   saveSeriesPreference = { value ->
-                       userPreferencesRepository.saveSeriesPreference(value)
-                   },
-                   saveIntermediateBeepsPreference = { value ->
-                       userPreferencesRepository.saveIntermediateBeepsPreference(value)
-                   },
-                   evaluateRestingMode = {
-                       selectionState.currentDurationSecondsLeft = 0
-                       selectionState.currentRestTimeLeft = sessionController.evaluateRestTime(
-                           selectionState.lastDurationSeconds,
-                           selectionState.numberOfRepetitions
-                       )
-                       if (isTimerStopped) {
-                           sessionController.setFutureRestMode()
-                       } else {
-                           sessionController.setRestMode()
-                       }
-                   },
-                   sessionHasCompletedCallback = {
-                       sessionController.sessionHasCompleted()
-                       selectionState.currentDurationSecondsLeft = 0
-                       selectionState.currentRepetitionsLeft = 0
-                       selectionState.currentSeriesLeft = 0
-                       selectionState.currentRestTimeLeft = 0
-                   },
-                   resumeCountdowns = { sessionController.resumeCountdowns(selectionState.tickBaseTimeState) }
                )
                syncUiFromSelectionState()
             }

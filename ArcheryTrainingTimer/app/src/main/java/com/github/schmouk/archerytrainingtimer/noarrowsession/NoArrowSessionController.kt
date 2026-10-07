@@ -47,6 +47,9 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 
 class SelectionState {
+    var userPreferencesRepository: UserPreferencesRepository? = null
+    var controller: NoArrowSessionController? = null
+
     var selectedDurationString by mutableStateOf<String?>(null)
     var numberOfRepetitions by mutableStateOf<Int?>(null)
     var numberOfSeries by mutableStateOf<Int?>(null)
@@ -80,6 +83,8 @@ class SelectionState {
         onAutomatonStateRestored: ((EState) -> Unit)? = null,
         onPreferencesLoaded: (() -> Unit)? = null,
     ) {
+        this.userPreferencesRepository = userPreferencesRepository
+
         if (formerAutomatonState != null) {
             onAutomatonStateRestored?.invoke(formerAutomatonState)
             currentDurationSecondsLeft = formerInternalRunningValues.currentDurationSecondsLeft
@@ -127,13 +132,6 @@ class SelectionState {
         isTimerStopped: Boolean,
         isTimerRunning: Boolean = false,
         isPreparationMode: Boolean = false,
-        saveDurationPreference: suspend (String?) -> Unit,
-        saveRepetitionsPreference: suspend (Int?) -> Unit,
-        saveSeriesPreference: suspend (Int?) -> Unit,
-        saveIntermediateBeepsPreference: suspend (Boolean) -> Unit,
-        evaluateRestingMode: () -> Unit,
-        sessionHasCompletedCallback: () -> Unit,
-        resumeCountdowns: () -> Unit,
     ) {
         val isSessionActive = isTimerRunning || isRestMode || isTimerStopped || isPreparationMode
 
@@ -158,10 +156,19 @@ class SelectionState {
                 lastDurationSeconds = durationValue
 
                 if (isSessionActive && (currentDurationSecondsLeft ?: 0) <= 1 && (currentRepetitionsLeft ?: 0) <= 1) {
-                    evaluateRestingMode()
+                    currentDurationSecondsLeft = 0
+                    currentRestTimeLeft = controller?.evaluateRestTime(
+                        lastDurationSeconds,
+                        numberOfRepetitions
+                    ) ?: 0
+                    if (isTimerStopped) {
+                        controller?.setFutureRestMode()
+                    } else {
+                        controller?.setRestMode()
+                    }
                 }
 
-                saveDurationPreference(selectedValue)
+                userPreferencesRepository?.saveDurationPreference(selectedValue)
             }
         }
 
@@ -179,13 +186,22 @@ class SelectionState {
                 )
                 currentRepetitionsLeft = nextRepetitions
                 if (nextRepetitions == 0) {
-                    evaluateRestingMode()
+                    currentDurationSecondsLeft = 0
+                    currentRestTimeLeft = controller?.evaluateRestTime(
+                        lastDurationSeconds,
+                        numberOfRepetitions
+                    ) ?: 0
+                    if (isTimerStopped) {
+                        controller?.setFutureRestMode()
+                    } else {
+                        controller?.setRestMode()
+                    }
                 }
             } else {
                 currentDurationSecondsLeft = 0
             }
             lastNumberOfRepetitions = repetitions
-            saveRepetitionsPreference(repetitions)
+            userPreferencesRepository?.saveRepetitionsPreference(repetitions)
         }
 
         val series = numberOfSeries
@@ -201,21 +217,46 @@ class SelectionState {
                     currentRepetitionsLeft = 0
                     currentSeriesLeft = 0
                     if (isRestMode) {
-                        sessionHasCompletedCallback()
+                        controller?.sessionHasCompleted()
+                        currentDurationSecondsLeft = 0
+                        currentRepetitionsLeft = 0
+                        currentSeriesLeft = 0
+                        currentRestTimeLeft = 0
                     } else if (isTimerStopped) {
-                        resumeCountdowns()
+                        controller?.resumeCountdowns(tickBaseTimeState)
                     }
                 }
             }
             lastNumberOfSeries = series
-            saveSeriesPreference(series)
+            userPreferencesRepository?.saveSeriesPreference(series)
         }
 
         val intermediate = intermediateBeepsChecked
         if (intermediate != null && intermediate != lastIntermediateBeepsChecked) {
-            saveIntermediateBeepsPreference(intermediate)
+            userPreferencesRepository?.saveIntermediateBeepsPreference(intermediate)
             lastIntermediateBeepsChecked = intermediate
         }
+    }
+
+    private fun evaluateRestingMode(isTimerStopped: Boolean) {
+        currentDurationSecondsLeft = 0
+        currentRestTimeLeft = controller?.evaluateRestTime(
+            lastDurationSeconds,
+            numberOfRepetitions
+        ) ?: 0
+        if (isTimerStopped) {
+            controller?.setFutureRestMode()
+        } else {
+            controller?.setRestMode()
+        }
+    }
+
+    private fun completeSession() {
+        controller?.sessionHasCompleted()
+        currentDurationSecondsLeft = 0
+        currentRepetitionsLeft = 0
+        currentSeriesLeft = 0
+        currentRestTimeLeft = 0
     }
 
     suspend fun runTimerLoop(
@@ -239,6 +280,9 @@ class NoArrowSessionController(
     private val sessionDurationManager: DurationSessionController = DurationSessionController(),
     private val beepScheduler: NoArrowBeepScheduler = NoArrowBeepScheduler(soundPlayer, scope),
 ) {
+    init {
+        noArrowsViewModel.selectionState.controller = this
+    }
     fun pauseCountdowns(tickBaseTimeState: MutableState<Long>) {
         tickBaseTimeState.value = System.currentTimeMillis()
         noArrowsViewModel.action(ESignal.SIG_STOP)
