@@ -315,7 +315,6 @@ fun NoArrowsTimerScreen(
             LaunchedEffect(isIdleMode, isSessionCompleted) {
                if (!isIdleMode && !isSessionCompleted) {
                    selectionState.runTimerLoop(
-                       controller = sessionController,
                        keepScreenOn = { enabled ->
                            (currentLocalContext as? ComponentActivity)?.window?.let { window ->
                                if (enabled) {

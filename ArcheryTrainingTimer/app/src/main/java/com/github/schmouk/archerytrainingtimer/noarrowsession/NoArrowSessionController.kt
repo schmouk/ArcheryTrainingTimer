@@ -212,17 +212,13 @@ class SelectionState {
                 val nextSeries = max(0, (currentSeriesLeft ?: 0) + series - lastNumberOfSeries)
                 currentSeriesLeft = nextSeries
                 if (nextSeries == 0 || (isRestMode && nextSeries <= 1)) {
-                    currentRestTimeLeft = 0
-                    currentDurationSecondsLeft = 0
-                    currentRepetitionsLeft = 0
-                    currentSeriesLeft = 0
-                    if (isRestMode) {
-                        controller?.sessionHasCompleted()
+                    if (nextSeries == 0 || isRestMode) {
+                        completeSession()
+                    } else if (isTimerStopped) {
+                        currentRestTimeLeft = 0
                         currentDurationSecondsLeft = 0
                         currentRepetitionsLeft = 0
                         currentSeriesLeft = 0
-                        currentRestTimeLeft = 0
-                    } else if (isTimerStopped) {
                         controller?.resumeCountdowns(tickBaseTimeState)
                     }
                 }
@@ -251,7 +247,7 @@ class SelectionState {
         }
     }
 
-    private fun completeSession() {
+    fun completeSession() {
         controller?.sessionHasCompleted()
         currentDurationSecondsLeft = 0
         currentRepetitionsLeft = 0
@@ -260,10 +256,9 @@ class SelectionState {
     }
 
     suspend fun runTimerLoop(
-        controller: NoArrowSessionController,
         keepScreenOn: (Boolean) -> Unit,
     ) {
-        controller.runTimerLoop(
+        controller?.runTimerLoop(
             selectionState = this,
             keepScreenOn = keepScreenOn,
         )
@@ -297,8 +292,6 @@ class NoArrowSessionController(
     fun setEndOfRestMode() = noArrowsViewModel.action(ESignal.SIG_REST_OFF)
     fun setFutureRestMode() = noArrowsViewModel.action(ESignal.SIG_WILL_REST)
 
-    fun beginSession() = sessionDurationManager.beginSession()
-    fun endSession() = sessionDurationManager.endSession()
     fun playBeep() = beepScheduler.playStartBeep()
     fun playIntermediateBeep() = beepScheduler.playIntermediateBeep()
     fun playRestBeep() = beepScheduler.playRestBeep()
@@ -461,12 +454,13 @@ class NoArrowSessionController(
                             playRestBeep()
                         }
 
+                        val currentSeries = selectionState.currentSeriesLeft ?: 1
+                        val nextSeries = currentSeries - 1
                         if (nextRestTime == 0) {
-                            val currentSeries = selectionState.currentSeriesLeft ?: 1
-                            val nextSeries = currentSeries - 1
                             selectionState.currentSeriesLeft = nextSeries
                             if (nextSeries <= 0) {
-                                completeSession(selectionState)
+                                selectionState.completeSession()
+                                //completeSession(selectionState)
                                 break
                             } else {
                                 setEndOfRestMode()
@@ -476,12 +470,16 @@ class NoArrowSessionController(
                                 playBeep()
                             }
                         }
+                        else if (nextSeries <= 0) {
+                            selectionState.completeSession()
+                        }
                     } else {
                         val currentSeries = selectionState.currentSeriesLeft ?: 1
                         val nextSeries = currentSeries - 1
                         selectionState.currentSeriesLeft = nextSeries
                         if (nextSeries <= 0) {
-                            completeSession(selectionState)
+                            selectionState.completeSession()
+                            //completeSession(selectionState)
                             break
                         } else {
                             setEndOfRestMode()
@@ -522,7 +520,8 @@ class NoArrowSessionController(
                             if (nextReps <= 0) {
                                 // Series completed!
                                 if (currentSeries <= 1) {
-                                    completeSession(selectionState)
+                                    selectionState.completeSession()
+                                    //completeSession(selectionState)
                                     break
                                 } else {
                                     // Enter rest period
@@ -542,7 +541,8 @@ class NoArrowSessionController(
                         selectionState.currentRepetitionsLeft = nextReps
                         if (nextReps <= 0) {
                             if (currentSeries <= 1) {
-                                completeSession(selectionState)
+                                selectionState.completeSession()
+                                //completeSession(selectionState)
                                 break
                             } else {
                                 setRestMode()
@@ -561,14 +561,6 @@ class NoArrowSessionController(
         } finally {
             keepScreenOn(false)
         }
-    }
-
-    private fun completeSession(selectionState: SelectionState) {
-        sessionHasCompleted()
-        selectionState.currentDurationSecondsLeft = 0
-        selectionState.currentRepetitionsLeft = 0
-        selectionState.currentSeriesLeft = 0
-        selectionState.currentRestTimeLeft = 0
     }
 
     private suspend fun adjustedDelay(countDownDelay: Long, tickBaseTimeState: MutableState<Long>) {
