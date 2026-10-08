@@ -26,28 +26,18 @@ SOFTWARE.
 
 package com.github.schmouk.archerytrainingtimer.noarrowsession
 
+import com.github.schmouk.archerytrainingtimer.commons.SoundPlayer
+import kotlinx.coroutines.CoroutineScope
+
 /**
- * Immutable snapshot of the current No-Arrows session values.
- * This is intentionally kept small and UI-agnostic so the screen can use it without
- * mixing timer rules and presentation concerns.
+ * Encapsulates sound scheduling for the No-Arrows timer.
  */
-data class NoArrowSessionState(
-    val initialDurationSeconds: Int? = null,
-    val currentDurationSecondsLeft: Int? = null,
-    val currentRepetitionsLeft: Int? = null,
-    val currentSeriesLeft: Int? = null,
-    val currentRestTimeLeft: Int? = null,
-    val currentPreparationSecondsLeft: Int? = null,
-    val selectedDurationString: String? = null,
-    val numberOfRepetitions: Int? = null,
-    val numberOfSeries: Int? = null,
-    val intermediateBeepsChecked: Boolean? = null,
-    val isTimerRunning: Boolean = false,
-    val isRestMode: Boolean = false,
-    val isPreparationMode: Boolean = false,
-    val isTimerStopped: Boolean = false,
-    val isSessionCompleted: Boolean = false,
-    val endOfRestBeepTime: Int = 7,
-    val preparationTime: Int = 7,
-    val intermediateBeepsDuration: Int = 5,
-)
+class NoArrowsBeepScheduler(
+    private val soundPlayer: SoundPlayer,
+    private val viewModelScope: CoroutineScope,
+) {
+    fun playStartBeep() = soundPlayer.playBeep(viewModelScope)
+    fun playIntermediateBeep() = soundPlayer.playIntermediateBeep(viewModelScope)
+    fun playRestBeep() = soundPlayer.playRestBeep(viewModelScope)
+    fun playEndBeep() = soundPlayer.playEndBeep(viewModelScope)
+}

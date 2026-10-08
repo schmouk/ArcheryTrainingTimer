@@ -273,7 +273,7 @@ class NoArrowSessionController(
     private val soundPlayer: SoundPlayer,
     private val scope: CoroutineScope,
     private val sessionDurationManager: DurationSessionController = DurationSessionController(),
-    private val beepScheduler: NoArrowBeepScheduler = NoArrowBeepScheduler(soundPlayer, scope),
+    private val beepScheduler: NoArrowsBeepScheduler = NoArrowsBeepScheduler(soundPlayer, scope),
 ) {
     init {
         noArrowsViewModel.selectionState.controller = this
@@ -335,9 +335,9 @@ class NoArrowSessionController(
     ): Int = calculateRestTime(lastDurationSeconds, numberOfRepetitions)
 
     fun prepareSessionState(
-        state: NoArrowSessionState,
+        state: NoArrowsSessionState,
         preparationTime: Int
-    ): NoArrowSessionState = state.copy(
+    ): NoArrowsSessionState = state.copy(
         currentPreparationSecondsLeft = preparationTime,
         isPreparationMode = true,
         isRestMode = false,
@@ -346,8 +346,8 @@ class NoArrowSessionController(
     )
 
     fun startCountdownState(
-        state: NoArrowSessionState
-    ): NoArrowSessionState = state.copy(
+        state: NoArrowsSessionState
+    ): NoArrowsSessionState = state.copy(
         currentDurationSecondsLeft = state.initialDurationSeconds,
         isPreparationMode = false,
         isTimerRunning = true,
@@ -355,8 +355,8 @@ class NoArrowSessionController(
     )
 
     fun completeSessionState(
-        state: NoArrowSessionState
-    ): NoArrowSessionState = state.copy(
+        state: NoArrowsSessionState
+    ): NoArrowsSessionState = state.copy(
         currentDurationSecondsLeft = 0,
         currentRepetitionsLeft = 0,
         currentSeriesLeft = 0,

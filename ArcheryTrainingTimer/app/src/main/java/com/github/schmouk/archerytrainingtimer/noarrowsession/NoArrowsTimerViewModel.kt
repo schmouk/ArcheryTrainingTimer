@@ -31,10 +31,10 @@ import com.github.schmouk.archerytrainingtimer.ui.commons.DurationSessionControl
 
 /**
  * ViewModel for managing the state of the No Arrows Training Timer.
- * This ViewModel uses a NoArrowStateAutomaton to handle state transitions
+ * This ViewModel uses a NoArrowsStateAutomaton to handle state transitions
  * based on user actions and timer events.
  */
-class NoArrowsTimerViewModel : BaseCountdownViewModel(NoArrowStateAutomaton()) {
+class NoArrowsTimerViewModel : BaseCountdownViewModel(NoArrowsStateAutomaton()) {
     val selectionState: SelectionState = SelectionState()
     val sessionDurationManager: DurationSessionController = DurationSessionController()
 }
