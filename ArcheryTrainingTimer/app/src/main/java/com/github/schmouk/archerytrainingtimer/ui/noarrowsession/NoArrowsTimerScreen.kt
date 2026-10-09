@@ -358,10 +358,7 @@ fun NoArrowsTimerScreen(
                     selectionState.currentDurationSecondsLeft = prepared.third
                     if (allSelectionsMade()) {
                         selectionState.currentPreparationSecondsLeft = preparationTime
-                        sessionController.startPreparationMode(
-                            selectionState.initialDurationSeconds,
-                            preparationTime
-                        )
+                        sessionController.startPreparationMode()
                     }
                 }
             }

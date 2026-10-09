@@ -26,6 +26,7 @@ SOFTWARE.
 
 package com.github.schmouk.archerytrainingtimer.ui.commons
 
+import android.annotation.SuppressLint
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.Typeface
@@ -243,6 +244,7 @@ fun SeriesCountdown(
  * @param modifier: Modifier, the modifier to be applied to the BoxWithConstraints composable
  * @param boxContentAlignment: Alignment = Alignment.Center, the alignment of the content within the
  */
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun SeriesCountdownConstrainedBox(
     initialDurationSeconds: Int?,
@@ -510,6 +512,7 @@ fun TimerCountdown(
  * @param modifier: Modifier, the modifier to be applied to the BoxWithConstraints composable
  * @param boxContentAlignment: Alignment = Alignment.Center, the alignment of the content within the BoxWithConstraints
  */
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun TimerCountdownConstrainedBox(
     selectedDurationString: String?,

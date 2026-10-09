@@ -100,7 +100,7 @@ class SoundPlayer(
 
     /**
      * Plays the end beep sound for the end of the session.
-     * The sound is played 3 times with a delay of 380 milliseconds between each play.
+     * The sound is played 3 times with a delay of 280 milliseconds between each play.
      */
     fun playEndBeep(scope: CoroutineScope) = scope.launch {
         playSound(beepSoundId, 3, 280L)
@@ -142,10 +142,9 @@ class SoundPlayer(
 
             while (repeats > 0) {
                 soundPool.play(soundId, audioVolume, audioVolume, 1, 0, 1f)
-                Log.i("SoundPlayer", "Playing soundId=$soundId, repeat #$repeats")
+                //Log.i("SoundPlayer", "Playing soundId=$soundId, repeat #$repeats")
                 repeats--
-
-                if (repeats > 0 && delayMillis > 0) {
+                if (repeats > 0 && delayMillis > 0L) {
                     delay(delayMillis)
                 }
             }

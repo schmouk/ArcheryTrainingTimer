@@ -52,14 +52,10 @@ import kotlinx.coroutines.isActive
 
 class DurationSessionController {
     private var isSessionActive = mutableStateOf(false)
-    //private var sessionStartTime = 0L
-    //private var accumulatedDuration = 0L
     private var currentDurationMn: Int = 0
     private var currentDurationHr: Int = 0
 
     fun beginSession() {
-        //sessionStartTime = System.currentTimeMillis()
-        //accumulatedDuration = 0L
         currentDurationMn = 0
         currentDurationHr = 0
         isSessionActive.value = true
@@ -77,19 +73,14 @@ class DurationSessionController {
     fun updateDuration() {
         if (isSessionActive.value) {
             currentDurationMn++
-            if (currentDurationMn >= 60) {
-                currentDurationMn = 0
+            while (currentDurationMn >= 60) {
+                currentDurationMn -= 60
                 currentDurationHr++
             }
         }
     }
 
     fun getCurrentDuration(): String {
-        /*return if (isSessionActive.value) {
-            System.currentTimeMillis() - sessionStartTime
-        } else {
-            accumulatedDuration
-        }*/
         return String.format("%02d:%02d", currentDurationHr, currentDurationMn)
     }
 }
@@ -105,13 +96,11 @@ fun SessionDurationDisplay(
     LaunchedEffect(controller.isActive()) {
         while (coroutineContext.isActive) {
             if (controller.isActive()) {
-                //displayTime = formatDuration(controller.getCurrentDuration())
                 displayTime = controller.getCurrentDuration()
                 delay(60L * SECOND_DURATION_MS - 1L) // i.e. 1 minute
                 controller.updateDuration()
             } else {
                 // Update one last time when session ends
-                //displayTime = formatDuration(controller.getCurrentDuration())
                 displayTime = controller.getCurrentDuration()
                 break
             }
@@ -133,10 +122,3 @@ fun SessionDurationDisplay(
         )
     }
 }
-
-/*private fun formatDuration(durationMillis: Long): String {
-    val totalMinutes = (durationMillis / 1000 / 60).toInt()
-    val hours = totalMinutes / 60
-    val minutes = totalMinutes % 60
-    return String.format("%02d:%02d", hours, minutes)
-}*/
