@@ -92,6 +92,7 @@ fun SeriesCountdown(
     isPreparationMode: Boolean,
     isTimerRunning: Boolean,
     isTimerStopped: Boolean,
+    isSessionCompleted: Boolean,
     isDimmedDisplay: Boolean,
     timerBorderColor: Color = TimerBorderColor,
     dimmedTimerBorderColor: Color = DimmedTimerBorderColor,
@@ -184,7 +185,7 @@ fun SeriesCountdown(
         }
 
         // Series display
-        val seriesToDisplayValue = currentSeriesLeft
+        val seriesToDisplayValue = if (isSessionCompleted) 0 else currentSeriesLeft
         val seriesToDisplayString =
             seriesToDisplayValue?.toString()
                 ?: currentSeriesLeft?.toString() ?: ""
@@ -256,6 +257,7 @@ fun SeriesCountdownConstrainedBox(
     isPreparationMode: Boolean,
     isTimerRunning: Boolean,
     isTimerStopped: Boolean,
+    isSessionCompleted: Boolean,
     isDimmedDisplay: Boolean,
     textColor: Color = TimerBorderColor,
     dimmedTextColor: Color = DimmedTimerBorderColor,
@@ -287,6 +289,7 @@ fun SeriesCountdownConstrainedBox(
             isPreparationMode,
             isTimerRunning,
             isTimerStopped,
+            isSessionCompleted,
             isDimmedDisplay,
             textColor,
             dimmedTextColor,
