@@ -105,6 +105,10 @@ open class NoArrowsStateAutomaton : BaseSessionStateAutomaton() {
                         // Transition to WILL_REST state.
                         currentState = EState.STATE_WILL_REST
                     }
+                    ESignal.SIG_COMPLETED -> {
+                        // The user has modified the series number and session has now completed
+                        currentState = EState.STATE_COMPLETED
+                    }
                     else -> {
                         // No other type of signal may happen in STOPPED state.
                         // No state change occurs.
@@ -121,7 +125,7 @@ open class NoArrowsStateAutomaton : BaseSessionStateAutomaton() {
                         currentState = EState.STATE_TIMER_RUNNING
                     }
                     ESignal.SIG_COMPLETED -> {
-                        // The training session has completed all of its countdowns.
+                        // The user has modified the series number and session has now completed
                         currentState = EState.STATE_COMPLETED
                     }
                     else -> {
@@ -135,6 +139,10 @@ open class NoArrowsStateAutomaton : BaseSessionStateAutomaton() {
                     ESignal.SIG_START -> {
                         // The application has indicated that the rest period should start now.
                         currentState = EState.STATE_REST_MODE
+                    }
+                    ESignal.SIG_COMPLETED -> {
+                        // The user has modified the series number and session has now completed
+                        currentState = EState.STATE_COMPLETED
                     }
                     else -> {
                         // No other type of signal may happen in WILL_REST state.

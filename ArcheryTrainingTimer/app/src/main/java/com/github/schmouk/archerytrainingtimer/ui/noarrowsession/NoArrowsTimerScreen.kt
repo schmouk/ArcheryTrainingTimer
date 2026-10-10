@@ -78,7 +78,6 @@ import com.github.schmouk.archerytrainingtimer.commons.SoundPlayer
 import com.github.schmouk.archerytrainingtimer.commons.TimerInternalRunningState
 import com.github.schmouk.archerytrainingtimer.commons.UserPreferencesRepository
 import com.github.schmouk.archerytrainingtimer.noarrowsession.NoArrowSessionController
-import com.github.schmouk.archerytrainingtimer.noarrowsession.SelectionState
 import com.github.schmouk.archerytrainingtimer.noarrowsession.NoArrowsTimerViewModel
 import com.github.schmouk.archerytrainingtimer.services.AudioService
 import com.github.schmouk.archerytrainingtimer.ui.commons.IntermediateBeepsCheckedRow
@@ -96,7 +95,6 @@ import com.github.schmouk.archerytrainingtimer.ui.commons.SessionDurationDisplay
 import com.github.schmouk.archerytrainingtimer.ui.commons.SessionPreparationText
 import com.github.schmouk.archerytrainingtimer.ui.commons.StartButtonRow
 import com.github.schmouk.archerytrainingtimer.ui.commons.TimerCountdownConstrainedBox
-import com.github.schmouk.archerytrainingtimer.ui.commons.DurationSessionController
 import com.github.schmouk.archerytrainingtimer.ui.commons.ViewHeader
 import com.github.schmouk.archerytrainingtimer.ui.theme.*
 import com.github.schmouk.archerytrainingtimer.ui.theme.ProgressBorderColor

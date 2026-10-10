@@ -135,6 +135,10 @@ class SelectionState {
     ) {
         val isSessionActive = isTimerRunning || isRestMode || isTimerStopped || isPreparationMode
 
+        if (controller?.isSessionCompleted() == true) {
+            clearAllCurrentLeft()
+        }
+
         val selectedDurationValue = selectedDurationString
         if (selectedDurationValue != null) {
             val durationValue = selectedDurationValue.split(" ").firstOrNull()?.toIntOrNull()
@@ -211,17 +215,12 @@ class SelectionState {
             } else {
                 val nextSeries = max(0, (currentSeriesLeft ?: 0) + series - lastNumberOfSeries)
                 currentSeriesLeft = nextSeries
-                /*if (nextSeries == 0 || (isRestMode && nextSeries <= 1)) {
-                    if (nextSeries == 0 || isRestMode) {
-                        completeSession()
-                    } else if (isTimerStopped) {
-                        currentRestTimeLeft = 0
-                        currentDurationSecondsLeft = 0
-                        currentRepetitionsLeft = 0
-                        currentSeriesLeft = 0
-                        controller?.resumeCountdowns(tickBaseTimeState)
-                    }
-                }*/
+                if (nextSeries == 0) {
+                    completeSession()
+                }
+                else if (nextSeries == 1 && isRestMode) {
+                    completeSession()
+                }
             }
             lastNumberOfSeries = series
             userPreferencesRepository?.saveSeriesPreference(series)
@@ -234,7 +233,7 @@ class SelectionState {
         }
     }
 
-    private fun evaluateRestingMode(isTimerStopped: Boolean) {
+    /*private fun evaluateRestingMode(isTimerStopped: Boolean) {
         currentDurationSecondsLeft = 0
         currentRestTimeLeft = controller?.evaluateRestTime(
             lastDurationSeconds,
@@ -245,14 +244,19 @@ class SelectionState {
         } else {
             controller?.setRestMode()
         }
-    }
+    }*/
 
-    fun completeSession() {
-        controller?.sessionHasCompleted()
+    fun clearAllCurrentLeft() {
         currentDurationSecondsLeft = 0
         currentRepetitionsLeft = 0
         currentSeriesLeft = 0
         currentRestTimeLeft = 0
+        currentPreparationSecondsLeft = 0
+    }
+
+    fun completeSession() {
+        controller?.sessionHasCompleted()
+        clearAllCurrentLeft()
     }
 
     suspend fun runTimerLoop(
@@ -278,6 +282,22 @@ class NoArrowSessionController(
     init {
         noArrowsViewModel.selectionState.controller = this
     }
+
+    fun isSessionCompleted(): Boolean =
+        noArrowsViewModel?.isSessionCompleted?.value ?: false
+
+    fun isTimerRunning(): Boolean =
+        noArrowsViewModel?.isTimerRunning?.value ?: false
+
+    fun isRestMode(): Boolean =
+        noArrowsViewModel?.isRestMode?.value ?: false
+
+    fun isTimerStopped(): Boolean =
+        noArrowsViewModel?.isTimerStopped?.value ?: false
+
+    fun isPreparationMode(): Boolean =
+        noArrowsViewModel?.isPreparationMode?.value ?: false
+
     fun pauseCountdowns(tickBaseTimeState: MutableState<Long>) {
         tickBaseTimeState.value = System.currentTimeMillis()
         noArrowsViewModel.action(ESignal.SIG_STOP)
@@ -335,7 +355,7 @@ class NoArrowSessionController(
         numberOfRepetitions: Int?
     ): Int = calculateRestTime(lastDurationSeconds, numberOfRepetitions)
 
-    fun prepareSessionState(
+    /*fun prepareSessionState(
         state: NoArrowsSessionState,
         preparationTime: Int
     ): NoArrowsSessionState = state.copy(
@@ -344,18 +364,18 @@ class NoArrowSessionController(
         isRestMode = false,
         isTimerRunning = false,
         isTimerStopped = false,
-    )
+    )*/
 
-    fun startCountdownState(
+    /*fun startCountdownState(
         state: NoArrowsSessionState
     ): NoArrowsSessionState = state.copy(
         currentDurationSecondsLeft = state.initialDurationSeconds,
         isPreparationMode = false,
         isTimerRunning = true,
         isTimerStopped = false,
-    )
+    )*/
 
-    fun completeSessionState(
+    /*fun completeSessionState(
         state: NoArrowsSessionState
     ): NoArrowsSessionState = state.copy(
         currentDurationSecondsLeft = 0,
@@ -367,7 +387,7 @@ class NoArrowSessionController(
         isTimerStopped = false,
         isPreparationMode = false,
         isRestMode = false,
-    )
+    )*/
 
     fun startPreparationMode() {
         noArrowsViewModel.action(ESignal.SIG_PREPARE)
@@ -445,7 +465,7 @@ class NoArrowSessionController(
                 }
 
                 // --- 2. REST MODE ---
-                if (noArrowsViewModel.isRestMode.value) {
+                if (noArrowsViewModel.isRestMode.value ) {
                     val totalRestTime = evaluateRestTime(selectionState.lastDurationSeconds, selectionState.numberOfRepetitions)
                     val restLeft = selectionState.currentRestTimeLeft ?: totalRestTime
                     if (restLeft > 0) {
@@ -516,7 +536,7 @@ class NoArrowSessionController(
                             }
                         }
 
-                        if (nextDuration == 0) {
+                        if (nextDuration <= 0) {
                             val nextReps = currentRepetitions - 1
                             selectionState.currentRepetitionsLeft = nextReps
 
