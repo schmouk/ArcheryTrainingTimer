@@ -248,16 +248,6 @@ fun MainAppScreen(viewModel: SessionChoiceViewModel) {
                 SessionType.NO_ARROWS_PYRAMIDAL,
                 Modifier.fillMaxWidth().weight(1f)
             )
-            /*SessionRow(
-                mainImageRes = R.drawable.no_arrows_session_400,
-                onOption1Click = { viewModel.selectSessionType(SessionType.NO_ARROWS_UNIFORM) },
-                onOption2Click = { viewModel.selectSessionType(SessionType.NO_ARROWS_PYRAMIDAL) },
-                selected = selectedSession,
-                option1Type = SessionType.NO_ARROWS_UNIFORM,
-                option2Type = SessionType.NO_ARROWS_PYRAMIDAL,
-                scale = scale,
-                modifier = Modifier.fillMaxWidth().weight(1f)
-            )*/
 
             Spacer(modifier = Modifier.height((18f * scale).dp))
 
@@ -267,16 +257,6 @@ fun MainAppScreen(viewModel: SessionChoiceViewModel) {
                 SessionType.ARROWS_PYRAMIDAL,
                 Modifier.fillMaxWidth().weight(1f)
             )
-            /*SessionRow(
-                mainImageRes = R.drawable.arrows_session_400,
-                onOption1Click = { viewModel.selectSessionType(SessionType.ARROWS_UNIFORM) },
-                onOption2Click = { viewModel.selectSessionType(SessionType.ARROWS_PYRAMIDAL) },
-                selected = selectedSession,
-                option1Type = SessionType.ARROWS_UNIFORM,
-                option2Type = SessionType.ARROWS_PYRAMIDAL,
-                scale = scale,
-                modifier = Modifier.fillMaxWidth().weight(1f)
-            )*/
         }
     }
 

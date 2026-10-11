@@ -29,7 +29,7 @@ package com.github.schmouk.archerytrainingtimer.commons
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.SoundPool
-import android.util.Log
+//import android.util.Log
 
 import com.github.schmouk.archerytrainingtimer.R
 import com.github.schmouk.archerytrainingtimer.services.AudioService
@@ -56,7 +56,7 @@ class SoundPlayer(
     private var soundPoolLoaded = false
 
     private var beepSoundId: Int = 0
-    private var endBeepSoundId: Int = 0
+    //private var endBeepSoundId: Int = 0  // Notice: no more used
     private var intermediateBeepSoundId: Int = 0
 
     /**
@@ -86,7 +86,7 @@ class SoundPlayer(
 
         // Load the sounds
         beepSoundId = soundPool.load(context, R.raw.beep_short, 1)
-        endBeepSoundId = soundPool.load(context, R.raw.beep_end, 1)
+        //endBeepSoundId = soundPool.load(context, R.raw.beep_end, 1)  // Notice: no more used
         intermediateBeepSoundId = soundPool.load(context, R.raw.beep_intermediate_short, 1)
     }
 
