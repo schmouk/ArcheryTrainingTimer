@@ -34,6 +34,7 @@ import android.util.Log
 import com.github.schmouk.archerytrainingtimer.R
 import com.github.schmouk.archerytrainingtimer.services.AudioService
 
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -49,6 +50,8 @@ class SoundPlayer(
     private val context: Context,
     private val audioService: AudioService
 ) {
+    private val ready = CompletableDeferred<Unit>()
+
     private val soundPool: SoundPool
     private var soundPoolLoaded = false
 
@@ -73,6 +76,8 @@ class SoundPlayer(
         soundPool.setOnLoadCompleteListener { _, _, status ->
             if (status == 0) {
                 soundPoolLoaded = true
+                if (!ready.isCompleted)
+                    ready.complete(Unit)
                 //Log.i("SoundPlayer", "All sounds loaded successfully.")
             } else {
                 //Log.e("SoundPlayer", "Failed to load a sound, status: $status")
@@ -86,10 +91,9 @@ class SoundPlayer(
     }
 
 
-    /**
-     * Returns true if all sounds are loaded and ready to be played,or false otherwise.
-     */
-    fun isLoaded(): Boolean = soundPoolLoaded
+    private suspend fun awaitReady() {
+        if (!soundPoolLoaded) ready.await()
+    }
 
     /**
      * Plays the beep sound for the start of a repetition.
@@ -134,8 +138,11 @@ class SoundPlayer(
         repeatsCount: Int = 1,
         delayMillis: Long = 0L
     ) {
+        // Synchronization barrier to ensure all sounds are loaded before playing
+        awaitReady()
+
         // Use the shared AudioService to check if we are allowed to play a sound
-        if (soundId != 0  && repeatsCount > 0 && audioService.isAudioNotMuted() && soundPoolLoaded) {
+        if (soundId != 0  && repeatsCount > 0 && audioService.isAudioNotMuted()) {  // && soundPoolLoaded) {
 
             val audioVolume = audioService.getAudioVolumeLevel()
             var repeats = repeatsCount

@@ -217,9 +217,11 @@ class SelectionState {
                 currentSeriesLeft = nextSeries
                 if (nextSeries == 0) {
                     completeSession()
+                    //controller?.playEndBeep()
                 }
                 else if (nextSeries == 1 && isRestMode) {
                     completeSession()
+                    //controller?.playEndBeep()
                 }
             }
             lastNumberOfSeries = series
@@ -255,8 +257,8 @@ class SelectionState {
     }
 
     fun completeSession() {
-        controller?.sessionHasCompleted()
         clearAllCurrentLeft()
+        controller?.sessionHasCompleted()
     }
 
     suspend fun runTimerLoop(
@@ -433,6 +435,8 @@ class NoArrowSessionController(
                     !noArrowsViewModel.isRestMode.value &&
                     !noArrowsViewModel.isPreparationMode.value
                 ) {
+                    if (noArrowsViewModel.isSessionCompleted.value)
+                        doCompleteSession()
                     break
                 }
 
@@ -496,6 +500,7 @@ class NoArrowSessionController(
                         }
                         else if (nextSeries <= 0) {
                             doCompleteSession()
+                            break
                         }
                     } else {
                         val currentSeries = selectionState.currentSeriesLeft ?: 1
@@ -578,6 +583,13 @@ class NoArrowSessionController(
                     }
                     continue
                 }
+
+                // --- 4. COMPLETED SESSION MODE ---
+                if (noArrowsViewModel.isSessionCompleted.value) {
+                    doCompleteSession()
+                    break
+                }
+
             }
         } finally {
             keepScreenOn(false)
