@@ -137,8 +137,8 @@ fun SeriesCountdown(
         )
 
         // Draw the progress arc
-        if (!isPreparationMode) {
-            // Progress arc is not drawn in preparation mode
+        if (!isPreparationMode && !isSessionCompleted) {
+            // Progress arc is drawn in neither preparation mode nor session completed
             val totalRepetitions =
                 (numberOfRepetitions ?: 0) * (numberOfSeries ?: 0)
             val sweepAngle =
