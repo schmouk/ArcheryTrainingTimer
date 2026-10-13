@@ -24,17 +24,17 @@ OUT  OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-package com.github.schmouk.archerytrainingtimer.noarrowsession
+package com.github.schmouk.archerytrainingtimer.noarrowsession.uniformsession
 
 import com.github.schmouk.archerytrainingtimer.commons.BaseCountdownViewModel
 import com.github.schmouk.archerytrainingtimer.ui.commons.DurationSessionController
 
 /**
  * ViewModel for managing the state of the No Arrows Training Timer.
- * This ViewModel uses a NoArrowsStateAutomaton to handle state transitions
+ * This ViewModel uses a NoArrowsUniformStateAutomaton to handle state transitions
  * based on user actions and timer events.
  */
-class NoArrowsTimerViewModel : BaseCountdownViewModel(NoArrowsStateAutomaton()) {
+class NoArrowsUniformTimerViewModel : BaseCountdownViewModel(NoArrowsUniformStateAutomaton()) {
     val selectionState: SelectionState = SelectionState()
     val sessionDurationManager: DurationSessionController = DurationSessionController()
 }

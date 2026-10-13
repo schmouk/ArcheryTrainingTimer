@@ -24,7 +24,7 @@ OUT  OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-package com.github.schmouk.archerytrainingtimer.ui.noarrowsession
+package com.github.schmouk.archerytrainingtimer.ui.noarrowsession.uniformsession
 
 import android.annotation.SuppressLint
 import android.view.WindowManager
@@ -50,10 +50,8 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -78,8 +76,8 @@ import com.github.schmouk.archerytrainingtimer.commons.EState
 import com.github.schmouk.archerytrainingtimer.commons.SoundPlayer
 import com.github.schmouk.archerytrainingtimer.commons.TimerInternalRunningState
 import com.github.schmouk.archerytrainingtimer.commons.UserPreferencesRepository
-import com.github.schmouk.archerytrainingtimer.noarrowsession.NoArrowSessionController
-import com.github.schmouk.archerytrainingtimer.noarrowsession.NoArrowsTimerViewModel
+import com.github.schmouk.archerytrainingtimer.noarrowsession.uniformsession.NoArrowSessionController
+import com.github.schmouk.archerytrainingtimer.noarrowsession.uniformsession.NoArrowsUniformTimerViewModel
 import com.github.schmouk.archerytrainingtimer.services.AudioService
 import com.github.schmouk.archerytrainingtimer.ui.commons.IntermediateBeepsCheckedRow
 import com.github.schmouk.archerytrainingtimer.ui.commons.LogoImage
@@ -113,7 +111,7 @@ import kotlin.math.min
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun NoArrowsTimerScreen(
-    noArrowsViewModel: NoArrowsTimerViewModel,
+    noArrowsViewModel: NoArrowsUniformTimerViewModel,
     userPreferencesRepository: UserPreferencesRepository,
     formerAutomatonState: EState? = null,
     formerInternalRunningValues: TimerInternalRunningState = TimerInternalRunningState()

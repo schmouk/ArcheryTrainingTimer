@@ -24,7 +24,7 @@ OUT  OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-package com.github.schmouk.archerytrainingtimer.noarrowsession
+package com.github.schmouk.archerytrainingtimer.noarrowsession.uniformsession
 
 import android.content.Intent
 import android.media.AudioManager
@@ -43,14 +43,13 @@ import com.github.schmouk.archerytrainingtimer.commons.horizontalSwipeDetector
 import com.github.schmouk.archerytrainingtimer.commons.UserPreferencesRepository
 import com.github.schmouk.archerytrainingtimer.services.AudioService
 import com.github.schmouk.archerytrainingtimer.services.TaskRemovalService
-import com.github.schmouk.archerytrainingtimer.ui.noarrowsession.NoArrowsTimerScreen
+import com.github.schmouk.archerytrainingtimer.ui.noarrowsession.uniformsession.NoArrowsTimerScreen
 import com.github.schmouk.archerytrainingtimer.ui.theme.*
 
 import kotlinx.coroutines.launch
-import kotlin.math.abs
 
 
-class NoArrowsTrainingTimerActivity : ComponentActivity() {
+class NoArrowsUniformTrainingTimerActivity : ComponentActivity() {
 
     private val swipeGestureDetector by lazy {
         GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
@@ -81,9 +80,9 @@ class NoArrowsTrainingTimerActivity : ComponentActivity() {
     // Get the ViewModel instance, scoped to this Activity.
     // The Android system will create it if it doesn't exist, or re-provide
     // the existing one if, for example, the Activity is recreated due to rotation.
-    // This requires NoArrowsTimerViewModel to have a default constructor OR
+    // This requires NoArrowsUniformTimerViewModel to have a default constructor OR
     // for us to provide a ViewModelProvider.Factory if it has constructor parameters.
-    private val noArrowsTimerViewModel: NoArrowsTimerViewModel by viewModels()
+    private val noArrowsTimerViewModel: NoArrowsUniformTimerViewModel by viewModels()
 
     // --- Lifecycle Methods ---
 

@@ -24,7 +24,7 @@ OUT  OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-package com.github.schmouk.archerytrainingtimer.noarrowsession
+package com.github.schmouk.archerytrainingtimer.noarrowsession.uniformsession
 
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -275,11 +275,11 @@ class SelectionState {
  * Keeps the runtime No-Arrows timer actions out of the screen composable.
  */
 class NoArrowSessionController(
-    private val noArrowsViewModel: NoArrowsTimerViewModel,
+    private val noArrowsViewModel: NoArrowsUniformTimerViewModel,
     private val soundPlayer: SoundPlayer,
     private val scope: CoroutineScope,
     private val sessionDurationManager: DurationSessionController = DurationSessionController(),
-    private val beepScheduler: NoArrowsBeepScheduler = NoArrowsBeepScheduler(soundPlayer, scope),
+    private val beepScheduler: NoArrowsUniformBeepScheduler = NoArrowsUniformBeepScheduler(soundPlayer, scope),
 ) {
     init {
         noArrowsViewModel.selectionState.controller = this
@@ -358,9 +358,9 @@ class NoArrowSessionController(
     ): Int = calculateRestTime(lastDurationSeconds, numberOfRepetitions)
 
     /*fun prepareSessionState(
-        state: NoArrowsSessionState,
+        state: NoArrowsUniformSessionState,
         preparationTime: Int
-    ): NoArrowsSessionState = state.copy(
+    ): NoArrowsUniformSessionState = state.copy(
         currentPreparationSecondsLeft = preparationTime,
         isPreparationMode = true,
         isRestMode = false,
@@ -369,8 +369,8 @@ class NoArrowSessionController(
     )*/
 
     /*fun startCountdownState(
-        state: NoArrowsSessionState
-    ): NoArrowsSessionState = state.copy(
+        state: NoArrowsUniformSessionState
+    ): NoArrowsUniformSessionState = state.copy(
         currentDurationSecondsLeft = state.initialDurationSeconds,
         isPreparationMode = false,
         isTimerRunning = true,
@@ -378,8 +378,8 @@ class NoArrowSessionController(
     )*/
 
     /*fun completeSessionState(
-        state: NoArrowsSessionState
-    ): NoArrowsSessionState = state.copy(
+        state: NoArrowsUniformSessionState
+    ): NoArrowsUniformSessionState = state.copy(
         currentDurationSecondsLeft = 0,
         currentRepetitionsLeft = 0,
         currentSeriesLeft = 0,

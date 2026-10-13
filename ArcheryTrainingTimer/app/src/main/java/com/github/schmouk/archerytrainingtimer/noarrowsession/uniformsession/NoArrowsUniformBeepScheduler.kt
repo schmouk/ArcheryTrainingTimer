@@ -24,9 +24,20 @@ OUT  OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-package com.github.schmouk.archerytrainingtimer.noarrowsession
+package com.github.schmouk.archerytrainingtimer.noarrowsession.uniformsession
+
+import com.github.schmouk.archerytrainingtimer.commons.SoundPlayer
+import kotlinx.coroutines.CoroutineScope
 
 /**
- * This reducer logic was moved into NoArrowSessionController.kt.
- * Keeping this file intentionally empty avoids dead, duplicated reducer code.
+ * Encapsulates sound scheduling for the No-Arrows timer.
  */
+class NoArrowsUniformBeepScheduler(
+    private val soundPlayer: SoundPlayer,
+    private val viewModelScope: CoroutineScope,
+) {
+    fun playStartBeep() = soundPlayer.playBeep(viewModelScope)
+    fun playIntermediateBeep() = soundPlayer.playIntermediateBeep(viewModelScope)
+    fun playRestBeep() = soundPlayer.playRestBeep(viewModelScope)
+    fun playEndBeep() = soundPlayer.playEndBeep(viewModelScope)
+}

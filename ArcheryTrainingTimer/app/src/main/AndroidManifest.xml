@@ -53,7 +53,7 @@
 
         <!-- No Arrows Sessions Activity -->
         <activity
-            android:name=".noarrowsession.NoArrowsTrainingTimerActivity"
+            android:name=".noarrowsession.uniformsession.NoArrowsUniformTrainingTimerActivity"
             android:exported="false"
             android:theme="@style/Theme.ArcheryTrainingTimer">
             <!-- android:screenOrientation="portrait" -->

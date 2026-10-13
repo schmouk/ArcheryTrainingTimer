@@ -24,30 +24,9 @@ OUT  OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-package com.github.schmouk.archerytrainingtimer.noarrowsession
+package com.github.schmouk.archerytrainingtimer.noarrowsession.uniformsession
 
 /**
- * Immutable snapshot of the current No-Arrows session values.
- * This is intentionally kept small and UI-agnostic so the screen can use it without
- * mixing timer rules and presentation concerns.
+ * This reducer logic was moved into NoArrowUniformSessionController.kt.
+ * Keeping this file intentionally empty avoids dead, duplicated reducer code.
  */
-data class NoArrowsSessionState(
-    val initialDurationSeconds: Int? = null,
-    val currentDurationSecondsLeft: Int? = null,
-    val currentRepetitionsLeft: Int? = null,
-    val currentSeriesLeft: Int? = null,
-    val currentRestTimeLeft: Int? = null,
-    val currentPreparationSecondsLeft: Int? = null,
-    val selectedDurationString: String? = null,
-    val numberOfRepetitions: Int? = null,
-    val numberOfSeries: Int? = null,
-    val intermediateBeepsChecked: Boolean? = null,
-    val isTimerRunning: Boolean = false,
-    val isRestMode: Boolean = false,
-    val isPreparationMode: Boolean = false,
-    val isTimerStopped: Boolean = false,
-    val isSessionCompleted: Boolean = false,
-    val endOfRestBeepTime: Int = 7,
-    val preparationTime: Int = 7,
-    val intermediateBeepsDuration: Int = 5,
-)

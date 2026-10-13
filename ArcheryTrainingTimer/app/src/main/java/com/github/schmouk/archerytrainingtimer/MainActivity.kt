@@ -54,7 +54,7 @@ import kotlinx.coroutines.launch
 import com.github.schmouk.archerytrainingtimer.commons.NotImplementedSessionActivity
 import com.github.schmouk.archerytrainingtimer.commons.SessionType
 import com.github.schmouk.archerytrainingtimer.commons.UserPreferencesRepository
-import com.github.schmouk.archerytrainingtimer.noarrowsession.NoArrowsTrainingTimerActivity
+import com.github.schmouk.archerytrainingtimer.noarrowsession.uniformsession.NoArrowsUniformTrainingTimerActivity
 import com.github.schmouk.archerytrainingtimer.sessions.SessionChoiceViewModel
 import com.github.schmouk.archerytrainingtimer.ui.theme.*
 import com.github.schmouk.archerytrainingtimer.ui.utils.EFoldedPosture
@@ -124,7 +124,7 @@ fun MainAppScreen(viewModel: SessionChoiceViewModel) {
         // This check prevents launching an activity on initial composition if nothing is selected
         if (selectedSession != null) {
             val intent = when (selectedSession) {
-                SessionType.NO_ARROWS_UNIFORM -> Intent(context, NoArrowsTrainingTimerActivity::class.java)
+                SessionType.NO_ARROWS_UNIFORM -> Intent(context, NoArrowsUniformTrainingTimerActivity::class.java)
                 SessionType.NO_ARROWS_PYRAMIDAL -> Intent(context, NotImplementedSessionActivity::class.java)
                 SessionType.ARROWS_UNIFORM -> Intent(context, NotImplementedSessionActivity::class.java)
                 SessionType.ARROWS_PYRAMIDAL -> Intent(context, NotImplementedSessionActivity::class.java)
