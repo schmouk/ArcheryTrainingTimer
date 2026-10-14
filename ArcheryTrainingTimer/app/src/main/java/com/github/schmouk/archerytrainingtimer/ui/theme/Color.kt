@@ -31,8 +31,12 @@ import androidx.compose.ui.graphics.Color
 val WAYellowColor = Color(0xFF_FFE552)              // Yellow color used in the app
 val WARedColor = Color(0xFF_F65058)                 // Red color used in the app
 val WABlueColor = Color(0xFF_00B4E4)                // Blue color used in the app
-//val WABlackColor = Color(0xFF000000)                     // Notice: actually not used
+//val WABlackColor = Color(0xFF000000)              // Notice: actually not used
 val WAWhiteColor = Color(0xFF_FFFFFF)
+
+val DimmedWAYellowColor = Color(0xFF_4C4418)        // i.e. 30% of WAYellowColor
+val DimmedWARedColor = Color(0xFF_4A1816)           // i.e. 30% of WARedColor
+val DimmedWABlueColor = Color(0xFF_003644)          // i.e. 30% of WABlueColor
 
 val AppBackgroundColor = Color(0xFF_2F3133)
 val AppTimerRowBackgroundColor = Color(0xFF_111213)
@@ -42,18 +46,18 @@ val TimerDigitsColor = Color(0xFF_FFE597)           // WAWhiteColor.copy(alpha =
 val AppTitleColor = WAYellowColor
 val AppButtonColor = Color(0xFF_00B4E4)
 val AppButtonDarkerColor = Color(0xFF_17728B)       //AppButtonColor.copy(alpha = 0.38f)
-//val AppDimmedButtonColor = Color(0xFF484A4C)             // Notice: actually not used
+//val AppDimmedButtonColor = Color(0xFF484A4C)      // Notice: actually not used
 val AppButtonTextColor = Color(0xFF_33373F)
 
-val SelectedButtonBackgroundColor = AppTitleColor          // Background for selected button
+val SelectedButtonBackgroundColor = AppTitleColor   // Background for selected button
 val SelectedButtonBorderColor = WARedColor
 
 val TimerBorderColor = WAYellowColor
 val TimerPreparationColor = WARedColor
 val TimerRestColor = WABlueColor
-val ProgressBorderColor = Color(0xFF_92302C)        // i.e 60% of WARedColor
-val DimmedTimerBorderColor = Color(0xFF_4C4418)     // i.e 30% of WAYellowColor
-val DimmedProgressBorderColor = Color(0xFF_4A1816)  // i.e 30% of WARedColor
+val ProgressBorderColor = Color(0xFF_92302C)        // i.e. 60% of WARedColor
+val DimmedTimerBorderColor = DimmedWAYellowColor    // i.e. 30% of WAYellowColor
+val DimmedProgressBorderColor = DimmedWARedColor    // i.e. 30% of WARedColor
 
 val AppSurfaceContainerLow = Color(0xFF_08090A)
 val AppSurfaceContainerHigh = Color(0xFF_212325)

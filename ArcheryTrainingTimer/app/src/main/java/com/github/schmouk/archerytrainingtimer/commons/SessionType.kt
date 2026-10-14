@@ -44,6 +44,9 @@ class SessionType(val id: Int?) {
         const val KSL_SPT_ENDURANCE: Int = 31
         const val KSP_SPT_POWER_STRENGTH: Int = 32
         const val KSL_SPT_FLEXIBILITY: Int = 33
+
+        // 7s/2s Strength Validation
+        const val SEVEN_TWO_SECONDS: Int = 41
     }
 }
 

@@ -27,6 +27,7 @@
 <resources>
     <string name="app_name">ArcheryTrainingTimer</string>
     <string name="app_title">Archery Training Timer</string>
+    <string name="approx_total_count">Ungefähre Gesamtzahl der Wiederholungen:</string>
     <string name="back_button">Zurück</string>
     <string name="close_button">Aufhören</string>
     <string name="close_app_dialog_title">App schließen?</string>
