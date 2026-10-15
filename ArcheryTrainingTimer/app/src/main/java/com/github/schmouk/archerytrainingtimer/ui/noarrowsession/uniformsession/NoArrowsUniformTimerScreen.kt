@@ -72,7 +72,6 @@ import androidx.lifecycle.viewModelScope
 
 import com.github.schmouk.archerytrainingtimer.SECOND_DURATION_MS
 import com.github.schmouk.archerytrainingtimer.R
-import com.github.schmouk.archerytrainingtimer.commons.ATTStepsSlider
 import com.github.schmouk.archerytrainingtimer.commons.EState
 import com.github.schmouk.archerytrainingtimer.commons.SoundPlayer
 import com.github.schmouk.archerytrainingtimer.commons.TimerInternalRunningState
@@ -834,8 +833,6 @@ fun NoArrowsTimerScreen(
                             Modifier.align(Alignment.BottomStart)
                         )*/
                     }
-
-                    ATTStepsSlider()
 
                     // The block of selection items & related texts
                     // This block takes the remaining height

@@ -27,7 +27,7 @@
 <resources>
     <string name="app_name">ArcheryTrainingTimer</string>
     <string name="app_title">Archery Training Timer</string>
-    <string name="approx_total_count">Approx. total # of repetitions:</string>
+    <string name="approx_total_count">Approx. total # of repetitions</string>
     <string name="back_button">Back</string>
     <string name="close_button">Quit</string>
     <string name="close_app_dialog_title">Close App?</string>

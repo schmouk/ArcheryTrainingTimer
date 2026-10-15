@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.Text
@@ -100,16 +101,15 @@ fun ATTStepsSlider(
         Text(
             text = labelTitle,
             fontSize = labelFontSize.sp,
-            color = if (enabled) WABlueColor else colors.disabledThumbColor,
+            color = if (enabled) MaterialTheme.colorScheme.onBackground else colors.disabledThumbColor,
             textAlign = TextAlign.Center,
-            fontStyle = FontStyle.Italic,
             modifier = Modifier.padding(horizontal = 8.dp)
         )
 
         // --- The slider container ---
         Row(
             verticalAlignment = CenterVertically,
-            modifier = Modifier.padding(8.dp).fillMaxWidth()
+            modifier = Modifier.padding(horizontal = 8.dp).fillMaxWidth()
         ) {
             Text(
                 //text = "%.0f".format(sliderValue.floatValue),
@@ -130,8 +130,8 @@ fun ATTStepsSlider(
                 onValueChange = { sliderValue.floatValue = it },
                 onValueChangeFinished = onValueChangeFinished,
                 modifier = Modifier
-                    .height(44.dp)
-                    .weight(1f, fill = true)
+                    .height(40.dp)
+                    //.weight(1f, fill = true)
                     .fillMaxWidth()
             )
         }
