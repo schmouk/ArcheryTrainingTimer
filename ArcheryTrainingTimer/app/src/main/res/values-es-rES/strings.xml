@@ -37,6 +37,7 @@
     <string name="editor_logo">Logotipo del editor</string>
     <string name="empty_string"></string>
     <string name="intermediate_beeps">Pitidos intermedios cada 5 segundos</string>
+    <string name="min_max_reps">N.º mín./máx. de repeticiones por serie</string>
     <string name="not_implemented_session_title">tipo de sesión aún no implementado</string>
     <string name="please_select">Seleccione los controles de su sesión :</string>
     <string name="preparation">Inicio...</string>

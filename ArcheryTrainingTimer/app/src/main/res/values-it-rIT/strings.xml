@@ -37,6 +37,7 @@
     <string name="editor_logo">Logo dell\'editore</string>
     <string name="empty_string"></string>
     <string name="intermediate_beeps">Pitidos intermedios cada 5 segundos</string>
+    <string name="min_max_reps">Numero minimo/massimo di ripetizioni per serie</string>
     <string name="not_implemented_session_title">tipo di sessione non ancora implementato</string>
     <string name="please_select">Tempo di preparazione :</string>
     <string name="preparation">Inizio sessione tra </string>

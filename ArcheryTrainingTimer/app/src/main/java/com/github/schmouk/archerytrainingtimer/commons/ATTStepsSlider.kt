@@ -1,7 +1,7 @@
 /*
 MIT License
 
-Copyright (c) 2025 Philippe Schmouker, ph (dot) schmouker (at) gmail (dot) com
+Copyright (c) 2026 Philippe Schmouker, ph (dot) schmouker (at) gmail (dot) com
 
 This file is part of Android application ArcheryTrainingTimer.
 
@@ -33,7 +33,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.Text
@@ -45,7 +44,6 @@ import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -55,7 +53,6 @@ import com.github.schmouk.archerytrainingtimer.R
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppTextColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.WAYellowColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.WARedColor
-import com.github.schmouk.archerytrainingtimer.ui.theme.WABlueColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.WAWhiteColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.DimmedWAYellowColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppButtonDarkerColor
@@ -74,7 +71,9 @@ import kotlin.math.roundToInt
 fun ATTStepsSlider(
     labelTitle: String = stringResource(id = R.string.approx_total_count),
     labelFontSize: Float = 18f,
+    labelColor: Color = AppTextColor,
     valueRange: ClosedFloatingPointRange<Float> = 40f..250f,
+    sliderValue: Float = 60f,
     steps: Int = 20,
     enabled: Boolean = true,
     colors: SliderColors = SliderColors(
@@ -91,7 +90,7 @@ fun ATTStepsSlider(
     ),
     onValueChangeFinished : (() -> Unit)? = null,
 ) {
-    val sliderValue = remember { mutableFloatStateOf(60f) }
+    val sliderValue = remember { mutableFloatStateOf(sliderValue) }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -101,7 +100,7 @@ fun ATTStepsSlider(
         Text(
             text = labelTitle,
             fontSize = labelFontSize.sp,
-            color = if (enabled) MaterialTheme.colorScheme.onBackground else colors.disabledThumbColor,
+            color = if (enabled) labelColor else colors.disabledThumbColor,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(horizontal = 8.dp)
         )
@@ -112,10 +111,9 @@ fun ATTStepsSlider(
             modifier = Modifier.padding(horizontal = 8.dp).fillMaxWidth()
         ) {
             Text(
-                //text = "%.0f".format(sliderValue.floatValue),
                 text = "%3d".format(sliderValue.floatValue.roundToInt()),
                 fontSize = (1.33 * labelFontSize).sp,
-                color = if (enabled) AppTextColor else colors.disabledThumbColor,
+                color = if (enabled) labelColor else colors.disabledThumbColor,
                 textAlign = TextAlign.Start,
                 modifier = Modifier
                     .wrapContentWidth()
@@ -142,12 +140,14 @@ fun ATTStepsSlider(
 /**
  * The preview function to test displays in Android Studio
  */
-/*@Preview
+@Preview
 @Composable
 fun ATTStepsSliderPreview(
     labelTitle: String = stringResource(id = R.string.approx_total_count),
     labelFontSize: Float = 18f,
+    labelColor: Color = AppTextColor,
     valueRange: ClosedFloatingPointRange<Float> = 40f..250f,
+    sliderValue: Float = 60f,
     steps: Int = 20,
     enabled: Boolean = true,
     colors: SliderColors = SliderColors(
@@ -167,10 +167,12 @@ fun ATTStepsSliderPreview(
     ATTStepsSlider(
         labelTitle,
         labelFontSize,
+        labelColor,
         valueRange,
+        sliderValue,
         steps,
         enabled,
         colors,
         onValueChangeFinished
     )
-}*/
+}

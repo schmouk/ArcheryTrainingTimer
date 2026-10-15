@@ -37,6 +37,7 @@
     <string name="editor_logo">Editor logo</string>
     <string name="empty_string"></string>
     <string name="intermediate_beeps">Intermediate beeps every 5 seconds</string>
+    <string name="min_max_reps">Min/Max # of repetitions per set</string>
     <string name="not_implemented_session_title">not yet implemented session type</string>
     <string name="please_select">Select your session controls:</string>
     <string name="preparation">Prep...</string>

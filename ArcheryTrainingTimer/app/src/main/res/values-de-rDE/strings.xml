@@ -37,6 +37,7 @@
     <string name="editor_logo">Editor-Logo</string>
     <string name="empty_string"></string>
     <string name="intermediate_beeps">Zwischentöne alle 5 Sekunden</string>
+    <string name="min_max_reps">Min./Max. Anzahl der Wiederholungen pro Satz</string>
     <string name="not_implemented_session_title">noch nicht implementierter Sitzungstyp</string>
     <string name="please_select">Wählen Sie Ihre Sitzungssteuerung aus :</string>
     <string name="preparation">Sitzungsbeginn</string>
