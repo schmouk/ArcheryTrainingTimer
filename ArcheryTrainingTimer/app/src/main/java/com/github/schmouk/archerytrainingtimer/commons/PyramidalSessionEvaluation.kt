@@ -26,6 +26,8 @@ SOFTWARE.
 
 package com.github.schmouk.archerytrainingtimer.commons
 
+import kotlin.math.abs
+
 
 /**
  * Evaluates the sum of a range ran through with a specified step.
@@ -143,3 +145,19 @@ fun evaluatePyramidalSession(
     evaluatedSession = best ?: buildSession(listOf(repsLowCount), 1, false)
     return evaluatedSession
 }
+
+
+/**
+ * for tests purpose only
+ */
+/*fun main() {
+    for ((total, low, high) in listOf(
+        Triple(100, 5, 10),
+        Triple(60, 5, 12),
+        Triple(40, 5, 15),
+        Triple(300, 3, 6),
+    )) {
+        val s = evaluatePyramidalSession(total, low, high)
+        println("approx=$total low=$low high=$high -> $s (sum=${s.sum()})")
+    }
+}*/

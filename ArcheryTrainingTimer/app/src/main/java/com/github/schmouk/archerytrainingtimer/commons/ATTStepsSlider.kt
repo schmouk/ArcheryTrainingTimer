@@ -76,6 +76,7 @@ fun ATTStepsSlider(
     sliderValue: Float = 60f,
     steps: Int = 20,
     enabled: Boolean = true,
+    modifier: Modifier = Modifier,
     colors: SliderColors = SliderColors(
         thumbColor = WARedColor,
         activeTrackColor = WAYellowColor,
@@ -88,13 +89,14 @@ fun ATTStepsSlider(
         disabledInactiveTrackColor = Color.LightGray,
         disabledInactiveTickColor = Color.DarkGray,
     ),
+    onValueChange: ((Float) -> Unit)? = null,
     onValueChangeFinished : (() -> Unit)? = null,
 ) {
-    val sliderValue = remember { mutableFloatStateOf(sliderValue) }
+    val sliderValueState = remember { mutableFloatStateOf(sliderValue) }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth()
     ) {
         // --- The label title for this steps slider ---
         Text(
@@ -111,7 +113,7 @@ fun ATTStepsSlider(
             modifier = Modifier.padding(horizontal = 8.dp).fillMaxWidth()
         ) {
             Text(
-                text = "%3d".format(sliderValue.floatValue.roundToInt()),
+                text = "%3d".format(sliderValueState.floatValue.roundToInt()),
                 fontSize = (1.33 * labelFontSize).sp,
                 color = if (enabled) labelColor else colors.disabledThumbColor,
                 textAlign = TextAlign.Start,
@@ -120,16 +122,18 @@ fun ATTStepsSlider(
                     .padding(horizontal = 8.dp)
             )
             Slider(
-                value = sliderValue.floatValue,
+                value = sliderValueState.floatValue,
                 colors = colors,
                 enabled = enabled,
                 valueRange = valueRange,
                 steps = steps,
-                onValueChange = { sliderValue.floatValue = it },
+                onValueChange = {
+                    sliderValueState.floatValue = it
+                    onValueChange?.invoke(it)
+                },
                 onValueChangeFinished = onValueChangeFinished,
                 modifier = Modifier
                     .height(40.dp)
-                    //.weight(1f, fill = true)
                     .fillMaxWidth()
             )
         }
@@ -142,37 +146,6 @@ fun ATTStepsSlider(
  */
 @Preview
 @Composable
-fun ATTStepsSliderPreview(
-    labelTitle: String = stringResource(id = R.string.approx_total_count),
-    labelFontSize: Float = 18f,
-    labelColor: Color = AppTextColor,
-    valueRange: ClosedFloatingPointRange<Float> = 40f..250f,
-    sliderValue: Float = 60f,
-    steps: Int = 20,
-    enabled: Boolean = true,
-    colors: SliderColors = SliderColors(
-        thumbColor = WARedColor,
-        activeTrackColor = WAYellowColor,
-        activeTickColor = DimmedWAYellowColor,
-        inactiveTrackColor = AppButtonDarkerColor,
-        inactiveTickColor = WAWhiteColor,
-        disabledThumbColor = Color.Gray,
-        disabledActiveTrackColor = Color.Gray,
-        disabledActiveTickColor = Color.Gray,
-        disabledInactiveTrackColor = Color.LightGray,
-        disabledInactiveTickColor = Color.DarkGray,
-    ),
-    onValueChangeFinished : (() -> Unit)? = null,
-) {
-    ATTStepsSlider(
-        labelTitle,
-        labelFontSize,
-        labelColor,
-        valueRange,
-        sliderValue,
-        steps,
-        enabled,
-        colors,
-        onValueChangeFinished
-    )
+fun ATTStepsSliderPreview() {
+    ATTStepsSlider()
 }

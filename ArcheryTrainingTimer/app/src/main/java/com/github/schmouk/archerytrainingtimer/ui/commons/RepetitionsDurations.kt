@@ -41,12 +41,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 import com.github.schmouk.archerytrainingtimer.R
+import com.github.schmouk.archerytrainingtimer.commons.ATTStepsSlider
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppButtonDarkerColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppButtonTextColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppTextColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.SelectedButtonBackgroundColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.SelectedButtonBorderColor
 import com.github.schmouk.archerytrainingtimer.ui.utils.VerticalAdaptiveTextButton
+import kotlin.math.roundToInt
 
 
 /**
@@ -86,8 +88,6 @@ fun RepetitionsDurationButtons(
         horizontalArrangement = horizontalArrangement,
         modifier = modifier
     ) {
-        //var selectedDurationString = selectedDurationString
-
         durationOptions.forEach { durationString ->
             val isSelected = selectedDurationString == durationString
 
@@ -117,4 +117,33 @@ fun RepetitionsDurationButtons(
             )
         }
     }
+}
+
+
+@Composable
+fun RepetitionsDurationSlider(
+    labelTitle: String,
+    enabled: Boolean,
+    durationsRange: ClosedFloatingPointRange<Float> = 10f..30f,
+    steps: Float = 5f,
+    selectedDuration: Float? = null,
+    inDurationSelected: ((Float) -> Unit)? = null,
+    onDurationChangeFinished: (() -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+    val stepCount = (
+        ((durationsRange.endInclusive - durationsRange.start) / steps).roundToInt()
+            .coerceAtLeast(0)
+    )
+
+    ATTStepsSlider(
+        labelTitle = labelTitle,
+        valueRange = durationsRange,
+        sliderValue = selectedDuration ?: durationsRange.start,
+        steps = stepCount,
+        enabled = enabled,
+        onValueChange = inDurationSelected,
+        onValueChangeFinished = onDurationChangeFinished,
+        modifier = modifier
+    )
 }

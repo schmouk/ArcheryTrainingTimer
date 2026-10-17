@@ -188,12 +188,7 @@ fun VerticalAdaptiveTextButton(
 
         Text(
             text = text,
-            modifier = textModifier
-                //.fillMaxHeight() // Takes full height of button
-                .verticallyCenterOnBaseline(fontSizePx)
-                //.align(Alignment.Center)
-            //.wrapContentHeight(Alignment.CenterVertically) // Centers vertically
-            ,
+            modifier = textModifier.verticallyCenterOnBaseline(fontSizePx),
             color = textColor,
             fontSize = fontSizeSp,
             fontStyle = fontStyle,
