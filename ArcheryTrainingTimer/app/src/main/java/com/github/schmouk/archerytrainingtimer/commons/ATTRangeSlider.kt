@@ -43,13 +43,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-import com.github.schmouk.archerytrainingtimer.R
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppButtonDarkerColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppTextColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.DimmedWAYellowColor
@@ -69,7 +67,7 @@ import kotlin.math.roundToInt
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ATTRangeSlider(
-    labelTitle: String = stringResource(id = R.string.min_max_reps),
+    labelTitle: String? = null,
     labelFontSize: Float = 18f,
     labelColor: Color = AppTextColor,
     valueRange: ClosedFloatingPointRange<Float> = 3f..24f,
@@ -98,13 +96,15 @@ fun ATTRangeSlider(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Text(
-            text = labelTitle,
-            fontSize = labelFontSize.sp,
-            color = if (enabled) labelColor else colors.disabledThumbColor,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = 8.dp)
-        )
+        if (labelTitle != null) {
+            Text(
+                text = labelTitle!!,
+                fontSize = labelFontSize.sp,
+                color = if (enabled) labelColor else colors.disabledThumbColor,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+        }
 
         Row(
             verticalAlignment = CenterVertically,

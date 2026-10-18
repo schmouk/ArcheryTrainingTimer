@@ -50,7 +50,7 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
 private const val USER_PREFERENCES_TAG = "UserPreferencesRepo"
 
 data class UserPreferences(
-    val selectedDuration: String?,
+    val selectedDuration: Int?,
     val numberOfRepetitions: Int?,
     val numberOfSeries: Int?,
     val intermediateBeeps: Boolean?
@@ -68,7 +68,7 @@ class UserPreferencesRepository(context: Context) {
 
     // Define keys for each preference - No Arrows Session, Uniform Series
     private object PreferencesKeys {
-        val SELECTED_DURATION = stringPreferencesKey("selected_duration")
+        val SELECTED_DURATION = intPreferencesKey("selected_duration")
         val NUMBER_OF_REPETITIONS = intPreferencesKey("number_of_repetitions")
         val NUMBER_OF_SERIES = intPreferencesKey("number_of_series")
         val INTERMEDIATE_BEEPS = booleanPreferencesKey("intermediate_beeps")
@@ -114,7 +114,7 @@ class UserPreferencesRepository(context: Context) {
     }
 
     // Function to save only the duration preference
-    suspend fun saveDurationPreference(duration: String?) {
+    suspend fun saveDurationPreference(duration: Int?) {
         dataStore.edit { preferences ->
             if (duration == null) preferences.remove(PreferencesKeys.SELECTED_DURATION)
             else preferences[PreferencesKeys.SELECTED_DURATION] = duration

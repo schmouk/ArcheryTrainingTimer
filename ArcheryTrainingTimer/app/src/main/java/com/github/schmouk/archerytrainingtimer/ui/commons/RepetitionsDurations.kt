@@ -76,9 +76,9 @@ fun RepetitionsDurationTitle(
  */
 @Composable
 fun RepetitionsDurationButtons(
-    selectedDurationString : String?,
-    onDurationSelected: (String) -> Unit,
-    durationOptions : List<String>,
+    selectedDuration : Int?,
+    onDurationSelected: (Int) -> Unit,
+    durationOptions : List<Int>,
     borderStrokeWidth : Dp,
     durationButtonHeight : Dp,
     horizontalArrangement : Arrangement.Horizontal,
@@ -88,13 +88,13 @@ fun RepetitionsDurationButtons(
         horizontalArrangement = horizontalArrangement,
         modifier = modifier
     ) {
-        durationOptions.forEach { durationString ->
-            val isSelected = selectedDurationString == durationString
+        durationOptions.forEach { durationValue ->
+            val isSelected = selectedDuration == durationValue
 
             VerticalAdaptiveTextButton(
                 onClick = {
                     if (!isSelected)
-                        onDurationSelected(durationString)
+                        onDurationSelected(durationValue)
                 },
                 buttonModifier = Modifier.padding(borderStrokeWidth),
                 enabled = true,
@@ -107,7 +107,7 @@ fun RepetitionsDurationButtons(
                 ),
                 contentPadding = PaddingValues(horizontal = 24.dp, vertical = 0.dp),
                 forcedButtonHeightDp = durationButtonHeight,
-                text = durationString,
+                text = durationValue.toString(),  //"$durationValue s",
                 textColor = if (isSelected) AppButtonTextColor else AppTextColor,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                 textProportionalHeight = 0.33f,
@@ -122,8 +122,7 @@ fun RepetitionsDurationButtons(
 
 @Composable
 fun RepetitionsDurationSlider(
-    labelTitle: String,
-    enabled: Boolean,
+    enabled: Boolean = true,
     durationsRange: ClosedFloatingPointRange<Float> = 10f..30f,
     steps: Float = 5f,
     selectedDuration: Float? = null,
@@ -132,14 +131,16 @@ fun RepetitionsDurationSlider(
     modifier: Modifier = Modifier
 ) {
     val stepCount = (
-        ((durationsRange.endInclusive - durationsRange.start) / steps).roundToInt()
+        ((durationsRange.endInclusive - durationsRange.start) / steps - 1f).roundToInt()
             .coerceAtLeast(0)
     )
+    val midSteps: Int = stepCount / 2
+    val defaultSliderValue: Float = durationsRange.start + (steps * midSteps.toFloat())
 
     ATTStepsSlider(
-        labelTitle = labelTitle,
         valueRange = durationsRange,
-        sliderValue = selectedDuration ?: durationsRange.start,
+        sliderValue = selectedDuration ?: defaultSliderValue,
+        valueUnits = " s",
         steps = stepCount,
         enabled = enabled,
         onValueChange = inDurationSelected,

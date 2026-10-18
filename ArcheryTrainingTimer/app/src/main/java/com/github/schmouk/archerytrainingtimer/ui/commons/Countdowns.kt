@@ -334,7 +334,8 @@ fun SeriesCountdownConstrainedBox(
  */
 @Composable
 fun TimerCountdown(
-    selectedDurationString: String?,
+    //selectedDurationString: String?,
+    selectedDuration: Int?,
     initialDurationSeconds: Int?,
     currentDurationSecondsLeft: Int?,
     numberOfRepetitions: Int?,
@@ -428,8 +429,8 @@ fun TimerCountdown(
 
         val durationToDisplayString = durationToDisplayValue?.toString()
             ?: initialDurationSeconds?.toString()
-            ?: selectedDurationString?.split(" ")
-                ?.firstOrNull() ?: ""
+            ?: selectedDuration?.toString()
+            ?: ""
 
         if (durationToDisplayString.isNotEmpty()) {
             val targetTextHeightPx = circleRadius * 0.9f
@@ -518,7 +519,8 @@ fun TimerCountdown(
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun TimerCountdownConstrainedBox(
-    selectedDurationString: String?,
+    //selectedDurationString: String?,
+    selectedDuration: Int?,
     initialDurationSeconds: Int?,
     currentDurationSecondsLeft: Int?,
     numberOfRepetitions: Int?,
@@ -558,7 +560,8 @@ fun TimerCountdownConstrainedBox(
             with(LocalDensity.current) { timerStrokeWidthDp.toPx() }
 
         TimerCountdown(
-            selectedDurationString,
+            //selectedDurationString,
+            selectedDuration,
             initialDurationSeconds,
             currentDurationSecondsLeft,
             numberOfRepetitions,

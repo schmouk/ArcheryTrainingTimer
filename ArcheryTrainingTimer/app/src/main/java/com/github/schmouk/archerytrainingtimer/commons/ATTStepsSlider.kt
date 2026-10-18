@@ -69,10 +69,11 @@ import kotlin.math.roundToInt
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ATTStepsSlider(
-    labelTitle: String = stringResource(id = R.string.approx_total_count),
+    labelTitle: String? = null,
     labelFontSize: Float = 18f,
     labelColor: Color = AppTextColor,
     valueRange: ClosedFloatingPointRange<Float> = 40f..250f,
+    valueUnits: String = "",
     sliderValue: Float = 60f,
     steps: Int = 20,
     enabled: Boolean = true,
@@ -99,13 +100,15 @@ fun ATTStepsSlider(
         modifier = modifier.fillMaxWidth()
     ) {
         // --- The label title for this steps slider ---
-        Text(
-            text = labelTitle,
-            fontSize = labelFontSize.sp,
-            color = if (enabled) labelColor else colors.disabledThumbColor,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = 8.dp)
-        )
+        if (labelTitle != null) {
+            Text(
+                text = labelTitle!!,
+                fontSize = labelFontSize.sp,
+                color = if (enabled) labelColor else colors.disabledThumbColor,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+        }
 
         // --- The slider container ---
         Row(
@@ -113,7 +116,7 @@ fun ATTStepsSlider(
             modifier = Modifier.padding(horizontal = 8.dp).fillMaxWidth()
         ) {
             Text(
-                text = "%3d".format(sliderValueState.floatValue.roundToInt()),
+                text = "%3d%s".format(sliderValueState.floatValue.roundToInt(), valueUnits),
                 fontSize = (1.33 * labelFontSize).sp,
                 color = if (enabled) labelColor else colors.disabledThumbColor,
                 textAlign = TextAlign.Start,

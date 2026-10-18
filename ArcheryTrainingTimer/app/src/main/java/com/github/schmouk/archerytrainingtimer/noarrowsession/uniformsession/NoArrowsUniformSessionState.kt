@@ -38,7 +38,7 @@ data class NoArrowsUniformSessionState(
     val currentSeriesLeft: Int? = null,
     val currentRestTimeLeft: Int? = null,
     val currentPreparationSecondsLeft: Int? = null,
-    val selectedDurationString: String? = null,
+    val selectedDurationString: Int? = null,
     val numberOfRepetitions: Int? = null,
     val numberOfSeries: Int? = null,
     val intermediateBeepsChecked: Boolean? = null,

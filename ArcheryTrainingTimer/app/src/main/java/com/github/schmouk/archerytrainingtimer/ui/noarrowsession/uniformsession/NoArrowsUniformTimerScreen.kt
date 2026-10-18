@@ -82,7 +82,7 @@ import com.github.schmouk.archerytrainingtimer.services.AudioService
 import com.github.schmouk.archerytrainingtimer.ui.commons.IntermediateBeepsCheckedRow
 import com.github.schmouk.archerytrainingtimer.ui.commons.LogoImage
 import com.github.schmouk.archerytrainingtimer.ui.commons.PleaseSelectText
-import com.github.schmouk.archerytrainingtimer.ui.commons.RepetitionsDurationButtons
+import com.github.schmouk.archerytrainingtimer.ui.commons.RepetitionsDurationSlider
 import com.github.schmouk.archerytrainingtimer.ui.commons.RepetitionsDurationTitle
 import com.github.schmouk.archerytrainingtimer.ui.commons.RepetitionsNumberTitle
 import com.github.schmouk.archerytrainingtimer.ui.commons.RepetitionsSelectorWithScrollIndicators
@@ -220,7 +220,8 @@ fun NoArrowsTimerScreen(
             val generalPadding = deviceScaling(8).dp
             val mainHorizontalSpacingDp = deviceScaling(10).dp
 
-            var selectedDurationString by rememberSaveable { mutableStateOf(selectionState.selectedDurationString) }
+            //var selectedDurationString by rememberSaveable { mutableStateOf(selectionState.selectedDurationString) }
+            var selectedDuration by rememberSaveable { mutableStateOf(selectionState.selectedDuration) }
             var numberOfRepetitions by rememberSaveable { mutableStateOf(selectionState.numberOfRepetitions) }
             var numberOfSeries by rememberSaveable { mutableStateOf(selectionState.numberOfSeries) }
             var intermediateBeepsChecked by rememberSaveable { mutableStateOf(selectionState.intermediateBeepsChecked) }
@@ -228,7 +229,8 @@ fun NoArrowsTimerScreen(
             var lastDurationSeconds by rememberSaveable { mutableStateOf(selectionState.lastDurationSeconds) }
 
             fun syncUiFromSelectionState() {
-                selectedDurationString = selectionState.selectedDurationString
+                //selectedDurationString = selectionState.selectedDurationString
+                selectedDuration = selectionState.selectedDuration
                 numberOfRepetitions = selectionState.numberOfRepetitions
                 numberOfSeries = selectionState.numberOfSeries
                 intermediateBeepsChecked = selectionState.intermediateBeepsChecked
@@ -240,7 +242,6 @@ fun NoArrowsTimerScreen(
             val repetitionRange = (minRepetitions..maxRepetitions).toList()
 
             // --- Rest Mode & Series Tracking ---
-            val durationOptions = listOf("10 s", "15 s", "20 s", "30 s")
             val seriesOptions = mutableListOf(1, 2, 3, 5, 10, 15, 20, 25, 30)
 
             val restModeText = stringResource(R.string.rest_indicator)
@@ -256,9 +257,10 @@ fun NoArrowsTimerScreen(
              * Checks if all selections have been made
              */
             fun allSelectionsMade(): Boolean =
-               selectionState.selectedDurationString != null &&
-                       selectionState.numberOfRepetitions != null &&
-                       selectionState.numberOfSeries != null
+                //selectionState.selectedDurationString != null &&
+                selectionState.selectedDuration != null &&
+                selectionState.numberOfRepetitions != null &&
+                selectionState.numberOfSeries != null
 
             /**
              * Evaluates the dimmed status of displays.
@@ -291,7 +293,8 @@ fun NoArrowsTimerScreen(
              * Updates initial/current countdown values when selections change
              */
             LaunchedEffect(
-               selectionState.selectedDurationString,
+                //selectionState.selectedDurationString,
+                selectionState.selectedDuration,
                selectionState.numberOfRepetitions,
                selectionState.numberOfSeries,
                selectionState.intermediateBeepsChecked
@@ -466,7 +469,8 @@ fun NoArrowsTimerScreen(
                             ) {
                                 //-- Upper Cell (Big Timer Display) --
                                 TimerCountdownConstrainedBox(
-                                    selectedDurationString,
+                                    //selectionState.selectedDurationString,
+                                    selectedDuration,
                                     selectionState.initialDurationSeconds,
                                     selectionState.currentDurationSecondsLeft,
                                     numberOfRepetitions,
@@ -534,7 +538,8 @@ fun NoArrowsTimerScreen(
 
                             //-- Left Cell (Big Timer Display) --
                             TimerCountdownConstrainedBox(
-                                selectedDurationString,
+                                //selectedDurationString,
+                                selectedDuration,
                                 selectionState.initialDurationSeconds,
                                 selectionState.currentDurationSecondsLeft,
                                 numberOfRepetitions,
@@ -655,17 +660,18 @@ fun NoArrowsTimerScreen(
                             .align(Alignment.CenterHorizontally),
                     )
 
-                    // Then row of duration buttons
-                    RepetitionsDurationButtons(
-                        selectedDurationString = selectedDurationString,
-                        onDurationSelected = { newDuration ->
-                            selectedDurationString = newDuration
-                            selectionState.selectedDurationString = newDuration
+                    // Then the slider for the repetition duration
+                    RepetitionsDurationSlider(
+                        enabled = true,
+                        durationsRange = 10f..30f,
+                        steps = 5f,
+                        selectedDuration = selectedDuration?.toFloat(),
+                        inDurationSelected = { newDuration ->
+                            val newDurationInt = newDuration.toInt()
+                            selectedDuration = newDurationInt
+                            selectionState.selectedDuration = newDurationInt
                         },
-                        durationOptions = durationOptions,
-                        borderStrokeWidth = deviceScaling(5).dp,
-                        durationButtonHeight = selectionItemsBaseSizeDp,
-                        horizontalArrangement = Arrangement.Center,
+                        onDurationChangeFinished = null,
                         modifier = Modifier
                             .fillMaxWidth()
                             .wrapContentHeight()

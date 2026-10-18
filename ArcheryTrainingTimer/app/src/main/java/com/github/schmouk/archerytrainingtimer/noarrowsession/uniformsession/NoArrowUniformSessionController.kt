@@ -50,7 +50,8 @@ class SelectionState {
     var userPreferencesRepository: UserPreferencesRepository? = null
     var controller: NoArrowSessionController? = null
 
-    var selectedDurationString by mutableStateOf<String?>(null)
+    //var selectedDurationString by mutableStateOf<Int?>(null)
+    var selectedDuration by mutableStateOf<Int?>(null)
     var numberOfRepetitions by mutableStateOf<Int?>(null)
     var numberOfSeries by mutableStateOf<Int?>(null)
     var intermediateBeepsChecked by mutableStateOf<Boolean?>(null)
@@ -96,9 +97,10 @@ class SelectionState {
         userPreferencesRepository.saveSessionType(null)
 
         userPreferencesRepository.userPreferencesFlow.collect { loadedPrefs ->
-            val durationValue = loadedPrefs.selectedDuration?.split(" ")?.firstOrNull()?.toIntOrNull()
+            val durationValue = loadedPrefs.selectedDuration  //?.split(" ")?.firstOrNull()?.toIntOrNull()
 
-            selectedDurationString = loadedPrefs.selectedDuration
+            //selectedDurationString = loadedPrefs.selectedDuration
+            selectedDuration = loadedPrefs.selectedDuration
             numberOfRepetitions = loadedPrefs.numberOfRepetitions
             numberOfSeries = loadedPrefs.numberOfSeries
             intermediateBeepsChecked = loadedPrefs.intermediateBeeps
@@ -139,9 +141,43 @@ class SelectionState {
             clearAllCurrentLeft()
         }
 
-        val selectedDurationValue = selectedDurationString
+        val selectedDurationValue = selectedDuration
+        if (selectedDurationValue != null && selectedDurationValue != lastDurationSeconds) {
+            initialDurationSeconds = selectedDurationValue
+            currentDurationSecondsLeft = if (!isSessionActive) {
+                selectedDurationValue
+            } else if (isRestMode) {
+                selectedDurationValue
+            } else {
+                min(
+                    max(
+                        1,
+                        (currentDurationSecondsLeft ?: 0) + selectedDurationValue - lastDurationSeconds
+                    ),
+                    selectedDurationValue
+                )
+            }
+            lastDurationSeconds = selectedDurationValue
+
+            if (isSessionActive && (currentDurationSecondsLeft ?: 0) <= 1 && (currentRepetitionsLeft ?: 0) <= 1) {
+                currentDurationSecondsLeft = 0
+                currentRestTimeLeft = controller?.evaluateRestTime(
+                    lastDurationSeconds,
+                    numberOfRepetitions
+                ) ?: 0
+                if (isTimerStopped) {
+                    controller?.setFutureRestMode()
+                } else {
+                    controller?.setRestMode()
+                }
+            }
+
+            userPreferencesRepository?.saveDurationPreference(selectedDurationValue)
+        }
+
+        /*val selectedDurationValue = selectedDuration  //selectedDurationString
         if (selectedDurationValue != null) {
-            val durationValue = selectedDurationValue.split(" ").firstOrNull()?.toIntOrNull()
+            val durationValue = .split(" ").firstOrNull()?.toIntOrNull()
             if (durationValue != null && durationValue != lastDurationSeconds) {
                 initialDurationSeconds = durationValue
                 currentDurationSecondsLeft = if (!isSessionActive) {
@@ -174,7 +210,7 @@ class SelectionState {
 
                 userPreferencesRepository?.saveDurationPreference(selectedDurationValue)
             }
-        }
+        }*/
 
         val repetitions = numberOfRepetitions
         if (repetitions != null && repetitions != lastNumberOfRepetitions) {
