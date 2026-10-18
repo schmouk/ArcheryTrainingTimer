@@ -308,7 +308,7 @@ fun SeriesCountdownConstrainedBox(
 /**
  * The graphical entity for timer count-down
  *
- * @param selectedDurationString: String?, the currently selected duration string value
+ * @param selectedDuration: Int?, the currently selected duration integer value
  * @param initialDurationSeconds: Int?, the currently selected durations
  * @param currentDurationSecondsLeft: Int?, the actual seconds left before end of current repetition
  * @param numberOfRepetitions: Int?, the currently selected number of repetitions in series
@@ -490,7 +490,7 @@ fun TimerCountdown(
  * A BoxWithConstraints composable that contains the TimerCountdown composable,
  * ensuring that the timer fits within the available space while maintaining its aspect ratio.
  *
- * @param selectedDurationString: String?, the currently selected duration string value
+ * @param selectedDuration: Int?, the currently selected duration integer value
  * @param initialDurationSeconds: Int?, the currently selected durations
  * @param currentDurationSecondsLeft: Int?, the actual seconds left before end of current repetition
  * @param numberOfRepetitions: Int?, the currently selected number of repetitions in series

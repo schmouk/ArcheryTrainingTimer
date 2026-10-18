@@ -37,6 +37,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -93,7 +94,13 @@ fun ATTStepsSlider(
     onValueChange: ((Float) -> Unit)? = null,
     onValueChangeFinished : (() -> Unit)? = null,
 ) {
-    val sliderValueState = remember { mutableFloatStateOf(sliderValue) }
+    //val sliderValueState = remember { mutableFloatStateOf(sliderValue) }
+    var sliderValueState = remember(sliderValue) { mutableFloatStateOf(sliderValue) }
+
+    LaunchedEffect(sliderValue) {
+        sliderValueState.floatValue = sliderValue.coerceIn(valueRange)
+    }
+
     val steps: Int = ((valueRange.endInclusive - valueRange.start) / stepsGap - 1f)
                         .roundToInt()
                         .coerceAtLeast(0)
@@ -134,10 +141,11 @@ fun ATTStepsSlider(
                 valueRange = valueRange,
                 steps = steps,
                 onValueChange = {
-                    sliderValueState.floatValue = it.coerceIn(
+                    val newSliderValue: Float = it.coerceIn(
                         valueRange.start+stepsGap..valueRange.endInclusive-stepsGap
                     )
-                    onValueChange?.invoke(sliderValueState.floatValue)
+                    sliderValueState.floatValue = newSliderValue
+                    onValueChange?.invoke(newSliderValue)
                 },
                 onValueChangeFinished = onValueChangeFinished,
                 modifier = Modifier

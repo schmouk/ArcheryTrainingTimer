@@ -100,7 +100,7 @@ class SelectionState {
             val durationValue = loadedPrefs.selectedDuration  //?.split(" ")?.firstOrNull()?.toIntOrNull()
 
             //selectedDurationString = loadedPrefs.selectedDuration
-            selectedDuration = loadedPrefs.selectedDuration
+            selectedDuration = durationValue  //loadedPrefs.selectedDuration
             numberOfRepetitions = loadedPrefs.numberOfRepetitions
             numberOfSeries = loadedPrefs.numberOfSeries
             intermediateBeepsChecked = loadedPrefs.intermediateBeeps

@@ -69,6 +69,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 
 import com.github.schmouk.archerytrainingtimer.SECOND_DURATION_MS
 import com.github.schmouk.archerytrainingtimer.R
@@ -103,6 +104,7 @@ import com.github.schmouk.archerytrainingtimer.ui.utils.detectDeviceFoldedPostur
 import com.github.schmouk.archerytrainingtimer.ui.utils.EFoldedPosture
 
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 
 // Props for NoArrowsTimerScreen
@@ -667,11 +669,13 @@ fun NoArrowsTimerScreen(
                         stepsGap = 5f,
                         selectedDuration = selectedDuration?.toFloat(),
                         inDurationSelected = { newDuration ->
-                            val newDurationInt = newDuration.toInt()
-                            selectedDuration = newDurationInt
-                            selectionState.selectedDuration = newDurationInt
+                            selectionState.selectedDuration = newDuration.roundToInt()
                         },
-                        onDurationChangeFinished = null,
+                        onDurationChangeFinished = {
+                            noArrowsViewModel.viewModelScope.launch {
+                                userPreferencesRepository.saveDurationPreference(selectedDuration)
+                            }
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .wrapContentHeight()
