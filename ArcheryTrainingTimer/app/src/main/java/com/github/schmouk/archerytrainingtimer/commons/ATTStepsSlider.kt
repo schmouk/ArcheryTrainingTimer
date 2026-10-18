@@ -75,7 +75,7 @@ fun ATTStepsSlider(
     valueRange: ClosedFloatingPointRange<Float> = 40f..250f,
     valueUnits: String = "",
     sliderValue: Float = 60f,
-    steps: Int = 20,
+    stepsGap: Float = 10f,
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
     colors: SliderColors = SliderColors(
@@ -94,6 +94,9 @@ fun ATTStepsSlider(
     onValueChangeFinished : (() -> Unit)? = null,
 ) {
     val sliderValueState = remember { mutableFloatStateOf(sliderValue) }
+    val steps: Int = ((valueRange.endInclusive - valueRange.start) / stepsGap - 1f)
+                        .roundToInt()
+                        .coerceAtLeast(0)
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -117,7 +120,7 @@ fun ATTStepsSlider(
         ) {
             Text(
                 text = "%3d%s".format(sliderValueState.floatValue.roundToInt(), valueUnits),
-                fontSize = (1.33 * labelFontSize).sp,
+                fontSize = (1.1f * labelFontSize).sp,
                 color = if (enabled) labelColor else colors.disabledThumbColor,
                 textAlign = TextAlign.Start,
                 modifier = Modifier
@@ -131,8 +134,10 @@ fun ATTStepsSlider(
                 valueRange = valueRange,
                 steps = steps,
                 onValueChange = {
-                    sliderValueState.floatValue = it
-                    onValueChange?.invoke(it)
+                    sliderValueState.floatValue = it.coerceIn(
+                        valueRange.start+stepsGap..valueRange.endInclusive-stepsGap
+                    )
+                    onValueChange?.invoke(sliderValueState.floatValue)
                 },
                 onValueChangeFinished = onValueChangeFinished,
                 modifier = Modifier

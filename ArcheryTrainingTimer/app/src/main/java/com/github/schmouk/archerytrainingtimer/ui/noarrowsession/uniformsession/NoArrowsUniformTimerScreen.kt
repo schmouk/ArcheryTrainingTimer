@@ -663,8 +663,8 @@ fun NoArrowsTimerScreen(
                     // Then the slider for the repetition duration
                     RepetitionsDurationSlider(
                         enabled = true,
-                        durationsRange = 10f..30f,
-                        steps = 5f,
+                        durationsRange = 5f..35f,
+                        stepsGap = 5f,
                         selectedDuration = selectedDuration?.toFloat(),
                         inDurationSelected = { newDuration ->
                             val newDurationInt = newDuration.toInt()

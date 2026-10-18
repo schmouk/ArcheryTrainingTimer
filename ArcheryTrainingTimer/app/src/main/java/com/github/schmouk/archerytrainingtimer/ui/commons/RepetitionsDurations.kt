@@ -124,24 +124,24 @@ fun RepetitionsDurationButtons(
 fun RepetitionsDurationSlider(
     enabled: Boolean = true,
     durationsRange: ClosedFloatingPointRange<Float> = 10f..30f,
-    steps: Float = 5f,
+    stepsGap: Float = 5f,
     selectedDuration: Float? = null,
     inDurationSelected: ((Float) -> Unit)? = null,
     onDurationChangeFinished: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val stepCount = (
-        ((durationsRange.endInclusive - durationsRange.start) / steps - 1f).roundToInt()
+        ((durationsRange.endInclusive - durationsRange.start) / stepsGap - 1f).roundToInt()
             .coerceAtLeast(0)
     )
-    val midSteps: Int = stepCount / 2
-    val defaultSliderValue: Float = durationsRange.start + (steps * midSteps.toFloat())
+    val midSteps: Int = (stepCount + 1) / 2
+    val defaultSliderValue: Float = durationsRange.start + (stepsGap * midSteps.toFloat())
 
     ATTStepsSlider(
         valueRange = durationsRange,
         sliderValue = selectedDuration ?: defaultSliderValue,
         valueUnits = " s",
-        steps = stepCount,
+        stepsGap = stepsGap,
         enabled = enabled,
         onValueChange = inDurationSelected,
         onValueChangeFinished = onDurationChangeFinished,
