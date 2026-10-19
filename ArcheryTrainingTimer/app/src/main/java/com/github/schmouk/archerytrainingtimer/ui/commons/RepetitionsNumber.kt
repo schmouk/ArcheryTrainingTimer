@@ -67,6 +67,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 import com.github.schmouk.archerytrainingtimer.R
+import com.github.schmouk.archerytrainingtimer.commons.ATTStopsRangeSlider
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppButtonDarkerColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppButtonTextColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppTextColor
@@ -75,6 +76,7 @@ import com.github.schmouk.archerytrainingtimer.ui.theme.SelectedButtonBorderColo
 import com.github.schmouk.archerytrainingtimer.ui.utils.rememberFullyVisibleItemIndices
 
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 
 /**
@@ -309,3 +311,38 @@ fun RepetitionsSelectorWithScrollIndicators(
         }
     }
 }
+
+
+/**
+ * The slider for the selection of repetitions duration
+ */
+/*@Composable
+fun RepetitionsNumberSlider(
+    enabled: Boolean = true,
+    durationsRange: ClosedFloatingPointRange<Float> = 3f..15f,
+    stepsGap: Float = 1f,
+    selectedNumber: Float? = null,
+    inNumberSelected: ((Float) -> Unit)? = null,
+    onNumberChangeFinished: (() -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+    val stepCount = (
+            ((durationsRange.endInclusive - durationsRange.start) / stepsGap - 1f).roundToInt()
+                .coerceAtLeast(0)
+            )
+    val midSteps: Int = (stepCount + 1) / 2
+    val defaultSliderValue: Float = durationsRange.start + (stepsGap * midSteps.toFloat())
+
+    ATTStopsRangeSlider(
+        valueRange = durationsRange,
+        sliderValue = selectedDuration ?: defaultSliderValue,
+        valueUnits = " s",
+        stepsGap = stepsGap,
+        enabled = enabled,
+        showStopsValues = true,
+        oneOverNStopsValues = 1,
+        onValueChange = inDurationSelected,
+        onValueChangeFinished = onDurationChangeFinished,
+        modifier = modifier
+    )
+}*/

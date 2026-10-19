@@ -70,7 +70,7 @@ import kotlin.math.roundToInt
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ATTStepsSlider(
+fun ATTStopsRangeSlider(
     labelTitle: String? = null,
     labelFontSize: Float = 18f,
     labelColor: Color = AppTextColor,
@@ -78,6 +78,7 @@ fun ATTStepsSlider(
     valueUnits: String = "",
     sliderValue: Float = 60f,
     stepsGap: Float = 10f,
+    sliderHeight: Dp = 40.dp,  //64.dp,  //
     enabled: Boolean = true,
     showStopsValues: Boolean = true,
     oneOverNStopsValues: Int = 1,
@@ -136,7 +137,10 @@ fun ATTStepsSlider(
                 textAlign = TextAlign.Start,
                 modifier = Modifier
                     .wrapContentWidth()
-                    .padding(start = 8.dp, end = 8.dp, bottom = 16.dp)
+                    .padding(
+                        start = 8.dp, end = 8.dp,
+                        bottom = (sliderHeight.value * 0.4f).dp  //sliderHeight - 24.dp  //16.dp
+                    )
             )
 
             // The slider then, with maybe its stops labels
@@ -157,7 +161,7 @@ fun ATTStepsSlider(
                     },
                     onValueChangeFinished = onValueChangeFinished,
                     modifier = Modifier
-                        .height(40.dp)
+                        .height(sliderHeight)
                         .fillMaxWidth()
                 )
 
@@ -178,10 +182,10 @@ fun ATTStepsSlider(
 
                     DisplaySpotsLabels(
                         labels = stopsLabels,
-                        thumbSize = 24.dp,
+                        thumbSize = sliderHeight - 16.dp,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 32.dp)
+                            .padding(top = sliderHeight - 8.dp)
                     )
                 }
             }
@@ -217,7 +221,8 @@ private fun DisplaySpotsLabels(
             it.measure(constraints.copy(minWidth = 0, minHeight = 0))
         }
         val thumbPx = thumbSize.roundToPx()
-        // The track spans from thumbRadius to (width - thumbRadius)
+
+        // The track spans from thumbPx to (width - thumbPx)
         val trackWidth = (constraints.maxWidth - thumbPx).coerceAtLeast(0)
         val last = (placeables.size - 1).coerceAtLeast(1)
 
@@ -226,7 +231,7 @@ private fun DisplaySpotsLabels(
                 val centerX = thumbPx / 2f + trackWidth * i / last
                 p.placeRelative(
                     x = (centerX - p.width / 2f).roundToInt(),
-                    y = -labelFontSize.roundToInt() - 3
+                    y = -labelFontSize.roundToInt() - (thumbSize.value / 13f).roundToInt()
                 )
             }
         }
@@ -239,6 +244,6 @@ private fun DisplaySpotsLabels(
  */
 @Preview
 @Composable
-fun ATTStepsSliderPreview() {
-    ATTStepsSlider()
+fun ATTStopsRangeSliderPreview() {
+    ATTStopsRangeSlider()
 }

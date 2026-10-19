@@ -683,7 +683,7 @@ fun NoArrowsTimerScreen(
 
 
                     //-- Shows the block for the selection of number of repetitions --
-                    Spacer(modifier = Modifier.height(majorSpacerHeight))
+                    //Spacer(modifier = Modifier.height(majorSpacerHeight))
 
                     // The block title for repetitions numbers
                     RepetitionsNumberTitle(
