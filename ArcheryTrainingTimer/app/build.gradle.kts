@@ -156,6 +156,7 @@ dependencies {
 
     //-- Tooling for Previews (optional but very helpful)
     implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation(libs.androidx.compose.remote.creation.core)
     implementation(libs.androidx.ui.unit)
     debugImplementation("androidx.compose.ui:ui-tooling") // For tools like Layout Inspector
 

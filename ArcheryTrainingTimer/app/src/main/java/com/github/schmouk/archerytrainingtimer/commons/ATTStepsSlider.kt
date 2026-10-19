@@ -26,6 +26,7 @@ SOFTWARE.
 
 package com.github.schmouk.archerytrainingtimer.commons
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -44,12 +45,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.github.schmouk.archerytrainingtimer.R
 
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppTextColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.WAYellowColor
@@ -78,6 +79,8 @@ fun ATTStepsSlider(
     sliderValue: Float = 60f,
     stepsGap: Float = 10f,
     enabled: Boolean = true,
+    showStopsValues: Boolean = true,
+    oneOverNStopsValues: Int = 1,
     modifier: Modifier = Modifier,
     colors: SliderColors = SliderColors(
         thumbColor = WARedColor,
@@ -125,6 +128,7 @@ fun ATTStepsSlider(
             verticalAlignment = CenterVertically,
             modifier = Modifier.padding(horizontal = 8.dp).fillMaxWidth()
         ) {
+            // The selected value text at start side of the row
             Text(
                 text = "%3d%s".format(sliderValueState.floatValue.roundToInt(), valueUnits),
                 fontSize = (1.1f * labelFontSize).sp,
@@ -132,26 +136,99 @@ fun ATTStepsSlider(
                 textAlign = TextAlign.Start,
                 modifier = Modifier
                     .wrapContentWidth()
-                    .padding(horizontal = 8.dp)
+                    .padding(start = 8.dp, end = 8.dp, bottom = 16.dp)
             )
-            Slider(
-                value = sliderValueState.floatValue,
-                colors = colors,
-                enabled = enabled,
-                valueRange = valueRange,
-                steps = steps,
-                onValueChange = {
-                    val newSliderValue: Float = it.coerceIn(
-                        valueRange.start+stepsGap..valueRange.endInclusive-stepsGap
+
+            // The slider then, with maybe its stops labels
+            Box(modifier = modifier.fillMaxWidth()) {
+                // The slider first
+                Slider(
+                    value = sliderValueState.floatValue,
+                    colors = colors,
+                    enabled = enabled,
+                    valueRange = valueRange,
+                    steps = steps,
+                    onValueChange = {
+                        val newSliderValue: Float = it.coerceIn(
+                            valueRange.start+stepsGap..valueRange.endInclusive-stepsGap
+                        )
+                        sliderValueState.floatValue = newSliderValue
+                        onValueChange?.invoke(newSliderValue)
+                    },
+                    onValueChangeFinished = onValueChangeFinished,
+                    modifier = Modifier
+                        .height(40.dp)
+                        .fillMaxWidth()
+                )
+
+                // Then the maybe spots labels
+                if (showStopsValues) {
+                    val stopsLabels = mutableListOf<String>()
+                    val stepSize = stepsGap * oneOverNStopsValues.toFloat()
+                    var currentValue = valueRange.start
+                    while (currentValue <= valueRange.endInclusive) {
+                        if (currentValue == valueRange.start ||
+                            currentValue == valueRange.endInclusive)
+                            stopsLabels += ""
+                        else
+                            stopsLabels.add("%3d".format(currentValue.roundToInt()))
+
+                        currentValue += stepSize
+                    }
+
+                    DisplaySpotsLabels(
+                        labels = stopsLabels,
+                        thumbSize = 24.dp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 32.dp)
                     )
-                    sliderValueState.floatValue = newSliderValue
-                    onValueChange?.invoke(newSliderValue)
-                },
-                onValueChangeFinished = onValueChangeFinished,
-                modifier = Modifier
-                    .height(40.dp)
-                    .fillMaxWidth()
-            )
+                }
+            }
+        }
+    }
+}
+
+
+/**
+ * The stops labels displayed in the slider
+ */
+@Composable
+private fun DisplaySpotsLabels(
+    labels: List<String>,
+    labelFontSize: Float = 9f,
+    thumbSize: Dp,
+    modifier: Modifier = Modifier,
+) {
+    Layout(
+        modifier = modifier,
+        content = {
+            labels.forEach { label ->
+                Text(
+                    text = label,
+                    fontSize = labelFontSize.sp,
+                    maxLines = 1,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        },
+    ) { measurables, constraints ->
+        val placeables = measurables.map {
+            it.measure(constraints.copy(minWidth = 0, minHeight = 0))
+        }
+        val thumbPx = thumbSize.roundToPx()
+        // The track spans from thumbRadius to (width - thumbRadius)
+        val trackWidth = (constraints.maxWidth - thumbPx).coerceAtLeast(0)
+        val last = (placeables.size - 1).coerceAtLeast(1)
+
+        layout(constraints.maxWidth, placeables.maxOfOrNull { it.height } ?: 0) {
+            placeables.forEachIndexed { i, p ->
+                val centerX = thumbPx / 2f + trackWidth * i / last
+                p.placeRelative(
+                    x = (centerX - p.width / 2f).roundToInt(),
+                    y = -labelFontSize.roundToInt() - 3
+                )
+            }
         }
     }
 }
