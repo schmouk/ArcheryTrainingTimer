@@ -67,7 +67,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 import com.github.schmouk.archerytrainingtimer.R
-import com.github.schmouk.archerytrainingtimer.commons.ATTStopsRangeSlider
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppButtonDarkerColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppButtonTextColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppTextColor
@@ -76,7 +75,6 @@ import com.github.schmouk.archerytrainingtimer.ui.theme.SelectedButtonBorderColo
 import com.github.schmouk.archerytrainingtimer.ui.utils.rememberFullyVisibleItemIndices
 
 import kotlinx.coroutines.launch
-import kotlin.math.roundToInt
 
 
 /**

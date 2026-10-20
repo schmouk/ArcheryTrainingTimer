@@ -48,7 +48,6 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -70,7 +69,7 @@ import kotlin.math.roundToInt
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ATTStopsRangeSlider(
+fun ATTStopsSlider(
     modifier: Modifier = Modifier,
     labelTitle: String? = null,
     labelFontSize: Float = 18f,
@@ -217,17 +216,17 @@ private fun DisplaySpotsLabels(
             }
         },
     ) { measurables, constraints ->
-        val placeables = measurables.map {
+        val placeable = measurables.map {
             it.measure(constraints.copy(minWidth = 0, minHeight = 0))
         }
         val thumbPx = 24.dp.roundToPx()
 
         // The track spans from thumbPx to (width - thumbPx)
         val trackWidth = (constraints.maxWidth - thumbPx).coerceAtLeast(0)
-        val last = (placeables.size - 1).coerceAtLeast(1)
+        val last = (placeable.size - 1).coerceAtLeast(1)
 
-        layout(constraints.maxWidth, placeables.maxOfOrNull { it.height } ?: 0) {
-            placeables.forEachIndexed { i, p ->
+        layout(constraints.maxWidth, placeable.maxOfOrNull { it.height } ?: 0) {
+            placeable.forEachIndexed { i, p ->
                 val centerX = thumbPx / 2f + trackWidth * i / last
                 p.placeRelative(
                     x = (centerX - p.width / 2f).roundToInt(),
@@ -245,5 +244,5 @@ private fun DisplaySpotsLabels(
 @Preview
 @Composable
 fun ATTStopsRangeSliderPreview() {
-    ATTStopsRangeSlider()
+    ATTStopsSlider()
 }
