@@ -146,7 +146,7 @@ fun RepetitionsDurationSlider(
         valueUnits = " s",
         stepsGap = stepsGap,
         enabled = enabled,
-        showStopsValues = true,
+        showStopsValues = true,  //false,  //
         oneOverNStopsValues = 1,
         onValueChange = inDurationSelected,
         onValueChangeFinished = onDurationChangeFinished,

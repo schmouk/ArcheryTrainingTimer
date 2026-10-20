@@ -42,13 +42,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -71,6 +71,7 @@ import kotlin.math.roundToInt
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ATTStopsRangeSlider(
+    modifier: Modifier = Modifier,
     labelTitle: String? = null,
     labelFontSize: Float = 18f,
     labelColor: Color = AppTextColor,
@@ -78,11 +79,10 @@ fun ATTStopsRangeSlider(
     valueUnits: String = "",
     sliderValue: Float = 60f,
     stepsGap: Float = 10f,
-    sliderHeight: Dp = 40.dp,  //64.dp,  //
+    sliderHeight: Dp = 40.dp,
     enabled: Boolean = true,
     showStopsValues: Boolean = true,
     oneOverNStopsValues: Int = 1,
-    modifier: Modifier = Modifier,
     colors: SliderColors = SliderColors(
         thumbColor = WARedColor,
         activeTrackColor = WAYellowColor,
@@ -99,7 +99,8 @@ fun ATTStopsRangeSlider(
     onValueChangeFinished : (() -> Unit)? = null,
 ) {
     //val sliderValueState = remember { mutableFloatStateOf(sliderValue) }
-    var sliderValueState = remember(sliderValue) { mutableFloatStateOf(sliderValue) }
+    val sliderValueState = remember(sliderValue) { mutableFloatStateOf(sliderValue) }
+    val sliderHeightDp = sliderHeight.coerceIn(24.dp, 44.dp)
 
     LaunchedEffect(sliderValue) {
         sliderValueState.floatValue = sliderValue.coerceIn(valueRange)
@@ -116,7 +117,7 @@ fun ATTStopsRangeSlider(
         // --- The label title for this steps slider ---
         if (labelTitle != null) {
             Text(
-                text = labelTitle!!,
+                text = labelTitle,
                 fontSize = labelFontSize.sp,
                 color = if (enabled) labelColor else colors.disabledThumbColor,
                 textAlign = TextAlign.Center,
@@ -126,20 +127,21 @@ fun ATTStopsRangeSlider(
 
         // --- The slider container ---
         Row(
-            verticalAlignment = CenterVertically,
+            //verticalAlignment = Alignment.CenterVertically, //Alignment.Bottom,
             modifier = Modifier.padding(horizontal = 8.dp).fillMaxWidth()
         ) {
-            // The selected value text at start side of the row
+            // Align the selected value to the bottom of the slider track instead of the row center.
+            val textFontSize = 1.1f * labelFontSize
             Text(
                 text = "%3d%s".format(sliderValueState.floatValue.roundToInt(), valueUnits),
-                fontSize = (1.1f * labelFontSize).sp,
+                fontSize = textFontSize.sp,
                 color = if (enabled) labelColor else colors.disabledThumbColor,
                 textAlign = TextAlign.Start,
                 modifier = Modifier
                     .wrapContentWidth()
                     .padding(
-                        start = 8.dp, end = 8.dp,
-                        bottom = (sliderHeight.value * 0.4f).dp  //sliderHeight - 24.dp  //16.dp
+                        end = 8.dp,
+                        top = (sliderHeight - textFontSize.dp - 3.dp) / 2f
                     )
             )
 
@@ -161,7 +163,7 @@ fun ATTStopsRangeSlider(
                     },
                     onValueChangeFinished = onValueChangeFinished,
                     modifier = Modifier
-                        .height(sliderHeight)
+                        .height(sliderHeightDp)
                         .fillMaxWidth()
                 )
 
@@ -181,11 +183,10 @@ fun ATTStopsRangeSlider(
                     }
 
                     DisplaySpotsLabels(
-                        labels = stopsLabels,
-                        thumbSize = sliderHeight - 16.dp,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = sliderHeight - 8.dp)
+                            .padding(top = sliderHeightDp / 2f + 6.dp),
+                        labels = stopsLabels
                     )
                 }
             }
@@ -199,10 +200,9 @@ fun ATTStopsRangeSlider(
  */
 @Composable
 private fun DisplaySpotsLabels(
-    labels: List<String>,
-    labelFontSize: Float = 9f,
-    thumbSize: Dp,
     modifier: Modifier = Modifier,
+    labels: List<String>,
+    labelFontSize: Float = 9f
 ) {
     Layout(
         modifier = modifier,
@@ -220,7 +220,7 @@ private fun DisplaySpotsLabels(
         val placeables = measurables.map {
             it.measure(constraints.copy(minWidth = 0, minHeight = 0))
         }
-        val thumbPx = thumbSize.roundToPx()
+        val thumbPx = 24.dp.roundToPx()
 
         // The track spans from thumbPx to (width - thumbPx)
         val trackWidth = (constraints.maxWidth - thumbPx).coerceAtLeast(0)
@@ -231,7 +231,7 @@ private fun DisplaySpotsLabels(
                 val centerX = thumbPx / 2f + trackWidth * i / last
                 p.placeRelative(
                     x = (centerX - p.width / 2f).roundToInt(),
-                    y = -labelFontSize.roundToInt() - (thumbSize.value / 13f).roundToInt()
+                    y = 0
                 )
             }
         }
