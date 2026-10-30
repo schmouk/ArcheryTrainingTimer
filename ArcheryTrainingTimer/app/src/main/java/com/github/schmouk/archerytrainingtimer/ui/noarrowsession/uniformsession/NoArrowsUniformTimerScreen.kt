@@ -669,7 +669,7 @@ fun NoArrowsTimerScreen(
                             .fillMaxWidth()
                             .wrapContentHeight(),
                         enabled = true,
-                        durationsRange = 5f..35f,
+                        durationsRange = 10f..30f,
                         stepsGap = 5f,
                         selectedDuration = selectedDuration?.toFloat(),
                         inDurationSelected = { newDuration ->

@@ -105,6 +105,8 @@ fun ATTStopsSlider(
         sliderValueState.floatValue = sliderValue.coerceIn(valueRange)
     }
 
+    val valueRange = valueRange.start - stepsGap..valueRange.endInclusive + stepsGap
+
     val steps: Int = ((valueRange.endInclusive - valueRange.start) / stepsGap - 1f)
                         .roundToInt()
                         .coerceAtLeast(0)
@@ -170,16 +172,19 @@ fun ATTStopsSlider(
                 if (showStopsValues) {
                     val stopsLabels = mutableListOf<String>()
                     val stepSize = stepsGap * oneOverNStopsValues.toFloat()
-                    var currentValue = valueRange.start
-                    while (currentValue <= valueRange.endInclusive) {
-                        if (currentValue == valueRange.start ||
-                            currentValue == valueRange.endInclusive)
-                            stopsLabels += ""
-                        else
-                            stopsLabels.add("%3d".format(currentValue.roundToInt()))
+                    var currentValue = valueRange.start + stepsGap
+                    var currentIndex: Int = 0
 
-                        currentValue += stepSize
+                    stopsLabels += ""
+                    while (currentValue < valueRange.endInclusive) {
+                        if (currentIndex % oneOverNStopsValues == 0)
+                            stopsLabels.add("%d".format(currentValue.roundToInt()))
+                        else
+                            stopsLabels += ""
+                        currentIndex += 1
+                        currentValue = valueRange.start + (currentIndex+1) * stepsGap
                     }
+                    stopsLabels += ""
 
                     DisplaySpotsLabels(
                         modifier = Modifier
