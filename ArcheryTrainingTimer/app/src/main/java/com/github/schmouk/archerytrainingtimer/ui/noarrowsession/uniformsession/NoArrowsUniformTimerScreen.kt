@@ -85,6 +85,7 @@ import com.github.schmouk.archerytrainingtimer.ui.commons.LogoImage
 import com.github.schmouk.archerytrainingtimer.ui.commons.PleaseSelectText
 import com.github.schmouk.archerytrainingtimer.ui.commons.RepetitionsDurationSlider
 import com.github.schmouk.archerytrainingtimer.ui.commons.RepetitionsDurationTitle
+import com.github.schmouk.archerytrainingtimer.ui.commons.RepetitionsNumberSlider
 import com.github.schmouk.archerytrainingtimer.ui.commons.RepetitionsNumberTitle
 import com.github.schmouk.archerytrainingtimer.ui.commons.RepetitionsSelectorWithScrollIndicators
 import com.github.schmouk.archerytrainingtimer.ui.commons.RestingDurationText
@@ -664,6 +665,9 @@ fun NoArrowsTimerScreen(
 
                     // Then the slider for the repetition duration
                     RepetitionsDurationSlider(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight(),
                         enabled = true,
                         durationsRange = 5f..35f,
                         stepsGap = 5f,
@@ -675,10 +679,7 @@ fun NoArrowsTimerScreen(
                             noArrowsViewModel.viewModelScope.launch {
                                 userPreferencesRepository.saveDurationPreference(selectedDuration)
                             }
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .wrapContentHeight()
+                        }
                     )
 
 
@@ -695,7 +696,7 @@ fun NoArrowsTimerScreen(
                     )
 
                     // Then the actual selector
-                    RepetitionsSelectorWithScrollIndicators(
+                    /*RepetitionsSelectorWithScrollIndicators(
                         // Repetition lazy row with arrows
                         selectedNumberOfRepetitions = numberOfRepetitions,
                         onRepetitionSelected = { selected ->
@@ -709,6 +710,21 @@ fun NoArrowsTimerScreen(
                         horizontalSpaceArrangement = deviceScaling(8).dp,
                         repetitionBoxSize = selectionItemsBaseSizeDp, //deviceScaling(48).dp,
                         borderStrokeWidth = deviceScaling(4).dp,
+                    )*/
+                    RepetitionsNumberSlider(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight(),
+                        valueRange = 3f..15f,
+                        sliderValue = numberOfRepetitions?.toFloat() ?: 3f,
+                        onValueChange = { newRepsCount ->
+                            selectionState.numberOfRepetitions = newRepsCount.roundToInt()
+                        },
+                        onValueChangeFinished  = {
+                            noArrowsViewModel.viewModelScope.launch {
+                                userPreferencesRepository.saveRepetitionsPreference(numberOfRepetitions)
+                            }
+                        }
                     )
 
 

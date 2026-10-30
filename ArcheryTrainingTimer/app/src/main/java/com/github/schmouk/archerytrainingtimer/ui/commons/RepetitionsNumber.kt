@@ -50,6 +50,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.SliderColors
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -60,6 +61,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -67,11 +69,16 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 import com.github.schmouk.archerytrainingtimer.R
+import com.github.schmouk.archerytrainingtimer.commons.ATTStopsSlider
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppButtonDarkerColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppButtonTextColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppTextColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppTitleColor
+import com.github.schmouk.archerytrainingtimer.ui.theme.DimmedWAYellowColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.SelectedButtonBorderColor
+import com.github.schmouk.archerytrainingtimer.ui.theme.WARedColor
+import com.github.schmouk.archerytrainingtimer.ui.theme.WAWhiteColor
+import com.github.schmouk.archerytrainingtimer.ui.theme.WAYellowColor
 import com.github.schmouk.archerytrainingtimer.ui.utils.rememberFullyVisibleItemIndices
 
 import kotlinx.coroutines.launch
@@ -310,6 +317,46 @@ fun RepetitionsSelectorWithScrollIndicators(
     }
 }
 
+
+
+/**
+ * The slider for the selection of repetitions duration
+ */
+@Composable
+fun RepetitionsNumberSlider(
+    modifier: Modifier = Modifier,
+    labelTitle: String? = null,
+    labelFontSize: Float = 18f,
+    labelColor: Color = AppTextColor,
+    valueRange: ClosedFloatingPointRange<Float> = 1f..24f,
+    valueUnits: String = "",
+    sliderValue: Float = 3f,
+    stepsGap: Float = 1f,
+    sliderHeight: Dp = 40.dp,
+    enabled: Boolean = true,
+    showStopsValues: Boolean = true,
+    oneOverNStopsValues: Int = 3,
+    onValueChange: ((Float) -> Unit)? = null,
+    onValueChangeFinished : (() -> Unit)? = null,
+)
+{
+    ATTStopsSlider(
+        modifier = modifier,
+        labelTitle = labelTitle,
+        labelFontSize = labelFontSize,
+        labelColor = labelColor,
+        valueRange = valueRange,
+        valueUnits = valueUnits,
+        sliderValue = sliderValue,
+        stepsGap = stepsGap,
+        sliderHeight = sliderHeight,
+        enabled = enabled,
+        showStopsValues = showStopsValues,
+        oneOverNStopsValues = oneOverNStopsValues,
+        onValueChange = onValueChange,
+        onValueChangeFinished = onValueChangeFinished,
+    )
+}
 
 /**
  * The slider for the selection of repetitions duration
