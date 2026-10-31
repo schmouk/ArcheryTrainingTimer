@@ -717,6 +717,7 @@ fun NoArrowsTimerScreen(
                             .wrapContentHeight(),
                         valueRange = 3f..15f,
                         sliderValue = numberOfRepetitions?.toFloat() ?: 3f,
+                        oneOverNStopsValues = 3,
                         onValueChange = { newRepsCount ->
                             selectionState.numberOfRepetitions = newRepsCount.roundToInt()
                         },

@@ -171,16 +171,22 @@ fun ATTStopsSlider(
                 // Then the maybe spots labels
                 if (showStopsValues) {
                     val stopsLabels = mutableListOf<String>()
-                    val stepSize = stepsGap * oneOverNStopsValues.toFloat()
                     var currentValue = valueRange.start + stepsGap
                     var currentIndex: Int = 0
+                    val highIndex: Int = ((valueRange.endInclusive - valueRange.start) / stepsGap).roundToInt() - 2
 
                     stopsLabels += ""
                     while (currentValue < valueRange.endInclusive) {
-                        if (currentIndex % oneOverNStopsValues == 0)
-                            stopsLabels.add("%d".format(currentValue.roundToInt()))
-                        else
+                        val stopValue: Int = currentValue.roundToInt()
+                        if (stopValue % oneOverNStopsValues == 0 ||
+                                currentIndex == 0 ||
+                                currentIndex == highIndex
+                           ) {
+                            stopsLabels.add("%d".format(stopValue))
+                        }
+                        else {
                             stopsLabels += ""
+                        }
                         currentIndex += 1
                         currentValue = valueRange.start + (currentIndex+1) * stepsGap
                     }
