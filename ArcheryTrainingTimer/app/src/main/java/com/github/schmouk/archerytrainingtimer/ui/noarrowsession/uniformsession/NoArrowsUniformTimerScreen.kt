@@ -59,12 +59,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -90,6 +92,7 @@ import com.github.schmouk.archerytrainingtimer.ui.commons.RepetitionsNumberTitle
 import com.github.schmouk.archerytrainingtimer.ui.commons.RepetitionsSelectorWithScrollIndicators
 import com.github.schmouk.archerytrainingtimer.ui.commons.RestingDurationText
 import com.github.schmouk.archerytrainingtimer.ui.commons.SeriesCountdownConstrainedBox
+import com.github.schmouk.archerytrainingtimer.ui.commons.SeriesNumberSlider
 import com.github.schmouk.archerytrainingtimer.ui.commons.SeriesNumbersButtons
 import com.github.schmouk.archerytrainingtimer.ui.commons.SeriesNumberTitle
 import com.github.schmouk.archerytrainingtimer.ui.commons.SessionDurationDisplay
@@ -711,18 +714,19 @@ fun NoArrowsTimerScreen(
                     )*/
                     val minRepetitions: Float = 3f
                     val maxRepetitions: Float = 15f
-                    val showStopsLabelsEveryNMultiple: Int = 3
+                    val repsNumSliderValue: Float = numberOfRepetitions?.toFloat() ?: 3f
+                    val repsNumShowStopsLabelsEveryNMultiple: Int = 3
                     RepetitionsNumberSlider(
                         modifier = Modifier
                             .fillMaxWidth()
                             .wrapContentHeight(),
                         valueRange = minRepetitions..maxRepetitions,
-                        sliderValue = numberOfRepetitions?.toFloat() ?: 3f,
-                        showStopsLabelsEveryNMultiple = showStopsLabelsEveryNMultiple,
+                        sliderValue = repsNumSliderValue,
+                        showStopsLabelsEveryNMultiple = repsNumShowStopsLabelsEveryNMultiple,
                         onValueChange = { newRepsCount ->
                             selectionState.numberOfRepetitions = newRepsCount.roundToInt()
                         },
-                        onValueChangeFinished  = {
+                        onValueChangeFinished = {
                             noArrowsViewModel.viewModelScope.launch {
                                 userPreferencesRepository.saveRepetitionsPreference(numberOfRepetitions)
                             }
@@ -744,7 +748,7 @@ fun NoArrowsTimerScreen(
 
                     // Then the actual selector
                     // Checks first the available display width against the series-options list width
-                    with(LocalDensity.current) {
+                    /*with(LocalDensity.current) {
                         val horizontalSpaceArrangementPx = deviceScaling(8).dp.toPx()
                         val seriesBoxSizePx = selectionItemsBaseSizeDp.toPx()
                         val visibleWidth =
@@ -762,10 +766,10 @@ fun NoArrowsTimerScreen(
                             else
                                 seriesOptions.removeAt(removedIndex)
                         }
-                    }
+                    }*/
 
                     // Then displays the selector row
-                    SeriesNumbersButtons(
+                    /*SeriesNumbersButtons(
                         numberOfSeries = numberOfSeries,
                         onNumberSelected = { seriesCount: Int ->
                             numberOfSeries = seriesCount
@@ -780,6 +784,27 @@ fun NoArrowsTimerScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .wrapContentHeight()
+                    )*/
+                    val minSeriesNumber: Float = 1f
+                    val maxSeriesNumber: Float = 15f
+                    val seriesSliderValue: Float = numberOfSeries?.toFloat() ?: 3f
+                    val seriesShowStopsLabelsEveryNMultiple: Int = 5
+
+                    SeriesNumberSlider(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight(),
+                        valueRange = minSeriesNumber..maxSeriesNumber,
+                        sliderValue = seriesSliderValue,
+                        showStopsLabelsEveryNMultiple = seriesShowStopsLabelsEveryNMultiple,
+                        onValueChange = { seriesCount ->
+                            selectionState.numberOfSeries = seriesCount.roundToInt()
+                        },
+                        onValueChangeFinished = {
+                            noArrowsViewModel.viewModelScope.launch {
+                                userPreferencesRepository.saveSeriesPreference(selectionState.numberOfSeries)
+                            }
+                        }
                     )
 
 

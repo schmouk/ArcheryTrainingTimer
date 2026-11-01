@@ -318,7 +318,6 @@ fun RepetitionsSelectorWithScrollIndicators(
 }
 
 
-
 /**
  * The slider for the selection of repetitions duration
  */

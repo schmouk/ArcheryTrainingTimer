@@ -41,6 +41,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.TextStyle
@@ -48,6 +49,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 import com.github.schmouk.archerytrainingtimer.R
+import com.github.schmouk.archerytrainingtimer.commons.ATTStopsSlider
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppButtonDarkerColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppButtonTextColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppTextColor
@@ -129,4 +131,44 @@ fun SeriesNumbersButtons(
             }
         }
     }
+}
+
+
+/**
+ * The slider for the selection of series number
+ */
+@Composable
+fun SeriesNumberSlider(
+    modifier: Modifier = Modifier,
+    labelTitle: String? = null,
+    labelFontSize: Float = 18f,
+    labelColor: Color = AppTextColor,
+    valueRange: ClosedFloatingPointRange<Float> = 1f..30f,
+    valueUnits: String = "",
+    sliderValue: Float = 3f,
+    stepsGap: Float = 1f,
+    sliderHeight: Dp = 40.dp,
+    enabled: Boolean = true,
+    showStopsValues: Boolean = true,
+    showStopsLabelsEveryNMultiple: Int = 5,
+    onValueChange: ((Float) -> Unit)? = null,
+    onValueChangeFinished : (() -> Unit)? = null,
+)
+{
+    ATTStopsSlider(
+        modifier = modifier,
+        labelTitle = labelTitle,
+        labelFontSize = labelFontSize,
+        labelColor = labelColor,
+        valueRange = valueRange,
+        valueUnits = valueUnits,
+        sliderValue = sliderValue,
+        stepsGap = stepsGap,
+        sliderHeight = sliderHeight,
+        enabled = enabled,
+        showStopsValues = showStopsValues,
+        showStopsLabelsEveryNMultiple = showStopsLabelsEveryNMultiple,
+        onValueChange = onValueChange,
+        onValueChangeFinished = onValueChangeFinished,
+    )
 }
