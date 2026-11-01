@@ -335,7 +335,7 @@ fun RepetitionsNumberSlider(
     sliderHeight: Dp = 40.dp,
     enabled: Boolean = true,
     showStopsValues: Boolean = true,
-    oneOverNStopsValues: Int = 3,
+    showStopsLabelsEveryNMultiple: Int = 3,
     onValueChange: ((Float) -> Unit)? = null,
     onValueChangeFinished : (() -> Unit)? = null,
 )
@@ -352,7 +352,7 @@ fun RepetitionsNumberSlider(
         sliderHeight = sliderHeight,
         enabled = enabled,
         showStopsValues = showStopsValues,
-        oneOverNStopsValues = oneOverNStopsValues,
+        showStopsLabelsEveryNMultiple = showStopsLabelsEveryNMultiple,
         onValueChange = onValueChange,
         onValueChangeFinished = onValueChangeFinished,
     )
@@ -385,7 +385,7 @@ fun RepetitionsNumberSlider(
         stepsGap = stepsGap,
         enabled = enabled,
         showStopsValues = true,
-        oneOverNStopsValues = 1,
+        showStopsLabelsEveryNMultiple = 1,
         onValueChange = inDurationSelected,
         onValueChangeFinished = onDurationChangeFinished,
         modifier = modifier

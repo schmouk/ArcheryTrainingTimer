@@ -179,7 +179,7 @@ fun NoArrowsTimerScreen(
 
 
             // --- Repetitions selector state ---
-            val repetitionsLazyListState = rememberLazyListState()
+            //val repetitionsLazyListState = rememberLazyListState()
 
 
             // --- Playing sound ---
@@ -240,9 +240,7 @@ fun NoArrowsTimerScreen(
                 lastDurationSeconds = selectionState.lastDurationSeconds
             }
 
-            val minRepetitions = 3
-            val maxRepetitions = 15
-            val repetitionRange = (minRepetitions..maxRepetitions).toList()
+            //val repetitionRange = (minRepetitions..maxRepetitions).toList()
 
             // --- Rest Mode & Series Tracking ---
             val seriesOptions = mutableListOf(1, 2, 3, 5, 10, 15, 20, 25, 30)
@@ -711,13 +709,16 @@ fun NoArrowsTimerScreen(
                         repetitionBoxSize = selectionItemsBaseSizeDp, //deviceScaling(48).dp,
                         borderStrokeWidth = deviceScaling(4).dp,
                     )*/
+                    val minRepetitions: Float = 3f
+                    val maxRepetitions: Float = 15f
+                    val showStopsLabelsEveryNMultiple: Int = 3
                     RepetitionsNumberSlider(
                         modifier = Modifier
                             .fillMaxWidth()
                             .wrapContentHeight(),
-                        valueRange = 3f..15f,
+                        valueRange = minRepetitions..maxRepetitions,
                         sliderValue = numberOfRepetitions?.toFloat() ?: 3f,
-                        oneOverNStopsValues = 3,
+                        showStopsLabelsEveryNMultiple = showStopsLabelsEveryNMultiple,
                         onValueChange = { newRepsCount ->
                             selectionState.numberOfRepetitions = newRepsCount.roundToInt()
                         },

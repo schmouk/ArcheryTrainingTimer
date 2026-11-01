@@ -81,7 +81,7 @@ fun ATTStopsSlider(
     sliderHeight: Dp = 40.dp,
     enabled: Boolean = true,
     showStopsValues: Boolean = true,
-    oneOverNStopsValues: Int = 1,
+    showStopsLabelsEveryNMultiple: Int = 1,
     colors: SliderColors = SliderColors(
         thumbColor = WARedColor,
         activeTrackColor = WAYellowColor,
@@ -178,7 +178,7 @@ fun ATTStopsSlider(
                     stopsLabels += ""
                     while (currentValue < valueRange.endInclusive) {
                         val stopValue: Int = currentValue.roundToInt()
-                        if (stopValue % oneOverNStopsValues == 0 ||
+                        if (stopValue % showStopsLabelsEveryNMultiple == 0 ||
                                 currentIndex == 0 ||
                                 currentIndex == highIndex
                            ) {

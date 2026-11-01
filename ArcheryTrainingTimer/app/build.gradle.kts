@@ -151,6 +151,8 @@ dependencies {
     implementation("androidx.compose.material3:material3:1.4.0")  // 1.4.0-beta03 and 1.5.0-alpha03 are available also
     implementation("androidx.compose.material3.adaptive:adaptive-layout:1.1.0")  // 1.2.0-beta01 is available also
     implementation("androidx.compose.ui:ui:1.9.2")
+    implementation("androidx.compose.foundation:foundation:1.9.2")
+    implementation("androidx.compose.foundation:foundation-layout:1.9.2")
     //implementation("androidx.compose.ui:ui-graphics:1.9.1")
     //implementation("androidx.compose.ui:ui-unit:1.9.1")
 
