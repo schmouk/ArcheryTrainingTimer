@@ -358,6 +358,8 @@ fun NoArrowsTimerScreen(
                     sessionController.pauseCountdowns(selectionState.tickBaseTimeState)
                 } else if (isTimerStopped) {
                     sessionController.resumeCountdowns(selectionState.tickBaseTimeState)
+                } else if (isPreparationMode) {
+                    sessionController.resetPreparationCountdown(preparationTime)
                 } else {
                     val prepared = sessionController.startNewSession(
                         allSelectionsMade = allSelectionsMade(),
@@ -370,7 +372,7 @@ fun NoArrowsTimerScreen(
                     selectionState.currentDurationSecondsLeft = prepared.third
                     if (allSelectionsMade()) {
                         selectionState.currentPreparationSecondsLeft = preparationTime
-                        sessionController.startPreparationMode()
+                        sessionController.startPreparationMode(preparationTime)
                     }
                 }
             }

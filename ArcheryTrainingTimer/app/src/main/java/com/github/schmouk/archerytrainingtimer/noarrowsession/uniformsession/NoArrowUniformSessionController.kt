@@ -67,6 +67,7 @@ class SelectionState {
     var currentSeriesLeft by mutableStateOf<Int?>(null)
     var currentRestTimeLeft by mutableStateOf<Int?>(null)
     var currentPreparationSecondsLeft by mutableStateOf<Int?>(null)
+    var preparationResetVersion by mutableIntStateOf(0)
 
     var tickBaseTimeState: MutableState<Long> = mutableLongStateOf(System.currentTimeMillis())
     var countDownDelay: Long = SECOND_DURATION_MS
@@ -427,7 +428,19 @@ class NoArrowSessionController(
         isRestMode = false,
     )*/
 
-    fun startPreparationMode() {
+    fun startPreparationMode(preparationTime: Int = 7) {
+        val state = noArrowsViewModel.selectionState
+        state.currentPreparationSecondsLeft = preparationTime
+        state.tickBaseTimeState.value = System.currentTimeMillis()
+        state.preparationResetVersion += 1
+        noArrowsViewModel.action(ESignal.SIG_PREPARE)
+    }
+
+    fun resetPreparationCountdown(preparationTime: Int = 7) {
+        val state = noArrowsViewModel.selectionState
+        state.currentPreparationSecondsLeft = preparationTime
+        state.tickBaseTimeState.value = System.currentTimeMillis()
+        state.preparationResetVersion += 1
         noArrowsViewModel.action(ESignal.SIG_PREPARE)
     }
 
@@ -478,12 +491,19 @@ class NoArrowSessionController(
 
                 // --- 1. PREPARATION MODE ---
                 if (noArrowsViewModel.isPreparationMode.value) {
+                    val versionAtLoopStart = selectionState.preparationResetVersion
                     selectionState.tickBaseTimeState.value = System.currentTimeMillis()
                     val prepLeft = selectionState.currentPreparationSecondsLeft ?: 0
                     if (prepLeft > 0) {
                         adjustedDelay(selectionState.countDownDelay, selectionState.tickBaseTimeState)
+                        if (selectionState.preparationResetVersion != versionAtLoopStart) {
+                            continue
+                        }
                         if (noArrowsViewModel.isTimerStopped.value) continue
                         val remainingPrep = prepLeft - 1
+                        if (selectionState.preparationResetVersion != versionAtLoopStart) {
+                            continue
+                        }
                         selectionState.currentPreparationSecondsLeft = remainingPrep
                         if (remainingPrep <= 0) {
                             selectionState.currentDurationSecondsLeft = selectionState.initialDurationSeconds
@@ -494,6 +514,9 @@ class NoArrowSessionController(
                             startCountdowns(selectionState.initialDurationSeconds)
                         }
                     } else {
+                        if (selectionState.preparationResetVersion != versionAtLoopStart) {
+                            continue
+                        }
                         selectionState.currentDurationSecondsLeft = selectionState.initialDurationSeconds
                         selectionState.currentRepetitionsLeft = selectionState.numberOfRepetitions
                         if (selectionState.currentSeriesLeft == null || selectionState.currentSeriesLeft == 0) {
