@@ -254,6 +254,6 @@ private fun DisplaySpotsLabels(
  */
 @Preview
 @Composable
-fun ATTStopsRangeSliderPreview() {
+fun ATTStopsSliderPreview() {
     ATTStopsSlider()
 }
