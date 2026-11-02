@@ -24,7 +24,7 @@ OUT  OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-package com.github.schmouk.archerytrainingtimer.commons
+package com.github.schmouk.archerytrainingtimer.ui.commons
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row

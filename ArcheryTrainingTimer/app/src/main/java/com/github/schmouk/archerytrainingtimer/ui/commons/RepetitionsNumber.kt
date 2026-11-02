@@ -50,7 +50,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.SliderColors
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -69,16 +68,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 import com.github.schmouk.archerytrainingtimer.R
-import com.github.schmouk.archerytrainingtimer.commons.ATTStopsSlider
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppButtonDarkerColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppButtonTextColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppTextColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.AppTitleColor
-import com.github.schmouk.archerytrainingtimer.ui.theme.DimmedWAYellowColor
 import com.github.schmouk.archerytrainingtimer.ui.theme.SelectedButtonBorderColor
-import com.github.schmouk.archerytrainingtimer.ui.theme.WARedColor
-import com.github.schmouk.archerytrainingtimer.ui.theme.WAWhiteColor
-import com.github.schmouk.archerytrainingtimer.ui.theme.WAYellowColor
 import com.github.schmouk.archerytrainingtimer.ui.utils.rememberFullyVisibleItemIndices
 
 import kotlinx.coroutines.launch

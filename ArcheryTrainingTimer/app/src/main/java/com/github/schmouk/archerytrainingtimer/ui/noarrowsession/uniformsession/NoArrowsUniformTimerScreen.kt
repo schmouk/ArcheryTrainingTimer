@@ -786,7 +786,7 @@ fun NoArrowsTimerScreen(
                             .wrapContentHeight()
                     )*/
                     val minSeriesNumber: Float = 1f
-                    val maxSeriesNumber: Float = 15f
+                    val maxSeriesNumber: Float = 20f
                     val seriesSliderValue: Float = numberOfSeries?.toFloat() ?: 3f
                     val seriesShowStopsLabelsEveryNMultiple: Int = 5
 

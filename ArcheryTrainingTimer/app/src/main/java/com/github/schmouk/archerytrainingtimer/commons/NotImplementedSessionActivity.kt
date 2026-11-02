@@ -58,6 +58,7 @@ import androidx.core.view.WindowCompat
 import kotlinx.coroutines.launch
 
 import com.github.schmouk.archerytrainingtimer.R
+import com.github.schmouk.archerytrainingtimer.ui.commons.horizontalSwipeDetector
 import com.github.schmouk.archerytrainingtimer.ui.theme.*
 
 class NotImplementedSessionActivity : ComponentActivity() {

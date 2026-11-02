@@ -24,7 +24,7 @@ OUT  OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-package com.github.schmouk.archerytrainingtimer.commons
+package com.github.schmouk.archerytrainingtimer.ui.commons
 
 import android.view.MotionEvent
 import kotlin.math.abs
@@ -35,8 +35,8 @@ fun horizontalSwipeDetector(e1: MotionEvent?, e2: MotionEvent, velocityX: Float,
                             minSwipeDistance : Int = 120, minVelocity : Float = 100f): Boolean {
     if (e1 == null) return false
 
-    val horizontalDistance = kotlin.math.abs(e2.x - e1.x)
-    val verticalDistance = kotlin.math.abs(e2.y - e1.y)
+    val horizontalDistance = abs(e2.x - e1.x)
+    val verticalDistance = abs(e2.y - e1.y)
 
     return horizontalDistance > minSwipeDistance &&
         verticalDistance < minSwipeDistance &&
