@@ -130,7 +130,7 @@ class SelectionState {
         }
     }
 
-    suspend fun updateSelectionState(
+    fun applySelectedDurationChange(
         isRestMode: Boolean,
         isTimerStopped: Boolean,
         isTimerRunning: Boolean = false,
@@ -143,36 +143,74 @@ class SelectionState {
         }
 
         val selectedDurationValue = selectedDuration
-        if (selectedDurationValue != null && selectedDurationValue != lastDurationSeconds) {
-            initialDurationSeconds = selectedDurationValue
-            currentDurationSecondsLeft = if (!isSessionActive) {
-                selectedDurationValue
-            } else if (isRestMode) {
-                selectedDurationValue
-            } else {
-                min(
-                    max(
-                        1,
-                        (currentDurationSecondsLeft ?: 0) + selectedDurationValue - lastDurationSeconds
-                    ),
-                    selectedDurationValue
-                )
-            }
-            lastDurationSeconds = selectedDurationValue
+        if (selectedDurationValue == null || selectedDurationValue == lastDurationSeconds)
+            return
 
-            if (isSessionActive && (currentDurationSecondsLeft ?: 0) <= 1 && (currentRepetitionsLeft ?: 0) <= 1) {
-                currentDurationSecondsLeft = 0
-                currentRestTimeLeft = controller?.evaluateRestTime(
-                    lastDurationSeconds,
-                    numberOfRepetitions
-                ) ?: 0
-                if (isTimerStopped) {
-                    controller?.setFutureRestMode()
-                } else {
-                    controller?.setRestMode()
+        val previousDuration = lastDurationSeconds
+        initialDurationSeconds = selectedDurationValue
+
+        if (!isSessionActive || isRestMode || isPreparationMode) {
+            currentDurationSecondsLeft = selectedDurationValue
+        } else {
+            val currentRemaining = currentDurationSecondsLeft ?: previousDuration
+            val delta = selectedDurationValue - previousDuration
+            val adjustedRemaining = currentRemaining + delta
+
+            if (delta >= 0) {
+                currentDurationSecondsLeft = max(1, adjustedRemaining)
+            } else {
+                currentDurationSecondsLeft = adjustedRemaining
+                if (adjustedRemaining <= 0) {
+                    val nextRepetitions = max(0, (currentRepetitionsLeft ?: 1) - 1)
+                    currentRepetitionsLeft = nextRepetitions
+
+                    if (nextRepetitions <= 0) {
+                        val nextSeries = max(0, (currentSeriesLeft ?: 1) - 1)
+                        currentSeriesLeft = nextSeries
+                        if (nextSeries <= 0) {
+                            completeSession()
+                        } else {
+                            currentDurationSecondsLeft = 0
+                            currentRestTimeLeft = controller?.evaluateRestTime(
+                                selectedDurationValue,
+                                numberOfRepetitions
+                            ) ?: 0
+                            if (isTimerStopped) {
+                                controller?.setFutureRestMode()
+                            } else {
+                                controller?.setRestMode()
+                            }
+                        }
+                    } else {
+                        currentDurationSecondsLeft = selectedDurationValue
+                        if (isTimerRunning) {
+                            controller?.playBeep()
+                        }
+                    }
                 }
             }
+        }
 
+        lastDurationSeconds = selectedDurationValue
+    }
+
+    suspend fun updateSelectionState(
+        isRestMode: Boolean,
+        isTimerStopped: Boolean,
+        isTimerRunning: Boolean = false,
+        isPreparationMode: Boolean = false,
+    ) {
+        val isSessionActive = isTimerRunning || isRestMode || isTimerStopped || isPreparationMode
+
+        applySelectedDurationChange(
+            isRestMode = isRestMode,
+            isTimerStopped = isTimerStopped,
+            isTimerRunning = isTimerRunning,
+            isPreparationMode = isPreparationMode,
+        )
+
+        val selectedDurationValue = selectedDuration
+        if (selectedDurationValue != null) {
             userPreferencesRepository?.saveDurationPreference(selectedDurationValue)
         }
 
@@ -581,14 +619,26 @@ class NoArrowSessionController(
 
                 // --- 3. TIMER RUNNING (WORK REPETITION) ---
                 if (noArrowsViewModel.isTimerRunning.value) {
-                    val initialDuration = selectionState.initialDurationSeconds ?: 10
-                    val currentDuration = selectionState.currentDurationSecondsLeft ?: initialDuration
+                    var initialDuration = selectionState.initialDurationSeconds ?: 10
+                    var currentDuration = selectionState.currentDurationSecondsLeft ?: initialDuration
                     val currentRepetitions = selectionState.currentRepetitionsLeft ?: (selectionState.numberOfRepetitions ?: 1)
                     val currentSeries = selectionState.currentSeriesLeft ?: (selectionState.numberOfSeries ?: 1)
 
                     if (currentDuration > 0) {
                         adjustedDelay(selectionState.countDownDelay, selectionState.tickBaseTimeState)
                         if (noArrowsViewModel.isTimerStopped.value) continue
+                        if (!noArrowsViewModel.isTimerRunning.value) continue
+
+                        val liveInitialDuration = selectionState.initialDurationSeconds
+                        if (liveInitialDuration != null && liveInitialDuration != initialDuration) {
+                            initialDuration = liveInitialDuration
+                        }
+
+                        val liveCurrentDuration = selectionState.currentDurationSecondsLeft
+                        if (liveCurrentDuration != null && liveCurrentDuration != currentDuration) {
+                            currentDuration = liveCurrentDuration
+                        }
+
                         val nextDuration = currentDuration - 1
                         selectionState.currentDurationSecondsLeft = nextDuration
 
@@ -601,12 +651,14 @@ class NoArrowSessionController(
                         }
 
                         if (nextDuration <= 0) {
-                            val nextReps = currentRepetitions - 1
+                            val liveRepetitions = selectionState.currentRepetitionsLeft ?: currentRepetitions
+                            val nextReps = liveRepetitions - 1
                             selectionState.currentRepetitionsLeft = nextReps
 
                             if (nextReps <= 0) {
                                 // Series completed!
-                                if (currentSeries <= 1) {
+                                val liveSeries = selectionState.currentSeriesLeft ?: currentSeries
+                                if (liveSeries <= 1) {
                                     doCompleteSession()
                                     break
                                 } else {
@@ -623,10 +675,12 @@ class NoArrowSessionController(
                             }
                         }
                     } else {
-                        val nextReps = currentRepetitions - 1
+                        val liveRepetitions = selectionState.currentRepetitionsLeft ?: currentRepetitions
+                        val nextReps = liveRepetitions - 1
                         selectionState.currentRepetitionsLeft = nextReps
+                        val liveSeries = selectionState.currentSeriesLeft ?: currentSeries
                         if (nextReps <= 0) {
-                            if (currentSeries <= 1) {
+                            if (liveSeries <= 1) {
                                 doCompleteSession()
                                 break
                             } else {

@@ -26,6 +26,8 @@ SOFTWARE.
 
 package com.github.schmouk.archerytrainingtimer.noarrowsession.uniformsession
 
+import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
 import com.github.schmouk.archerytrainingtimer.commons.BaseCountdownViewModel
 import com.github.schmouk.archerytrainingtimer.ui.commons.DurationSessionController
 
@@ -37,4 +39,8 @@ import com.github.schmouk.archerytrainingtimer.ui.commons.DurationSessionControl
 class NoArrowsUniformTimerViewModel : BaseCountdownViewModel(NoArrowsUniformStateAutomaton()) {
     val selectionState: SelectionState = SelectionState()
     val sessionDurationManager: DurationSessionController = DurationSessionController()
+
+    val currentDurationSecondsLeft: State<Int?> = derivedStateOf { selectionState.currentDurationSecondsLeft }
+    val currentSeriesLeft: State<Int?> = derivedStateOf { selectionState.currentSeriesLeft }
+    val currentRepetitionsLeft: State<Int?> = derivedStateOf { selectionState.currentRepetitionsLeft }
 }

@@ -97,13 +97,7 @@ fun ATTStopsSlider(
     onValueChange: ((Float) -> Unit)? = null,
     onValueChangeFinished : (() -> Unit)? = null,
 ) {
-    //val sliderValueState = remember { mutableFloatStateOf(sliderValue) }
-    val sliderValueState = remember(sliderValue) { mutableFloatStateOf(sliderValue) }
     val sliderHeightDp = sliderHeight.coerceIn(24.dp, 44.dp)
-
-    LaunchedEffect(sliderValue) {
-        sliderValueState.floatValue = sliderValue.coerceIn(valueRange)
-    }
 
     val valueRange = valueRange.start - stepsGap..valueRange.endInclusive + stepsGap
 
@@ -134,7 +128,7 @@ fun ATTStopsSlider(
             // Align the selected value to the bottom of the slider track instead of the row center.
             val textFontSize = 1.1f * labelFontSize
             Text(
-                text = "%3d%s".format(sliderValueState.floatValue.roundToInt(), valueUnits),
+                text = "%3d%s".format(sliderValue.coerceIn(valueRange).roundToInt(), valueUnits),
                 fontSize = textFontSize.sp,
                 color = if (enabled) labelColor else colors.disabledThumbColor,
                 textAlign = TextAlign.Start,
@@ -150,7 +144,7 @@ fun ATTStopsSlider(
             Box(modifier = modifier.fillMaxWidth()) {
                 // The slider first
                 Slider(
-                    value = sliderValueState.floatValue,
+                    value = sliderValue.coerceIn(valueRange),
                     colors = colors,
                     enabled = enabled,
                     valueRange = valueRange,
@@ -159,7 +153,6 @@ fun ATTStopsSlider(
                         val newSliderValue: Float = it.coerceIn(
                             valueRange.start+stepsGap..valueRange.endInclusive-stepsGap
                         )
-                        sliderValueState.floatValue = newSliderValue
                         onValueChange?.invoke(newSliderValue)
                     },
                     onValueChangeFinished = onValueChangeFinished,
