@@ -52,8 +52,10 @@ fun WheelPicker(
     units: String = "",
     selectedIndex: Int,
     onSelectedIndexChange: (Int) -> Unit,
+    selectedScaling: Float = 1f,
     selectedColor: Color = Color(0xFF_FFFFFF),
     selectedBackground: Color = Color(0x00_000000),
+    unselectedScaling: Float = 1f,
     unselectedColor: Color = Color(0xFF_A3A3A3),
     unselectedBackground: Color = Color(0x00_000000),
     itemHeight: Dp = 48.dp,
@@ -118,12 +120,12 @@ fun WheelPicker(
                         },
                     contentAlignment = Alignment.Center,
                 ) {
-                    val textScale = 1f  //if (isSelected) 0.92f else 0.64f
+                    val textScale = if (isSelected) selectedScaling else unselectedScaling
                     val textHeight = itemHeight * textScale
                     val textFontSize = with(density) { (textHeight * 0.72f).toSp() }
                     val textLineHeight = with(density) { textHeight.toSp() }
                     Text(
-                        text = value.toString(),
+                        text = value.toString() + units,
                         style = LocalTextStyle.current.copy(
                             fontSize = textFontSize,
                             lineHeight = textLineHeight,
@@ -199,6 +201,7 @@ fun WheelPickerPreview() {
         ) {
             WheelPicker(
                 items = numbers,
+                units = " s",
                 selectedIndex = selected3,
                 onSelectedIndexChange = { selected3 = it },
                 modifier = Modifier.width(80.dp),
