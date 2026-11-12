@@ -27,6 +27,7 @@ SOFTWARE.
 package com.github.schmouk.archerytrainingtimer.ui.commons
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -41,6 +42,16 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
+
+import com.github.schmouk.archerytrainingtimer.ui.theme.AppBackgroundColor
+import com.github.schmouk.archerytrainingtimer.ui.theme.AppButtonDarkerColor
+import com.github.schmouk.archerytrainingtimer.ui.theme.AppButtonTextColor
+import com.github.schmouk.archerytrainingtimer.ui.theme.AppTextColor
+import com.github.schmouk.archerytrainingtimer.ui.theme.SelectedButtonBackgroundColor
+import com.github.schmouk.archerytrainingtimer.ui.theme.WARedColor
+import com.github.schmouk.archerytrainingtimer.ui.theme.WAYellowColor
+
 import kotlin.math.abs
 
 @Composable
@@ -69,16 +80,9 @@ fun ATTWheelPicker(
     LaunchedEffect(centeredIndex) { onSelectedIndexChange(centeredIndex) }
 
     Box(
-        modifier = modifier.height(itemHeight * 3),   // 1 nombre au centre + 1 au-dessus + 1 en dessous
+        modifier = modifier.height(itemHeight * 3),  // 1 nombre au centre + 1 au-dessus + 1 en dessous
         contentAlignment = Alignment.Center,
     ) {
-        // Repères de la sélection (optionnel)
-        Column(Modifier.fillMaxWidth().height(itemHeight)) {
-            HorizontalDivider()
-            Spacer(Modifier.weight(1f))
-            HorizontalDivider()
-        }
-
         LazyColumn(
             state = listState,
             flingBehavior = flingBehavior,
@@ -101,26 +105,47 @@ fun ATTWheelPicker(
                 Box(
                     modifier = Modifier
                         .height(itemHeight)
+                        .fillMaxWidth()
+                        .background(if (isSelected) SelectedButtonBackgroundColor else AppButtonDarkerColor)
                         .graphicsLayer {
                             // Effet "cylindre" : rotation autour de l'axe horizontal
                             rotationX = -distance * rotationAngle  // inverser le signe si le sens est opposé
                             cameraDistance = 12f * density.density
                             val s = 1f - 0.15f * abs(distance).coerceAtMost(1f)
                             scaleX = s; scaleY = s
-                            alpha = 1f - 0.55f * abs(distance).coerceAtMost(1f)
+                            alpha = 1f  //- 0.55f * abs(distance).coerceAtMost(1f)
                         },
                     contentAlignment = Alignment.Center,
                 ) {
+                    val textScale = 1f  //if (isSelected) 0.92f else 0.64f
+                    val textHeight = itemHeight * textScale
+                    val textFontSize = with(density) { (textHeight * 0.72f).toSp() }
+                    val textLineHeight = with(density) { textHeight.toSp() }
                     Text(
                         text = value.toString(),
-                        style = if (isSelected) MaterialTheme.typography.headlineMedium
-                        else MaterialTheme.typography.titleMedium,
-                        color = if (isSelected) MaterialTheme.colorScheme.onSurface
-                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = LocalTextStyle.current.copy(
+                            fontSize = textFontSize,
+                            lineHeight = textLineHeight,
+                        ),
+                        color = if (isSelected) AppButtonTextColor  //MaterialTheme.colorScheme.onSurface
+                                else AppTextColor  //MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-
             }
+        }
+
+        // Red guide lines, drawn above the item rows so they stay visible.
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(itemHeight)
+                .zIndex(1f),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            val dividerThickness = itemHeight * 0.1f
+            HorizontalDivider(color = WARedColor, thickness = dividerThickness)
+            Spacer(Modifier.weight(1f))
+            HorizontalDivider(color = WARedColor, thickness = dividerThickness)
         }
     }
 }
@@ -134,36 +159,50 @@ fun ATTWheelPickerPreview() {
     var selected2 by remember { mutableIntStateOf(10) }
     var selected3 by remember { mutableIntStateOf(10) }
 
-    Row() {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Row(
+        Modifier.background(AppBackgroundColor).padding(top=12.dp, start=8.dp),
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(start=8.dp)
+        ) {
             ATTWheelPicker(
                 items = numbers,
                 selectedIndex = selected1,
                 onSelectedIndexChange = { selected1 = it },
                 modifier = Modifier.width(80.dp),
+                itemHeight = 24.dp,
                 rotationAngle = 35f
             )
             Text("Valeur : ${numbers[selected1]}")
         }
 
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(start=8.dp)
+        ) {
             ATTWheelPicker(
                 items = numbers,
                 selectedIndex = selected2,
                 onSelectedIndexChange = { selected2 = it },
                 modifier = Modifier.width(80.dp),
+                itemHeight = 32.dp,
                 rotationAngle = 20f
             )
             Text("Valeur : ${numbers[selected2]}")
         }
 
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(start=8.dp)
+        ) {
             ATTWheelPicker(
                 items = numbers,
                 selectedIndex = selected3,
                 onSelectedIndexChange = { selected3 = it },
                 modifier = Modifier.width(80.dp),
-                rotationAngle = 5f
+                itemHeight = 44.dp,
+                rotationAngle = 35f
             )
             Text("Valeur : ${numbers[selected3]}")
         }
